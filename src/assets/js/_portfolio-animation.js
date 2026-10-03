@@ -3,38 +3,90 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
+function listLightPatterns(columns) {
+  const reverse = Math.random() < 0.5;
+  return [
+    { name: "sweep", rise: 0.85, fade: 2, strength: 1, buildStartTime: (_, column) => (reverse ? columns - 1 - column : column) * 0.25 },
+    { name: "ripple", rise: 1, fade: 2.3, strength: 1, buildStartTime: (row, column) => Math.hypot(column - (columns - 1) / 2, (row - 3) * 1.2) * 0.34 },
+    { name: "cascade", rise: 0.9, fade: 2.1, strength: 0.95, buildStartTime: (row, column) => row * 0.46 + (column % 3) * 0.15 },
+    { name: "diagonal", rise: 0.85, fade: 2.2, strength: 1, buildStartTime: (row, column) => (reverse ? columns - 1 - column + 6 - row : column + row) * 0.23 },
+    { name: "sparkle", rise: 0.85, fade: 2.4, strength: 0.9, buildStartTime: () => Math.random() * 4.8 },
+  ];
+}
+
 function createLightSequence(stage) {
   const lights = [...stage.querySelectorAll(".c-light")].filter(light => getComputedStyle(light).display !== "none");
   const columns = Math.max(...lights.map(light => Number(light.dataset.lightColumn))) + 1;
   const quiet = stage.classList.contains("c-light-stage--contact");
-  const loop = gsap.timeline({ paused: true, repeat: -1, repeatDelay: 2.4, defaults: { ease: "sine.inOut" } });
+  const patterns = listLightPatterns(columns);
+  let activeIndex = -1;
+  let playing = false;
+
+  // Build a bounded set inside matchMedia's GSAP context. Only one timeline runs at a time.
+  const sequences = patterns.map(pattern => {
+    const sequence = gsap.timeline({ paused: true, defaults: { ease: "sine.inOut" }, onComplete: playNextLightPattern });
+    lights.forEach(light => {
+      const row = Number(light.dataset.lightRow);
+      const column = Number(light.dataset.lightColumn);
+      const isBehindTitle = row >= 2 && row <= 4 && column >= columns * 0.2 && column <= columns * 0.8;
+      const base = isBehindTitle ? 0.1 : 0.22;
+      const peak = (isBehindTitle ? 0.4 : 1) * pattern.strength * (quiet ? 0.9 : 1);
+      const start = pattern.buildStartTime(row, column);
+
+      sequence
+        .fromTo(light, { opacity: base, scale: 1 }, { opacity: peak, scale: isBehindTitle ? 1.05 : 1.2, duration: pattern.rise, immediateRender: false }, start)
+        .to(light, { opacity: base, scale: 1, duration: pattern.fade }, start + pattern.rise);
+    });
+    // The quiet gap belongs to the timeline, so pausing also stops the next pattern's countdown.
+    sequence.to({}, { duration: 1.6 });
+    return sequence;
+  });
 
   lights.forEach(light => {
     const row = Number(light.dataset.lightRow);
     const column = Number(light.dataset.lightColumn);
-    const isBehindTitle = !quiet && row >= 2 && row <= 4 && column >= columns * 0.2 && column <= columns * 0.8;
-    const base = isBehindTitle ? 0.06 : 0.16;
-    const peak = (isBehindTitle ? 0.26 : 0.8) * (quiet ? 0.7 : 1);
-    const sweepStart = column * 0.24 + row * 0.12;
-    const rippleStart = 9 + (Math.abs(column - (columns - 1) / 2) + Math.abs(row - 3)) * 0.18;
-
-    gsap.set(light, { opacity: base });
-    // Fixed light positions echo a strobe wall; only luminance changes, with a long afterglow.
-    loop.to(light, { opacity: peak, duration: 1.35 }, sweepStart).to(light, { opacity: base, duration: 2.25 }, sweepStart + 1.35);
-    loop.to(light, { opacity: peak * 0.8, duration: 1.55 }, rippleStart).to(light, { opacity: base, duration: 2.6 }, rippleStart + 1.55);
+    const isBehindTitle = row >= 2 && row <= 4 && column >= columns * 0.2 && column <= columns * 0.8;
+    gsap.set(light, { opacity: isBehindTitle ? 0.1 : 0.22, scale: 1 });
   });
-  return loop;
+
+  function playNextLightPattern() {
+    if (!playing) return;
+    if (activeIndex >= 0) sequences[activeIndex].pause();
+    const candidates = patterns.map((_, index) => index).filter(index => index !== activeIndex);
+    activeIndex = candidates[Math.floor(Math.random() * candidates.length)];
+    stage.dataset.lightPattern = patterns[activeIndex].name;
+    sequences[activeIndex].restart();
+  }
+
+  return {
+    isComplete: () => false,
+    pause: () => {
+      playing = false;
+      if (activeIndex >= 0) sequences[activeIndex].pause();
+    },
+    resume: () => {
+      if (playing) return;
+      playing = true;
+      if (activeIndex < 0) playNextLightPattern();
+      else sequences[activeIndex].resume();
+    },
+  };
 }
 
 function createLightCueSequence(stage) {
   const lights = [...stage.querySelectorAll(".c-light")];
   const sequence = gsap.timeline({ paused: true, onComplete: () => (stage.dataset.lightPlayback = "complete") });
-  gsap.set(lights, { opacity: 0.18 });
+  const patterns = ["sweep", "ripple", "sparkle"];
+  const pattern = patterns[Math.floor(Math.random() * patterns.length)];
+  const reverse = Math.random() < 0.5;
+  stage.dataset.lightPattern = pattern;
+  gsap.set(lights, { opacity: 0.2, scale: 1 });
   lights.forEach((light, index) => {
-    sequence.to(light, { opacity: 0.72, duration: 0.65, ease: "sine.inOut" }, index * 0.13);
-    sequence.to(light, { opacity: 0.3, duration: 1.5, ease: "sine.inOut" }, index * 0.13 + 0.65);
+    const start = pattern === "ripple" ? Math.abs(index - 3) * 0.16 : pattern === "sparkle" ? Math.random() * 0.9 : (reverse ? lights.length - 1 - index : index) * 0.14;
+    sequence.to(light, { opacity: 1, scale: 1.15, duration: 0.7, ease: "sine.inOut" }, start);
+    sequence.to(light, { opacity: 0.5, scale: 1, duration: 1.6, ease: "sine.inOut" }, start + 0.7);
   });
-  return sequence;
+  return { isComplete: () => sequence.progress() === 1, pause: () => sequence.pause(), resume: () => sequence.resume() };
 }
 
 function initLightPlayback() {
@@ -51,7 +103,7 @@ function initLightPlayback() {
 
   function syncLightPlayback() {
     sequences.forEach(({ stage, loop }) => {
-      if (loop.repeat() !== -1 && loop.progress() === 1) {
+      if (loop.isComplete()) {
         stage.dataset.lightPlayback = "complete";
         return;
       }
@@ -78,9 +130,11 @@ function initLightPlayback() {
   return () => {
     observer.disconnect();
     document.removeEventListener("visibilitychange", syncLightPlayback);
+    sequences.forEach(({ loop }) => loop.pause());
     stages.forEach(stage => {
       stage.removeEventListener("contentvisibilityautostatechange", handleLightRenderState);
       stage.removeAttribute("data-light-playback");
+      stage.removeAttribute("data-light-pattern");
     });
   };
 }
