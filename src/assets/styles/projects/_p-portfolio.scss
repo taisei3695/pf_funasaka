@@ -130,6 +130,8 @@ body.portfolio-site:not(.home) .p-portfolio-header {
 }
 
 .portfolio-site .p-portfolio-hero {
+  --portfolio-night: #111315;
+
   position: relative;
   display: grid;
   place-items: center;
@@ -214,6 +216,10 @@ body.portfolio-site:not(.home) .p-portfolio-header {
 
     @include mq(md) {
       letter-spacing: 0.16em;
+    }
+
+    &:has(+ .c-light-cue) {
+      margin-block-end: fluid(12px, 16px);
     }
   }
 }

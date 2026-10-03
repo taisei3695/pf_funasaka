@@ -3,6 +3,88 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
+function createLightSequence(stage) {
+  const lights = [...stage.querySelectorAll(".c-light")].filter(light => getComputedStyle(light).display !== "none");
+  const columns = Math.max(...lights.map(light => Number(light.dataset.lightColumn))) + 1;
+  const quiet = stage.classList.contains("c-light-stage--contact");
+  const loop = gsap.timeline({ paused: true, repeat: -1, repeatDelay: 2.4, defaults: { ease: "sine.inOut" } });
+
+  lights.forEach(light => {
+    const row = Number(light.dataset.lightRow);
+    const column = Number(light.dataset.lightColumn);
+    const isBehindTitle = !quiet && row >= 2 && row <= 4 && column >= columns * 0.2 && column <= columns * 0.8;
+    const base = isBehindTitle ? 0.06 : 0.16;
+    const peak = (isBehindTitle ? 0.26 : 0.8) * (quiet ? 0.7 : 1);
+    const sweepStart = column * 0.24 + row * 0.12;
+    const rippleStart = 9 + (Math.abs(column - (columns - 1) / 2) + Math.abs(row - 3)) * 0.18;
+
+    gsap.set(light, { opacity: base });
+    // Fixed light positions echo a strobe wall; only luminance changes, with a long afterglow.
+    loop.to(light, { opacity: peak, duration: 1.35 }, sweepStart).to(light, { opacity: base, duration: 2.25 }, sweepStart + 1.35);
+    loop.to(light, { opacity: peak * 0.8, duration: 1.55 }, rippleStart).to(light, { opacity: base, duration: 2.6 }, rippleStart + 1.55);
+  });
+  return loop;
+}
+
+function createLightCueSequence(stage) {
+  const lights = [...stage.querySelectorAll(".c-light")];
+  const sequence = gsap.timeline({ paused: true, onComplete: () => (stage.dataset.lightPlayback = "complete") });
+  gsap.set(lights, { opacity: 0.18 });
+  lights.forEach((light, index) => {
+    sequence.to(light, { opacity: 0.72, duration: 0.65, ease: "sine.inOut" }, index * 0.13);
+    sequence.to(light, { opacity: 0.3, duration: 1.5, ease: "sine.inOut" }, index * 0.13 + 0.65);
+  });
+  return sequence;
+}
+
+function initLightPlayback() {
+  // Keep the CSS light wall static when viewport observation is unavailable.
+  if (typeof IntersectionObserver !== "function") return () => {};
+  const stages = [...document.querySelectorAll(".js-light-stage, .js-light-cue")];
+  const stageVisible = new Map(stages.map(stage => [stage, false]));
+  const renderSkipped = new Map();
+  const sequences = stages.map(stage => ({ stage, loop: stage.classList.contains("js-light-cue") ? createLightCueSequence(stage) : createLightSequence(stage) }));
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => stageVisible.set(entry.target, entry.isIntersecting));
+    syncLightPlayback();
+  });
+
+  function syncLightPlayback() {
+    sequences.forEach(({ stage, loop }) => {
+      if (loop.repeat() !== -1 && loop.progress() === 1) {
+        stage.dataset.lightPlayback = "complete";
+        return;
+      }
+      const shouldPlay = !document.hidden && stageVisible.get(stage) && !renderSkipped.get(stage);
+      if (shouldPlay) loop.resume();
+      else loop.pause();
+      stage.dataset.lightPlayback = shouldPlay ? "playing" : "paused";
+    });
+  }
+
+  function handleLightRenderState(event) {
+    renderSkipped.set(event.currentTarget, event.skipped);
+    syncLightPlayback();
+  }
+
+  stages.forEach(stage => {
+    stage.dataset.lightPlayback = "paused";
+    stage.addEventListener("contentvisibilityautostatechange", handleLightRenderState);
+    observer.observe(stage);
+  });
+  document.addEventListener("visibilitychange", syncLightPlayback);
+  syncLightPlayback();
+
+  return () => {
+    observer.disconnect();
+    document.removeEventListener("visibilitychange", syncLightPlayback);
+    stages.forEach(stage => {
+      stage.removeEventListener("contentvisibilityautostatechange", handleLightRenderState);
+      stage.removeAttribute("data-light-playback");
+    });
+  };
+}
+
 function initPortfolioMotion() {
   if (!document.body.classList.contains("portfolio-site")) return;
   const media = gsap.matchMedia();
@@ -67,45 +149,7 @@ function initPortfolioMotion() {
         scrollTrigger: { trigger: skills, start: "top 92%", once: true },
       });
 
-    const lightLoops = [];
-    const stageVisible = new Map();
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => stageVisible.set(entry.target, entry.isIntersecting));
-      syncLightPlayback();
-    });
-    function syncLightPlayback() {
-      lightLoops.forEach(({ stage, loop }) => {
-        if (!document.hidden && stageVisible.get(stage)) loop.resume();
-        else loop.pause();
-      });
-    }
-    document.querySelectorAll(".js-light-stage").forEach(stage => {
-      stageVisible.set(stage, false);
-      const quiet = stage.classList.contains("c-light-stage--contact");
-      [...stage.children]
-        .filter(light => getComputedStyle(light).display !== "none")
-        .forEach((light, index) => {
-          const strength = quiet ? 0.45 : 1;
-          const loop = gsap.timeline({ repeat: -1, paused: true, delay: index * 0.45, defaults: { ease: "sine.inOut" } });
-          // Uneven, slow pulses form a repeating phrase, without audio or rapid flashing.
-          [0.2, 0.6, 0.35, 0.8, 0.4, 0.7].forEach((level, beat) => {
-            loop.to(light, {
-              opacity: level * strength * 0.75,
-              scale: 1 + level * (desktop ? 0.09 : 0.035),
-              x: (beat % 2 ? 1 : -1) * ((index % 3) + 1) * (desktop ? 5 : 2),
-              y: (beat % 2 ? -1 : 1) * (desktop ? 6 : 2),
-              duration: 2.6 + ((beat + index) % 3) * 0.45,
-            });
-          });
-          lightLoops.push({ stage, loop });
-        });
-      observer.observe(stage);
-    });
-    document.addEventListener("visibilitychange", syncLightPlayback);
-    return () => {
-      observer.disconnect();
-      document.removeEventListener("visibilitychange", syncLightPlayback);
-    };
+    return initLightPlayback();
   });
 
   document.fonts.ready.then(() => ScrollTrigger.refresh());

@@ -1,6 +1,7 @@
 <section id="works" class="p-portfolio-section p-portfolio-works" aria-labelledby="works-title">
   <div class="l-portfolio-inner">
     <h2 id="works-title" class="p-portfolio-section__title js-fade-up">WORKS</h2>
+    <?php get_template_part("template-parts/portfolio-light-cue"); ?>
     <div class="p-portfolio-works__list">
       <?php foreach (portfolio_list_public_works(3) as $work_post) {
         get_template_part("template-parts/portfolio-work-card", null, ["id" => $work_post->ID]);

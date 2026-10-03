@@ -1,6 +1,7 @@
 <section id="about" class="p-portfolio-section p-portfolio-about" aria-labelledby="about-title">
   <div class="l-portfolio-inner">
     <h2 id="about-title" class="p-portfolio-section__title js-fade-up">ABOUT</h2>
+    <?php get_template_part("template-parts/portfolio-light-cue"); ?>
     <div class="p-portfolio-about__grid">
       <div class="p-portfolio-about__intro js-fade-up"><h3>舩坂 太成</h3><p>Web Coder / WordPress Developer</p></div>
       <div class="p-portfolio-about__image js-fade-up"><img src="<?php echo esc_url(

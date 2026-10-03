@@ -6,7 +6,7 @@
 
 ## ページとデザイン
 
-TOPはHeader、FV、Works、Skills、About、Contact、Footerで構成します。FVはチャコール背景に `TAISEI`、`FUNASAKA`、`PORTFOLIO` の文字と柔らかい光を配置し、約100svhを使います。WorksからAboutまではオフホワイト背景、Contactでは光を弱く再使用します。
+TOPはHeader、FV、Works、Skills、About、Contact、Footerで構成します。FVは暗い背景に `TAISEI`、`FUNASAKA`、`PORTFOLIO` の文字と整列した光点を配置し、約100svhを使います。WorksからAboutまではオフホワイト背景に小さな点灯cue、ContactではFVの光点を弱く再使用します。
 
 公開実績の一覧は `/works/`、詳細は `/works/{slug}/` です。デスクトップでは画像と情報を左右交互に配置し、小さい画面では1カラムへ切り替えます。作品の通し番号は表示しません。作品名・サイト種別・担当範囲・リンクには同じ英字フォントJostを使用し、種類ごとにフォントを変えません。Jostはライセンスを同梱し、ローカル配信します。
 
@@ -18,7 +18,7 @@ TOPは公開実績の新着3件を取得します。一覧と取得ヘルパー�
 
 GSAPとScrollTriggerをViteのJavaScriptエントリへ組み込みました。FVの文字は行単位で順に表示し、スクロールに合わせて文字と光を少し上へ動かします。作品画像はマスクと弱い拡大縮小で表示し、デスクトップでは小さな移動を加えます。Skillsは軽いstagger、AboutはFade Up、リンクと画像は小さなhover変化を使用します。
 
-光は少ないDOM要素にCSSのradial-gradientとblurを使い、GSAPでゆっくり明滅させます。音声再生、Web Audio、動画、Three.jsは使用していません。画面外と非表示タブでは光のループを停止します。画面幅や `prefers-reduced-motion` の変更に合わせて再設定し、動きを減らす設定では内容を表示状態に保ちます。
+光は透明な単一光源のWebPを14列×7行（スマホは7列×7行）に配置し、GSAPで順次点灯と余韻をつくります。音声再生、Web Audio、動画、Three.jsは使用していません。画面外・非表示タブ・描画省略時には光のループを停止します。画面幅や `prefers-reduced-motion` の変更に合わせて再設定し、動きを減らす設定では静止光と内容を表示状態に保ちます。調整方法と素材の記録は [light-motion.md](light-motion.md)、最新の画面確認は [design-qa.md](../design-qa.md) を参照してください。
 
 スタイルには375pxを想定した左右20pxの余白、可変文字サイズ、リンクの44px以上のタップ領域、キーボード用のfocus-visibleを設定しています。実ブラウザでの結果は末尾に記録しています。
 
@@ -130,9 +130,9 @@ WordPressは `http://localhost:8888/`、Viteは `http://localhost:5173/` です�
 
 About画像は生成イメージのまま使用できます。本人の作業環境を伝えたい場合は実際の写真へ差し替えてください。本番ではWordPressのDB・画像の移行、サイトURL、Gmail設定、Basic認証・非公開画像領域を確認します。
 
-## 最終ブラウザ確認
+## 初期実装時のブラウザ確認（面状光の変更前）
 
-CodexのブラウザでWordPressの実画面を確認しました。スクリーンショットは `work/portfolio-qa/` に保存しています。ブラウザの実機エミュレーションではなく、CSS viewportを変更した確認です。
+以下は光点への変更前の記録です。最新の98/49点の表示、cue、停止・再開とブラウザーの結果は [design-qa.md](../design-qa.md) と [light-motion.md](light-motion.md) に記録しています。初期画面のスクリーンショットは `work/portfolio-qa/` に保存しています。ブラウザの実機エミュレーションではなく、CSS viewportを変更した確認です。
 
 | 画面幅 | 確認する内容 | 結果・証跡 |
 |---|---|---|
