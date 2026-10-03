@@ -1,0 +1,16 @@
+@use "sass:math";
+
+// 375pxと1440pxのカンプ幅を基準に、16px = 1remで補間する。
+$fluid-min-width: 375;
+$fluid-max-width: 1440;
+$fluid-root-size: 16;
+
+// 引数はpx付きで指定する: font-size: fluid(16px, 24px);
+@function fluid($min-px, $max-px) {
+  $min: math.div($min-px, 1px);
+  $max: math.div($max-px, 1px);
+  $slope: math.div($max - $min, $fluid-max-width - $fluid-min-width);
+  $base: math.div($min - $slope * $fluid-min-width, $fluid-root-size);
+
+  @return clamp(#{math.div($min, $fluid-root-size)}rem, #{$base}rem + #{$slope * 100}vw, #{math.div($max, $fluid-root-size)}rem);
+}

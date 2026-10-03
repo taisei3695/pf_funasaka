@@ -47,27 +47,27 @@ function portfolio_register_works()
 }
 add_action("init", "portfolio_register_works", 30);
 
-function portfolio_work_visibility($post_id)
+function portfolio_get_work_visibility($post_id)
 {
   $visibility = get_post_meta((int) $post_id, "works_visibility", true);
   return in_array($visibility, ["public", "private"], true) ? $visibility : "unassigned";
 }
 
-function portfolio_work_is_public($post_id)
+function portfolio_is_public_work($post_id)
 {
-  return get_post_type($post_id) === "works" && get_post_status($post_id) === "publish" && portfolio_work_visibility($post_id) === "public";
+  return get_post_type($post_id) === "works" && get_post_status($post_id) === "publish" && portfolio_get_work_visibility($post_id) === "public";
 }
 
-function portfolio_work_can_view($post_id)
+function portfolio_can_view_work($post_id)
 {
-  if (portfolio_work_is_public($post_id)) {
+  if (portfolio_is_public_work($post_id)) {
     return true;
   }
-  return get_post_type($post_id) === "works" && get_post_status($post_id) === "private" && portfolio_work_visibility($post_id) === "private" && function_exists("portfolio_private_is_authenticated") && portfolio_private_is_authenticated();
+  return get_post_type($post_id) === "works" && get_post_status($post_id) === "private" && portfolio_get_work_visibility($post_id) === "private" && function_exists("portfolio_is_private_request_authenticated") && portfolio_is_private_request_authenticated();
 }
 
 /** Public helpers return WP_Post objects, ordered by publication, newest first. */
-function portfolio_public_works($limit = 3)
+function portfolio_list_public_works($limit = 3)
 {
   $query = new WP_Query([
     "post_type" => "works",
@@ -82,10 +82,10 @@ function portfolio_public_works($limit = 3)
   return $query->posts;
 }
 
-function portfolio_work_data($post_id = 0)
+function portfolio_find_work_data($post_id = 0)
 {
   $post_id = $post_id ? (int) $post_id : get_the_ID();
-  if (!portfolio_work_can_view($post_id)) {
+  if (!portfolio_can_view_work($post_id)) {
     return [];
   }
   $technology_labels = [
@@ -126,24 +126,24 @@ function portfolio_work_data($post_id = 0)
     "overview" => (string) get_post_meta($post_id, "works_overview", true),
     "implementation" => (string) get_post_meta($post_id, "works_implementation", true),
     "url" => (string) get_post_meta($post_id, "works_url", true),
-    "demo_access_note" => portfolio_work_visibility($post_id) === "public" ? (string) get_post_meta($post_id, "works_demo_access_note", true) : "",
-    "visibility" => portfolio_work_visibility($post_id),
+    "demo_access_note" => portfolio_get_work_visibility($post_id) === "public" ? (string) get_post_meta($post_id, "works_demo_access_note", true) : "",
+    "visibility" => portfolio_get_work_visibility($post_id),
     "origin" => $origin,
     "graduation" => $origin === "school_graduation",
     "permalink" => get_permalink($post_id),
-    "demo_image" => portfolio_work_visibility($post_id) === "public" && (bool) get_post_meta($post_id, "portfolio_demo_image", true) && !(int) get_post_meta($post_id, "works_gallery", true) && !has_post_thumbnail($post_id),
+    "demo_image" => portfolio_get_work_visibility($post_id) === "public" && (bool) get_post_meta($post_id, "portfolio_demo_image", true) && !(int) get_post_meta($post_id, "works_gallery", true) && !has_post_thumbnail($post_id),
   ];
 }
 
 /** Main-image markup. Confidential works never fall back to a public upload. */
-function portfolio_work_image($post_id = 0, $size = "large", $attr = [])
+function portfolio_build_work_image($post_id = 0, $size = "large", $attr = [])
 {
   $post_id = $post_id ? (int) $post_id : get_the_ID();
-  if (!portfolio_work_can_view($post_id)) {
+  if (!portfolio_can_view_work($post_id)) {
     return "";
   }
-  if (portfolio_work_visibility($post_id) === "private") {
-    return function_exists("portfolio_private_image") ? portfolio_private_image($post_id, $attr) : "";
+  if (portfolio_get_work_visibility($post_id) === "private") {
+    return function_exists("portfolio_build_private_image") ? portfolio_build_private_image($post_id, $attr) : "";
   }
   $attr = wp_parse_args($attr, ["loading" => "lazy", "decoding" => "async", "alt" => get_the_title($post_id)]);
   $image_id = (int) get_post_meta($post_id, "works_gallery", true);
@@ -177,27 +177,27 @@ function portfolio_work_image($post_id = 0, $size = "large", $attr = [])
   return $html . " />";
 }
 
-function portfolio_work_permalink($url, $post)
+function portfolio_apply_work_permalink($url, $post)
 {
-  if ($post->post_type === "works" && portfolio_work_visibility($post->ID) === "private") {
+  if ($post->post_type === "works" && portfolio_get_work_visibility($post->ID) === "private") {
     return home_url("/private-works/" . $post->post_name . "/");
   }
   return $url;
 }
-add_filter("post_type_link", "portfolio_work_permalink", 10, 2);
+add_filter("post_type_link", "portfolio_apply_work_permalink", 10, 2);
 
 /** Keep WP's native private status as an additional barrier to public APIs. */
-function portfolio_work_insert_status($data, $postarr)
+function portfolio_apply_work_insert_status($data, $postarr)
 {
   if (($data["post_type"] ?? "") !== "works" || !in_array($data["post_status"] ?? "", ["publish", "private"], true)) {
     return $data;
   }
   $post_id = (int) ($postarr["ID"] ?? 0);
-  $visibility = isset($_POST["acf"]["field_portfolio_visibility"]) ? sanitize_key(wp_unslash($_POST["acf"]["field_portfolio_visibility"])) : portfolio_work_visibility($post_id);
+  $visibility = isset($_POST["acf"]["field_portfolio_visibility"]) ? sanitize_key(wp_unslash($_POST["acf"]["field_portfolio_visibility"])) : portfolio_get_work_visibility($post_id);
   $data["post_status"] = $visibility === "public" ? "publish" : "private";
   return $data;
 }
-add_filter("wp_insert_post_data", "portfolio_work_insert_status", 10, 2);
+add_filter("wp_insert_post_data", "portfolio_apply_work_insert_status", 10, 2);
 
 function portfolio_sync_work_status($post_id)
 {
@@ -207,7 +207,7 @@ function portfolio_sync_work_status($post_id)
   if ($syncing || !$post || $post->post_type !== "works" || wp_is_post_revision($post_id) || !in_array($post->post_status, ["publish", "private"], true)) {
     return;
   }
-  $target = portfolio_work_visibility($post_id) === "public" ? "publish" : "private";
+  $target = portfolio_get_work_visibility($post_id) === "public" ? "publish" : "private";
   if ($post->post_status !== $target) {
     $syncing = true;
     wp_update_post(["ID" => $post_id, "post_status" => $target]);
@@ -215,12 +215,12 @@ function portfolio_sync_work_status($post_id)
   }
 }
 add_action("acf/save_post", "portfolio_sync_work_status", 20);
-function portfolio_sync_visibility_meta($meta_id, $post_id, $meta_key)
+function portfolio_handle_work_visibility_meta_change($meta_id, $post_id, $meta_key)
 {
   if ($meta_key === "works_visibility") {
     portfolio_sync_work_status($post_id);
   }
 }
-add_action("added_post_meta", "portfolio_sync_visibility_meta", 10, 3);
-add_action("updated_post_meta", "portfolio_sync_visibility_meta", 10, 3);
-add_action("deleted_post_meta", "portfolio_sync_visibility_meta", 10, 3);
+add_action("added_post_meta", "portfolio_handle_work_visibility_meta_change", 10, 3);
+add_action("updated_post_meta", "portfolio_handle_work_visibility_meta_change", 10, 3);
+add_action("deleted_post_meta", "portfolio_handle_work_visibility_meta_change", 10, 3);

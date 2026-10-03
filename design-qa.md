@@ -84,4 +84,22 @@ FV比較は選定画像の887 × 487pxと、実装の1425 × 891pxをそれぞ�
 - [x] 主要な導線、キーボードfocus、consoleを確認。
 - [x] WordPressビルド、対象のlint・PHP構文・ACF JSON・Git差分の検証を実施。
 
+## 追加確認: fluid関数による文字サイズ・余白の調整
+
+2026年10月3日の追加依頼により、375px／1440px、root 16pxを基準とする `fluid($min-px, $max-px)` を共通SCSSへ追加しました。新しい関数は `src/assets/styles/global/_functions.scss`、使用箇所は `projects/_p-portfolio.scss` です。文字サイズと主な余白を連続的に補間し、レイアウトの切り替えは既存のmedia queryを使います。
+
+この追加確認の基準は、直前の確認済みデザインと、利用者が指定したfluid関数です。比較は1440 × 900pxの同じ状態で撮影した `work/portfolio-qa/fluid-comparison-hero.png` と `fluid-comparison-works.png` で実施しました。左が変更前、右が変更後です。双方1425 × 891pxの撮影を幅720pxへ比例縮小して並べています。FVの先頭位置とWorksアンカー位置を一致させた撮影を使用しました。
+
+375pxと1440pxの基準の見え方を保ちながら、768pxの文字と余白が連続して変化することを確認しました。書体・字間・色・画像・文言・グリッド・アニメーションは維持しています。上限の変更と、本文・補足・リンクの一部のサイズ調整は追加依頼に基づく変更です。P0・P1・P2の新しい問題はありません。
+
+| ブラウザの幅 | CSS計算幅 | FVの名前 | セクション見出し | Worksの作品名 | About本文 |
+|---|---:|---:|---:|---:|---:|
+| 375px | 360px | 40px | 32px | 28px | 14px |
+| 768px | 753px | 70.52px | 46.20px | 35.10px | 14.35px |
+| 1440px | 1425px | 124.79px | 71.44px | 47.72px | 14.99px |
+
+スクロールバーがあるため、実際のvw計算幅はブラウザの外側の幅より15px小さい状態です。rootは16px。実DOMの計測値を `work/portfolio-qa/fluid-measurements.json` に保存しました。すべての幅でscrollWidthとclientWidthが一致し、ナビの高さは44px以上でした。768pxではSkillsの9項目が1行、1440pxではWorksの3作品名が1行です。
+
+追加証跡は `fluid-hero-375.jpg`、`fluid-hero-1440.jpg`、`fluid-works-375.jpg`、`fluid-works-1440.jpg`、`fluid-skills-768.jpg`、`fluid-about-768.jpg`。Stylelint、Prettier、WordPress用ビルド、Git差分検証を通過し、ブラウザconsole error / warningは0件でした。既存の実機・動作軽減設定・本番環境に関する未確認範囲は引き続き同じです。
+
 final result: passed

@@ -1,7 +1,7 @@
 import { resolve } from "path";
 import { fileURLToPath } from "node:url";
 import { readFileSync, writeFileSync, existsSync } from "fs";
-import { log, success, error } from "./utils/logger.js";
+import { log, logSuccess, logError } from "./utils/logger.js";
 import { projectRoot } from "./utils/paths.js";
 import { isWordPressEnvRunning, runWpCli } from "./utils/wp-env.js";
 
@@ -79,7 +79,7 @@ function filterInsertRecords(block, shouldDrop) {
   const body = block.slice(head.length).replace(/;\s*$/, "");
 
   // トップレベルの "),(" 区切りでレコードを分割する（文字列内のカンマは考慮不要な範囲で単純分割）
-  const records = splitTopLevelRecords(body);
+  const records = parseInsertRecords(body);
   const kept = records.filter(record => !shouldDrop(record));
 
   if (kept.length === 0) {
@@ -94,7 +94,7 @@ function filterInsertRecords(block, shouldDrop) {
  * @param {string} body - VALUES 以降・末尾セミコロンを除いた本体
  * @returns {string[]} 各レコード（前後空白付きの `(...)`）
  */
-function splitTopLevelRecords(body) {
+function parseInsertRecords(body) {
   const records = [];
   let depth = 0;
   let inString = false;
@@ -170,7 +170,7 @@ function main() {
   const sanitized = args.includes("--sanitized");
 
   if (!isWordPressEnvRunning()) {
-    error(MODULE_NAME, "WordPress環境が起動していません。先に yarn wp-start を実行してください。");
+    logError(MODULE_NAME, "WordPress環境が起動していません。先に yarn wp-start を実行してください。");
     process.exit(1);
   }
 
@@ -179,7 +179,7 @@ function main() {
     runWpCli(["db", "export", EXPORT_CONTAINER_PATH], { stdio: "inherit" });
 
     if (!existsSync(UPLOADS_HOST_PATH)) {
-      error(MODULE_NAME, `エクスポートファイルが見つかりません: ${UPLOADS_HOST_PATH}`);
+      logError(MODULE_NAME, `エクスポートファイルが見つかりません: ${UPLOADS_HOST_PATH}`);
       process.exit(1);
     }
 
@@ -188,16 +188,16 @@ function main() {
       const original = readFileSync(UPLOADS_HOST_PATH, "utf8");
       const cleaned = sanitizeSql(original);
       writeFileSync(UPLOADS_HOST_PATH, cleaned);
-      success(MODULE_NAME, "無害化が完了しました。");
+      logSuccess(MODULE_NAME, "無害化が完了しました。");
       log(MODULE_NAME, "配布・共有する場合は、顧客の個人情報を含まないことを確認してからコミットしてください。");
     } else {
-      success(MODULE_NAME, "エクスポートが完了しました。");
+      logSuccess(MODULE_NAME, "エクスポートが完了しました。");
       log(MODULE_NAME, "配布用に無害化する場合は yarn wp-contents:export --sanitized を使ってください。");
     }
 
     log(MODULE_NAME, `出力先（ホスト）: ${UPLOADS_HOST_PATH}`);
   } catch (err) {
-    error(MODULE_NAME, "エクスポート処理に失敗しました。", err);
+    logError(MODULE_NAME, "エクスポート処理に失敗しました。", err);
     process.exit(1);
   }
 }
@@ -211,4 +211,4 @@ if (scriptFile && currentFile === scriptFile) {
 }
 
 // テスト・再利用のため sanitize ロジックを export する（副作用なし）
-export { sanitizeSql, transformInsertBlocks, filterInsertRecords, splitTopLevelRecords };
+export { sanitizeSql, transformInsertBlocks, filterInsertRecords, parseInsertRecords };

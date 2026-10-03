@@ -4,7 +4,7 @@ import { watch } from "chokidar";
 import { resolve, relative, basename, dirname } from "path";
 import { globSync } from "glob";
 import fs from "fs";
-import { THEME_NAME, paths, projectRoot, toPosixPath } from "./utils/paths.js";
+import { THEME_NAME, paths, projectRoot, convertToPosixPath } from "./utils/paths.js";
 
 /**
  * 画像の変換・最適化・ビルド統合 Vite プラグイン
@@ -24,7 +24,7 @@ import { THEME_NAME, paths, projectRoot, toPosixPath } from "./utils/paths.js";
  * @param {string} options.themeDir - WordPressテーマディレクトリ
  * @returns {Object} Vite プラグインオブジェクト
  */
-export default function convertAndOptimizeImages(options = {}) {
+export default function createViteImageOptimizationPlugin(options = {}) {
   const {
     format: imageFormat = "webp",
     copyOriginal = false,
@@ -70,7 +70,7 @@ export default function convertAndOptimizeImages(options = {}) {
   };
 
   // 画像を変換して src と WordPress ディレクトリの両方に出力する関数
-  const convertAndCopyImages = async sourcePath => {
+  const convertAndCopyImage = async sourcePath => {
     if (!/\.(png|jpe?g)$/.test(sourcePath)) {
       return;
     }
@@ -133,8 +133,8 @@ export default function convertAndOptimizeImages(options = {}) {
   };
 
   // 既存画像の一括変換・コピーを行う関数（開発・ビルドの両方から呼ばれる。ファイル監視は行わない）
-  // 戻り値: { srcImagesDir, wpImagesDir, copyToWordPress, conversionPromise } / ソースディレクトリが無ければ null
-  const convertExistingImages = () => {
+  // 戻り値: { srcImagesDir, wpImagesDir, copyImageToWordPress, conversionPromise } / ソースディレクトリが無ければ null
+  const convertAndCopyExistingImages = () => {
     // rootは既にsrcディレクトリなので、そのままassets/imagesを追加
     const srcImagesDir = resolve(root, "assets/images");
     const wpImagesDir = resolve(themeDir, "assets/images");
@@ -155,14 +155,14 @@ export default function convertAndOptimizeImages(options = {}) {
     }
 
     // 既存のPNG/JPEG画像を変換
-    const existingImages = globSync(`${toPosixPath(srcImagesDir)}/**/*.{png,jpg,jpeg}`);
+    const existingImages = globSync(`${convertToPosixPath(srcImagesDir)}/**/*.{png,jpg,jpeg}`);
     console.log(`[image-plugin] Found ${existingImages.length} existing images to convert`);
 
     // Promise.allで並列処理（エラー処理は呼び出し側に委ねる: devはログのみ、ビルドは失敗させる）
-    const conversionPromise = Promise.all(existingImages.map(filePath => convertAndCopyImages(filePath)));
+    const conversionPromise = Promise.all(existingImages.map(filePath => convertAndCopyImage(filePath)));
 
     // 変換対象外の画像（svg, gif, 単体webp）をWordPressディレクトリにコピー
-    const copyToWordPress = filePath => {
+    const copyImageToWordPress = filePath => {
       if (/\.(png|jpe?g)$/.test(filePath)) return;
       // 同名の png/jpg が存在する webp は変換で生成されるためコピー対象外
       // （png/jpg 未変換の単体 webp ソースのみコピーする）
@@ -180,38 +180,38 @@ export default function convertAndOptimizeImages(options = {}) {
     };
 
     // 既存のSVG/GIF/単体WebP画像をコピー
-    const existingCopyTargets = globSync(`${toPosixPath(srcImagesDir)}/**/*.{svg,gif,webp}`);
+    const existingCopyTargets = globSync(`${convertToPosixPath(srcImagesDir)}/**/*.{svg,gif,webp}`);
     console.log(`[image-plugin] Found ${existingCopyTargets.length} existing SVG/GIF/WebP images to copy`);
-    existingCopyTargets.forEach(copyToWordPress);
+    existingCopyTargets.forEach(copyImageToWordPress);
 
-    return { srcImagesDir, wpImagesDir, copyToWordPress, conversionPromise };
+    return { srcImagesDir, wpImagesDir, copyImageToWordPress, conversionPromise };
   };
 
   // ファイル監視を開始する関数（開発環境のみ呼ばれる）
-  const startImageWatchers = ({ srcImagesDir, copyToWordPress }) => {
+  const startImageWatchers = ({ srcImagesDir, copyImageToWordPress }) => {
     // PNG/JPEG変換の監視
-    const convertWatcher = watch(`${toPosixPath(srcImagesDir)}/**/*.{png,jpg,jpeg}`, {
+    const convertWatcher = watch(`${convertToPosixPath(srcImagesDir)}/**/*.{png,jpg,jpeg}`, {
       persistent: true,
       ignoreInitial: true,
     });
 
     convertWatcher.on("add", async filePath => {
-      await convertAndCopyImages(filePath);
+      await convertAndCopyImage(filePath);
     });
 
     convertWatcher.on("change", async filePath => {
-      await convertAndCopyImages(filePath);
+      await convertAndCopyImage(filePath);
     });
 
-    // SVG/GIF/単体WebPの監視（同名 png/jpg を持つ webp は copyToWordPress 側でスキップ）
-    watch(`${toPosixPath(srcImagesDir)}/**/*.{svg,gif,webp}`, { persistent: true, ignoreInitial: true })
-      .on("add", copyToWordPress)
-      .on("change", copyToWordPress);
+    // SVG/GIF/単体WebPの監視（同名 png/jpg を持つ webp は copyImageToWordPress 側でスキップ）
+    watch(`${convertToPosixPath(srcImagesDir)}/**/*.{svg,gif,webp}`, { persistent: true, ignoreInitial: true })
+      .on("add", copyImageToWordPress)
+      .on("change", copyImageToWordPress);
   };
 
   // 開発環境での画像処理を初期化する関数（一括変換 + ファイル監視）
   const initDevImageProcessing = () => {
-    const result = convertExistingImages();
+    const result = convertAndCopyExistingImages();
     if (!result) return;
     // dev では変換エラーで開発サーバーを止めない（ログのみ）
     result.conversionPromise.catch(err => {
@@ -229,7 +229,7 @@ export default function convertAndOptimizeImages(options = {}) {
       } else {
         // ビルド時も初期一括変換を実行する（監視はしない）。
         // 変換完了を待たずにビルドが進むと画像が欠けるため、完了を待機する。
-        const result = convertExistingImages();
+        const result = convertAndCopyExistingImages();
         if (result && result.conversionPromise) {
           await result.conversionPromise;
         }
@@ -245,7 +245,7 @@ export default function convertAndOptimizeImages(options = {}) {
       if (isDev && /\.(png|jpe?g)$/.test(id)) {
         const absolutePath = path.isAbsolute(id) ? id : resolve(projectRoot, id);
         if (fs.existsSync(absolutePath)) {
-          await convertAndCopyImages(absolutePath);
+          await convertAndCopyImage(absolutePath);
         }
         return null;
       }

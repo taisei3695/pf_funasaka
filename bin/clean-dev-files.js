@@ -10,7 +10,7 @@
 import { existsSync, rmSync, unlinkSync, statSync, readdirSync, readFileSync } from "fs";
 import { join } from "path";
 import { paths } from "./utils/paths.js";
-import { log, success, error } from "./utils/logger.js";
+import { log, logSuccess, logError } from "./utils/logger.js";
 
 const themeDir = paths.themeDir;
 
@@ -30,15 +30,15 @@ filesToRemove.forEach(path => {
         // ディレクトリの場合は再帰的に削除
         rmSync(path, { recursive: true, force: true });
         removedCount++;
-        success("clean-dev-files", `削除: ${path}/ (ディレクトリ)`);
+        logSuccess("clean-dev-files", `削除: ${path}/ (ディレクトリ)`);
       } else {
         // ファイルの場合は削除
         unlinkSync(path);
         removedCount++;
-        success("clean-dev-files", `削除: ${path}`);
+        logSuccess("clean-dev-files", `削除: ${path}`);
       }
     } catch (err) {
-      error("clean-dev-files", `削除失敗: ${path} - ${err.message}`);
+      logError("clean-dev-files", `削除失敗: ${path} - ${err.message}`);
     }
   }
 });
@@ -64,9 +64,9 @@ if (existsSync(manifestPath)) {
         try {
           unlinkSync(join(absDir, file));
           removedCount++;
-          success("clean-dev-files", `旧ビルド成果物を削除: ${relPath}`);
+          logSuccess("clean-dev-files", `旧ビルド成果物を削除: ${relPath}`);
         } catch (err) {
-          error("clean-dev-files", `削除失敗: ${relPath} - ${err.message}`);
+          logError("clean-dev-files", `削除失敗: ${relPath} - ${err.message}`);
         }
       });
     });
@@ -76,7 +76,7 @@ if (existsSync(manifestPath)) {
 }
 
 if (removedCount > 0) {
-  success("clean-dev-files", `完了: ${removedCount}個のファイル/ディレクトリを削除しました`);
+  logSuccess("clean-dev-files", `完了: ${removedCount}個のファイル/ディレクトリを削除しました`);
 } else {
   log("clean-dev-files", "削除対象のファイルは見つかりませんでした");
 }

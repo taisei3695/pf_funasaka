@@ -3,12 +3,12 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import { globSync } from "glob";
 import autoprefixer from "autoprefixer";
-import updateStyleCss from "./bin/update-wp-config.js";
+import createViteStyleCssPlugin from "./bin/update-wp-config.js";
 import { THEME_NAME } from "./bin/utils/paths.js";
 import sassGlobImports from "vite-plugin-sass-glob-import";
 import liveReload from "vite-plugin-live-reload";
 import devManifest from "vite-plugin-dev-manifest";
-import convertAndOptimizeImages from "./bin/vite-plugin-convert-images.js";
+import createViteImageOptimizationPlugin from "./bin/vite-plugin-convert-images.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "src");
@@ -74,9 +74,9 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     devManifest(),
-    updateStyleCss(),
+    createViteStyleCssPlugin(),
     sassGlobImports(),
-    convertAndOptimizeImages({
+    createViteImageOptimizationPlugin({
       format: imageConfig.format,
       copyOriginal: imageConfig.copyOriginal,
       optimize: imageConfig.optimize,

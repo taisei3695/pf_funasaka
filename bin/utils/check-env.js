@@ -67,7 +67,7 @@ export function getYarnStatus() {
 /**
  * Node.js のバージョンを検証する
  */
-export function checkNode() {
+export function assertNodeVersion() {
   const status = getNodeStatus();
 
   if (!status.ok) {
@@ -79,7 +79,7 @@ export function checkNode() {
 /**
  * Yarn の実行バージョンを検証する
  */
-export function checkYarn() {
+export function assertYarnVersion() {
   const status = getYarnStatus();
 
   if (!status.ok) {

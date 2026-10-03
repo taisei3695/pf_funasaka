@@ -37,14 +37,14 @@ export function log(module, message, level = "log") {
 /**
  * 成功メッセージを出力
  */
-export function success(module, message) {
+export function logSuccess(module, message) {
   log(module, `✓ ${message}`);
 }
 
 /**
  * エラーメッセージを出力
  */
-export function error(module, message, err = null) {
+export function logError(module, message, err = null) {
   log(module, `✗ ${message}`, "error");
   if (err) {
     console.error(err);

@@ -235,7 +235,7 @@ Vite + FLOCSS + WordPress を使用したモダンなWordPressテーマ開発環
 
 - **HTML**: `<img src="/assets/images/logo.svg" alt="" width="200" height="200" />`
 - **JS**: `import src from "/assets/images/logo.svg";` で読み込み
-- **WordPress(PHP)**: `img_path('/logo.svg')` または `get_template_directory_uri() . '/assets/images/logo.svg'`（テーマの `functions-lib/func-url.php` で `img_path` を定義）
+- **WordPress(PHP)**: `print_image_url('/logo.svg')` または `get_template_directory_uri() . '/assets/images/logo.svg'`（テーマの `functions-lib/func-url.php` で `print_image_url` を定義）
 - **SCSS/CSS（背景画像）**: `url()` の相対パスは **その記述がある SCSS ファイル自身の位置を基準** に解決される（Sass modern API）。`src/assets/images/` を参照するには階層に応じて `../` を重ねる。
   - `src/assets/styles/style.scss` → `url("../images/画像ファイル名.webp")`
   - `src/assets/styles/projects/_p-xxx.scss` → `url("../../images/画像ファイル名.webp")`
@@ -504,7 +504,7 @@ unable to get image 'mariadb:lts': Cannot connect to the Docker daemon at unix:/
 **解決方法**:
 
 1. 画像の配置場所を確認: `src/assets/images/`
-2. WordPress開発時は、PHPから画像を読み込む場合は`img_path()`関数を使用
+2. WordPress開発時は、PHPから画像URLを出力する場合は`print_image_url()`関数を使用
 3. ビルド後に画像が出力されているか確認（`wordpress/themes/{THEME_NAME}/assets/images/`）
 
 ### プラグインがインストールされない

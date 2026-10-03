@@ -81,6 +81,13 @@
   transition:
     border-color 0.3s ease,
     box-shadow 0.3s ease;
+
+  @media (any-hover: hover) {
+    &:hover:not(:focus) {
+      border-color: var(--_form-color-accent);
+      opacity: 0.7;
+    }
+  }
 }
 
 .p-form__input::placeholder,
@@ -95,13 +102,6 @@
   border-color: var(--_form-color-accent);
   box-shadow: 0 0 0 3px oklch(from var(--_form-color-accent) l c h / 10%);
   outline: none;
-}
-
-.p-form__input:hover:not(:focus),
-.p-form__select:hover:not(:focus),
-.p-form__textarea:hover:not(:focus) {
-  border-color: var(--_form-color-accent);
-  opacity: 0.7;
 }
 
 .p-form__input.is-error,
@@ -177,6 +177,13 @@
   cursor: pointer;
   appearance: none;
   transition: border-color 0.2s ease;
+
+  @media (any-hover: hover) {
+    &:hover:not(:checked) {
+      border-color: var(--_form-color-accent);
+      opacity: 0.5;
+    }
+  }
 }
 
 .p-form__radio input[type="radio"]:checked {
@@ -194,11 +201,6 @@
   border-radius: 50%;
   background-color: var(--_form-color-bg);
   translate: -50% -50%;
-}
-
-.p-form__radio input[type="radio"]:hover:not(:checked) {
-  border-color: var(--_form-color-accent);
-  opacity: 0.5;
 }
 
 .p-form__radio input[type="radio"]:focus {
@@ -229,6 +231,13 @@
   cursor: pointer;
   appearance: none;
   transition: border-color 0.2s ease;
+
+  @media (any-hover: hover) {
+    &:hover:not(:checked) {
+      border-color: var(--_form-color-accent);
+      opacity: 0.5;
+    }
+  }
 }
 
 .p-form__checkbox input[type="checkbox"]:checked {
@@ -247,11 +256,6 @@
   border-top: none;
   border-left: none;
   rotate: 45deg;
-}
-
-.p-form__checkbox input[type="checkbox"]:hover:not(:checked) {
-  border-color: var(--_form-color-accent);
-  opacity: 0.5;
 }
 
 .p-form__checkbox input[type="checkbox"]:focus {

@@ -20,14 +20,14 @@ remove_action("wp_head", "wp_generator");
  * WordPressの is_author() を使用してより安全に判定
  * @see　https://mucca-design.com/auther-archive-ineffective/
  */
-function disable_author_archive()
+function redirect_author_archive()
 {
   if (!is_admin() && is_author()) {
     wp_safe_redirect(home_url("/"), 301);
     exit();
   }
 }
-add_action("template_redirect", "disable_author_archive");
+add_action("template_redirect", "redirect_author_archive");
 
 /**
  * XML-RPCを無効化（総当たり攻撃・DDoS等の攻撃対象を削減）
@@ -39,7 +39,7 @@ add_filter("xmlrpc_methods", "__return_empty_array");
 /**
  * REST APIのユーザー列挙対策：未ログイン時は /wp/v2/users 系ルートを除去（CF7等の他REST APIは維持）
  */
-function restrict_rest_user_endpoints($endpoints)
+function remove_rest_user_endpoints($endpoints)
 {
   if (is_user_logged_in()) {
     return $endpoints;
@@ -53,7 +53,7 @@ function restrict_rest_user_endpoints($endpoints)
 
   return $endpoints;
 }
-add_filter("rest_endpoints", "restrict_rest_user_endpoints");
+add_filter("rest_endpoints", "remove_rest_user_endpoints");
 
 /**
  * RSDリンク（XML-RPC検出用）の出力を削除

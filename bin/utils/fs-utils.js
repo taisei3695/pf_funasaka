@@ -23,7 +23,7 @@ export function ensureDir(dirPath) {
  * @param {string} filePath - ファイルパス
  * @returns {boolean}
  */
-export function exists(filePath) {
+export function isPathPresent(filePath) {
   return fs.existsSync(filePath);
 }
 

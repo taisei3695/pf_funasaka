@@ -4,8 +4,8 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import { getNodeStatus, getYarnStatus } from "./utils/check-env.js";
 import { log } from "./utils/logger.js";
-import { projectRoot, THEME_NAME, validateThemeSlug } from "./utils/paths.js";
-import { resolveThemeConfig } from "./utils/project-config.js";
+import { projectRoot, THEME_NAME, assertValidThemeSlug } from "./utils/paths.js";
+import { buildThemeConfig } from "./utils/project-config.js";
 import { isWordPressEnvRunning } from "./utils/wp-env.js";
 import { getPluginSyncDiff } from "./sync-wp-plugins.js";
 
@@ -22,14 +22,14 @@ function create_result(name, status, message, hint = "") {
   };
 }
 
-function write_json(data) {
+function print_json(data) {
   process.stdout.write(JSON.stringify(data));
 }
 
-function check_theme_slug() {
+function validate_theme_slug() {
   try {
-    const theme_config = resolveThemeConfig();
-    validateThemeSlug(theme_config.themeSlug);
+    const theme_config = buildThemeConfig();
+    assertValidThemeSlug(theme_config.themeSlug);
 
     return create_result("theme_slug", "ok", `themeSlug は有効です: ${theme_config.themeSlug}`);
   } catch (err) {
@@ -37,7 +37,7 @@ function check_theme_slug() {
   }
 }
 
-function check_node() {
+function validate_node_version() {
   const node_status = getNodeStatus();
 
   if (node_status.ok) {
@@ -47,7 +47,7 @@ function check_node() {
   return create_result("node", "error", `Node.js v${node_status.current}`, `Node.js v${node_status.required} 以上に切り替えてください`);
 }
 
-function check_yarn() {
+function validate_yarn_version() {
   const yarn_status = getYarnStatus();
 
   if (yarn_status.ok) {
@@ -57,7 +57,7 @@ function check_yarn() {
   return create_result("yarn", "error", yarn_status.detail, "corepack enable を実行してから yarn をやり直してください");
 }
 
-function check_docker() {
+function validate_docker_state() {
   const docker_result = spawnSync("docker", ["info"], {
     stdio: "ignore",
   });
@@ -69,7 +69,7 @@ function check_docker() {
   return create_result("docker", "error", "Docker が起動していません", "Docker Desktop を起動してから再実行してください");
 }
 
-function check_docker_compose() {
+function validate_docker_compose() {
   const compose_result = spawnSync("docker", ["compose", "version"], {
     stdio: "ignore",
   });
@@ -81,7 +81,7 @@ function check_docker_compose() {
   return create_result("docker_compose", "warn", "Docker Compose V2 を検出できません", "Docker Desktop を最新版に更新してください");
 }
 
-function check_port(port) {
+function validate_port_availability(port) {
   const lsof_result = spawnSync("lsof", ["-nP", `-iTCP:${port}`, "-sTCP:LISTEN"], {
     encoding: "utf8",
     stdio: "pipe",
@@ -99,7 +99,7 @@ function check_port(port) {
   return create_result(`port_${port}`, "ok", `port ${port}: 空いています`);
 }
 
-function find_style_theme_dirs() {
+function list_style_theme_dirs() {
   const themes_dir = resolve(projectRoot, "wordpress/themes");
 
   if (!existsSync(themes_dir)) {
@@ -114,7 +114,7 @@ function find_style_theme_dirs() {
   });
 }
 
-function check_theme_dir_match() {
+function validate_theme_dir_match() {
   const wp_env_path = resolve(projectRoot, ".wp-env.json");
   const target_style_path = resolve(projectRoot, "wordpress/themes", THEME_NAME, "style.css");
   let mapping_ok = false;
@@ -134,7 +134,7 @@ function check_theme_dir_match() {
     return create_result("theme_dir_match", "warn", ".wp-env.json のテーマ mappings が想定と異なります", "wp-content/themes を ./wordpress/themes に合わせてください");
   }
 
-  const style_theme_dirs = find_style_theme_dirs();
+  const style_theme_dirs = list_style_theme_dirs();
   if (!existsSync(target_style_path)) {
     const found = style_theme_dirs.length > 0 ? style_theme_dirs.join(", ") : "なし";
     return create_result("theme_dir_match", "warn", `テーマディレクトリが themeSlug と一致していません（検出: ${found} / 期待: ${THEME_NAME}）`, "yarn update:wp-config を実行してください");
@@ -148,7 +148,7 @@ function check_theme_dir_match() {
   return create_result("theme_dir_match", "ok", `テーマディレクトリは一致しています: ${THEME_NAME}`);
 }
 
-async function check_plugin_sync() {
+async function validate_plugin_sync() {
   if (!isWordPressEnvRunning()) {
     return create_result("plugin_sync", "warn", "skip: WordPress 環境が未起動のためプラグイン同期差分を確認していません", "必要な場合のみ yarn wp-start 後に yarn doctor を再実行してください");
   }
@@ -167,8 +167,18 @@ async function check_plugin_sync() {
   }
 }
 
-async function collect_results() {
-  return [check_theme_slug(), check_node(), check_yarn(), check_docker(), check_docker_compose(), check_port("8888"), check_port("5173"), check_theme_dir_match(), await check_plugin_sync()];
+async function run_diagnostics() {
+  return [
+    validate_theme_slug(),
+    validate_node_version(),
+    validate_yarn_version(),
+    validate_docker_state(),
+    validate_docker_compose(),
+    validate_port_availability("8888"),
+    validate_port_availability("5173"),
+    validate_theme_dir_match(),
+    await validate_plugin_sync(),
+  ];
 }
 
 function summarize(results) {
@@ -198,10 +208,10 @@ function print_results(results) {
 }
 
 async function main() {
-  const results = await collect_results();
+  const results = await run_diagnostics();
 
   if (is_json) {
-    write_json({ summary: summarize(results), checks: results });
+    print_json({ summary: summarize(results), checks: results });
   } else {
     print_results(results);
   }
@@ -214,7 +224,7 @@ async function main() {
 main().catch(err => {
   const results = [create_result("doctor", "error", "doctor の実行に失敗しました", err.message)];
   if (is_json) {
-    write_json({ summary: summarize(results), checks: results });
+    print_json({ summary: summarize(results), checks: results });
   } else {
     log(MODULE, `❌ doctor の実行に失敗しました`, "error");
     log(MODULE, `  hint: ${err.message}`, "error");

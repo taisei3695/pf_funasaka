@@ -74,9 +74,11 @@
   background-color: transparent;
   cursor: default;
 
-  &:hover {
-    border-color: transparent;
-    background-color: transparent;
+  @media (any-hover: hover) {
+    &:hover {
+      border-color: transparent;
+      background-color: transparent;
+    }
   }
 }
 

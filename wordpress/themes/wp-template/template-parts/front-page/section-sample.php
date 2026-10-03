@@ -14,14 +14,14 @@
       ]); ?>
     </div>
     <div class="p-sample__button-wrap">
-      <a class="c-button" data-color="black" href="<?php page_path("contact"); ?>">問い合わせへ</a>
+      <a class="c-button" data-color="black" href="<?php print_page_url("contact"); ?>">問い合わせへ</a>
     </div>
     <div class="p-sample__button-wrap">
-      <a class="c-button" href="<?php page_path("news"); ?>">ニュース一覧へ</a>
+      <a class="c-button" href="<?php print_page_url("news"); ?>">ニュース一覧へ</a>
     </div>
 
     <div class="p-sample__button-wrap">
-      <a class="c-button" href="<?php page_path("works"); ?>">制作実績一覧へ</a>
+      <a class="c-button" href="<?php print_page_url("works"); ?>">制作実績一覧へ</a>
     </div>
 
     <hr class="p-sample__divider" />
@@ -33,7 +33,7 @@
 
     <p>通常画像の読み込み(imgの下部をマスクでフェードかけてます)</p>
     <div class="p-sample__image">
-      <img src="<?php assets_path("/images/image_sample.webp"); ?>" width="512" height="512" alt="猫の画像" />
+      <img src="<?php print_assets_url("/images/image_sample.webp"); ?>" width="512" height="512" alt="猫の画像" />
     </div>
   </div>
 </section>

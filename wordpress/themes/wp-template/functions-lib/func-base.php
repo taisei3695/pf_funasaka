@@ -12,7 +12,7 @@ if (!defined("ABSPATH")) {
  * https://haniwaman.com/functions/
  */
 // WordPressのテーマに必要な基本機能をサポートするための設定
-function my_setup()
+function my_apply_theme_setup()
 {
   add_theme_support("post-thumbnails"); /* アイキャッチ */
   add_theme_support("automatic-feed-links"); /* RSSフィード */
@@ -25,7 +25,7 @@ function my_setup()
   // 環境変数（WP_DEBUG）とmanifestファイルを活用したエディタスタイル読み込み
   enqueue_editor_styles();
 }
-add_action("after_setup_theme", "my_setup");
+add_action("after_setup_theme", "my_apply_theme_setup");
 
 /**
  * エディタスタイルを環境に応じて読み込み
@@ -67,7 +67,7 @@ function enqueue_editor_styles()
  */
 function enqueue_editor_style_dev()
 {
-  $dev_manifest = get_vite_manifest();
+  $dev_manifest = read_vite_manifest();
   if ($dev_manifest === false || !isset($dev_manifest["url"])) {
     return;
   }
@@ -83,7 +83,7 @@ function enqueue_editor_style_dev()
  */
 function enqueue_editor_style_from_manifest()
 {
-  $build_manifest = get_build_manifest();
+  $build_manifest = read_build_manifest();
   if ($build_manifest === false) {
     return;
   }
@@ -103,7 +103,7 @@ function enqueue_editor_style_fallback()
 {
   $style_path = get_template_directory_uri() . "/assets/styles/style.css";
   $style_file = get_template_directory() . "/assets/styles/style.css";
-  $version = get_file_version($style_file);
+  $version = find_file_version($style_file);
   // add_editor_style()はバージョンパラメータをサポートしていないため、URLに直接追加
   if ($version !== null) {
     add_editor_style($style_path . "?ver=" . $version);
@@ -113,7 +113,7 @@ function enqueue_editor_style_fallback()
 }
 
 // カスタムページにbodyクラスを追加（汎用化）
-function add_custom_page_body_classes($classes)
+function apply_custom_page_body_classes($classes)
 {
   // フィルターで設定可能なページとクラスのマッピング
   $page_classes = apply_filters("custom_page_body_classes", [
@@ -129,12 +129,12 @@ function add_custom_page_body_classes($classes)
 
   return $classes;
 }
-add_filter("body_class", "add_custom_page_body_classes");
+add_filter("body_class", "apply_custom_page_body_classes");
 
 /*
  * 出力を抑制
  */
-function disable_output()
+function remove_emoji_and_content_filters()
 {
   // 絵文字を削除することで、レスポンスを上げる
   // https://wp-doctor.jp/blog/2022/08/17/%E3%83%AF%E3%83%BC%E3%83%89%E3%83%97%E3%83%AC%E3%82%B9%E3%81%AE%E9%AB%98%E9%80%9F%E5%8C%96%E3%81%AE%E3%81%9F%E3%82%81%E3%81%AB%E3%80%81%E4%B8%8D%E8%A6%81%E3%81%AA%E7%B5%B5%E6%96%87%E5%AD%97%E3%81%AE/
@@ -151,12 +151,12 @@ function disable_output()
   remove_filter("the_content", "wpautop");
 }
 
-add_action("init", "disable_output");
+add_action("init", "remove_emoji_and_content_filters");
 
 // Contact Form 7で自動挿入されるPタグ、brタグを削除
 // https://junpei-sugiyama.com/contact-form7-autop/
-add_filter("wpcf7_autop_or_not", "wpcf7_autop_return_false");
-function wpcf7_autop_return_false()
+add_filter("wpcf7_autop_or_not", "wpcf7_should_autop");
+function wpcf7_should_autop()
 {
   return false;
 }

@@ -1,7 +1,7 @@
 import fs from "fs";
 import { resolve } from "path";
-import { exists, readJson, ensureDir, writeFile } from "./utils/fs-utils.js";
-import { log, success, error } from "./utils/logger.js";
+import { isPathPresent, readJson, ensureDir, writeFile } from "./utils/fs-utils.js";
+import { log, logSuccess, logError } from "./utils/logger.js";
 import { projectRoot, THEME_NAME } from "./utils/paths.js";
 import { isWordPressEnvRunning, ensureCliContainerRunning, runWpCli } from "./utils/wp-env.js";
 
@@ -58,7 +58,7 @@ if (!is_array($data)) {
 /**
  * カテゴリ指定（ID・名前・スラッグ混在可）をカテゴリIDの配列に解決する
  */
-function resolve_category_ids($categories) {
+function list_category_ids($categories) {
   if (empty($categories)) {
     return array();
   }
@@ -267,7 +267,7 @@ if ($seed_posts_if_empty && $has_existing_posts) {
       WP_CLI::log("  ✗ 作成エラー: {$post_data['title']} - " . $post_id->get_error_message());
       continue;
     }
-    $category_ids = resolve_category_ids(isset($post_data['categories']) ? $post_data['categories'] : array());
+    $category_ids = list_category_ids(isset($post_data['categories']) ? $post_data['categories'] : array());
     if (!empty($category_ids)) {
       wp_set_post_categories($post_id, $category_ids);
     }
@@ -285,9 +285,9 @@ if ($seed_posts_if_empty && $has_existing_posts) {
 WP_CLI::success('WordPress init options applied.');
 `;
 
-function loadConfig() {
+function loadWordPressOptionsConfig() {
   const configPath = resolve(projectRoot, "config/wp-options.json");
-  if (!exists(configPath)) {
+  if (!isPathPresent(configPath)) {
     return DEFAULT_CONFIG;
   }
   try {
@@ -301,7 +301,7 @@ function loadConfig() {
       },
     };
   } catch (err) {
-    error(MODULE_NAME, "config/wp-options.json の読み込みに失敗しました", err);
+    logError(MODULE_NAME, "config/wp-options.json の読み込みに失敗しました", err);
     return DEFAULT_CONFIG;
   }
 }
@@ -321,7 +321,7 @@ async function waitForWpReady(retries = 20, delayMs = 2000) {
         await new Promise(resolveWait => setTimeout(resolveWait, delayMs));
       } else {
         // 最後のリトライでも失敗した場合、エラー詳細をログに出力
-        error(MODULE_NAME, "WordPress の起動確認に失敗しました。", err);
+        logError(MODULE_NAME, "WordPress の起動確認に失敗しました。", err);
       }
     }
   }
@@ -333,18 +333,18 @@ async function waitForWpReady(retries = 20, delayMs = 2000) {
  * @param {Object} config - 設定オブジェクト
  * @returns {Array} 投稿データ配列
  */
-function loadSeedPosts(config) {
+function readSeedPosts(config) {
   if (!config.seed_posts_json) return [];
 
   const jsonPath = resolve(projectRoot, config.seed_posts_json);
-  if (!exists(jsonPath)) {
-    error(MODULE_NAME, `投稿データが見つかりません: ${config.seed_posts_json}`);
+  if (!isPathPresent(jsonPath)) {
+    logError(MODULE_NAME, `投稿データが見つかりません: ${config.seed_posts_json}`);
     return [];
   }
 
   const posts = readJson(jsonPath);
   if (!Array.isArray(posts) || posts.length === 0) {
-    error(MODULE_NAME, "投稿データが空です。");
+    logError(MODULE_NAME, "投稿データが空です。");
     return [];
   }
 
@@ -367,7 +367,7 @@ function buildPayload(config) {
     posts_page: config.posts_page || null,
     pages: Array.isArray(config.pages) ? config.pages : [],
     seed_posts_if_empty: !!config.seed_posts_if_empty,
-    seed_posts: loadSeedPosts(config),
+    seed_posts: readSeedPosts(config),
     theme_slug: THEME_NAME,
   };
 }
@@ -378,9 +378,9 @@ function writeTmpFiles(payload) {
   writeFile(EVAL_PHP_PATH, EVAL_PHP_CONTENT);
 }
 
-function cleanupTmpFiles() {
+function deleteTmpFiles() {
   [DATA_JSON_PATH, EVAL_PHP_PATH].forEach(filePath => {
-    if (exists(filePath)) {
+    if (isPathPresent(filePath)) {
       try {
         fs.unlinkSync(filePath);
       } catch (err) {
@@ -406,7 +406,7 @@ async function main() {
   log(MODULE_NAME, "WordPress 初期設定を適用します...");
 
   if (!isWordPressEnvRunning()) {
-    error(MODULE_NAME, "WordPress環境が起動していません。先に yarn wp-start を実行してください。");
+    logError(MODULE_NAME, "WordPress環境が起動していません。先に yarn wp-start を実行してください。");
     process.exit(1);
   }
 
@@ -426,35 +426,35 @@ async function main() {
   }
 
   if (!cliStarted) {
-    error(MODULE_NAME, "CLIコンテナの起動に失敗しました。");
-    error(MODULE_NAME, "手動で以下のコマンドを実行してください: yarn wp-start");
+    logError(MODULE_NAME, "CLIコンテナの起動に失敗しました。");
+    logError(MODULE_NAME, "手動で以下のコマンドを実行してください: yarn wp-start");
     process.exit(1);
   }
 
   const ready = await waitForWpReady();
   if (!ready) {
-    error(MODULE_NAME, "WordPress が起動しませんでした。少し待ってから再実行してください。");
-    error(MODULE_NAME, "もしくは、yarn wp-start を実行してWordPress環境を起動してください。");
+    logError(MODULE_NAME, "WordPress が起動しませんでした。少し待ってから再実行してください。");
+    logError(MODULE_NAME, "もしくは、yarn wp-start を実行してWordPress環境を起動してください。");
     process.exit(1);
   }
 
-  const config = loadConfig();
+  const config = loadWordPressOptionsConfig();
   const payload = buildPayload(config);
 
   try {
     writeTmpFiles(payload);
     const output = runWpCli(["eval-file", CONTAINER_EVAL_PHP_PATH]);
     printPhpOutput(output);
-    success(MODULE_NAME, "初期設定の適用が完了しました。");
+    logSuccess(MODULE_NAME, "初期設定の適用が完了しました。");
   } catch (err) {
-    error(MODULE_NAME, "初期設定の適用に失敗しました。", err);
+    logError(MODULE_NAME, "初期設定の適用に失敗しました。", err);
     process.exitCode = 1;
   } finally {
-    cleanupTmpFiles();
+    deleteTmpFiles();
   }
 }
 
 main().catch(err => {
-  error(MODULE_NAME, err.message, err);
+  logError(MODULE_NAME, err.message, err);
   process.exit(1);
 });

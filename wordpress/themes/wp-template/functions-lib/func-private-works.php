@@ -4,7 +4,7 @@ if (!defined("ABSPATH")) {
 }
 
 /** Server configuration only: never accept similarly named HTTP_* headers. */
-function portfolio_private_server_setting($name)
+function portfolio_get_private_server_setting($name)
 {
   if (defined($name)) {
     return constant($name);
@@ -21,7 +21,7 @@ function portfolio_private_server_setting($name)
   return "";
 }
 
-function portfolio_private_is_request()
+function portfolio_is_private_request()
 {
   $path = rawurldecode((string) wp_parse_url($_SERVER["REQUEST_URI"] ?? "", PHP_URL_PATH));
   $home_path = (string) wp_parse_url(home_url("/"), PHP_URL_PATH);
@@ -30,28 +30,28 @@ function portfolio_private_is_request()
 }
 
 /** AUTH_TYPE and REMOTE_USER must be supplied by an authenticated web server. */
-function portfolio_private_is_authenticated()
+function portfolio_is_private_request_authenticated()
 {
   $user = $_SERVER["REMOTE_USER"] ?? ($_SERVER["REDIRECT_REMOTE_USER"] ?? "");
   $type = $_SERVER["AUTH_TYPE"] ?? ($_SERVER["REDIRECT_AUTH_TYPE"] ?? "");
-  return portfolio_private_is_request() && (string) portfolio_private_server_setting("PORTFOLIO_PRIVATE_AUTH_ENABLED") === "1" && strcasecmp((string) $type, "Basic") === 0 && is_string($user) && trim($user) !== "";
+  return portfolio_is_private_request() && (string) portfolio_get_private_server_setting("PORTFOLIO_PRIVATE_AUTH_ENABLED") === "1" && strcasecmp((string) $type, "Basic") === 0 && is_string($user) && trim($user) !== "";
 }
 
-function portfolio_private_register_routes()
+function portfolio_register_private_routes()
 {
   add_rewrite_rule("^private-works/media/([0-9]+)/?$", 'index.php?portfolio_private_media=$matches[1]', "top");
   add_rewrite_rule("^private-works/([^/]+)/?$", 'index.php?post_type=works&name=$matches[1]&portfolio_private_route=1', "top");
 }
-add_action("init", "portfolio_private_register_routes", 40);
+add_action("init", "portfolio_register_private_routes", 40);
 add_filter("query_vars", function ($vars) {
   $vars[] = "portfolio_private_route";
   $vars[] = "portfolio_private_media";
   return $vars;
 });
 
-function portfolio_private_works($limit = 12)
+function portfolio_list_private_works($limit = 12)
 {
-  if (!portfolio_private_is_authenticated()) {
+  if (!portfolio_is_private_request_authenticated()) {
     return [];
   }
   $query = new WP_Query([
@@ -67,29 +67,29 @@ function portfolio_private_works($limit = 12)
   return $query->posts;
 }
 
-function portfolio_private_is_editor_request()
+function portfolio_is_editor_request()
 {
   return current_user_can("edit_posts") && (is_admin() || (defined("REST_REQUEST") && REST_REQUEST));
 }
 
 /** Apply to custom queries too, including get_posts() with its default suppression. */
-function portfolio_guard_work_queries($query)
+function portfolio_apply_work_query_visibility($query)
 {
-  if (portfolio_private_is_editor_request()) {
+  if (portfolio_is_editor_request()) {
     return;
   }
   $query->set("suppress_filters", false);
-  if ($query->is_main_query() && $query->get("portfolio_private_route") && portfolio_private_is_authenticated()) {
+  if ($query->is_main_query() && $query->get("portfolio_private_route") && portfolio_is_private_request_authenticated()) {
     $query->set("post_status", "private");
     $query->set("portfolio_private_query", true);
   }
-  if ($query->get("portfolio_private_query") && !portfolio_private_is_authenticated()) {
+  if ($query->get("portfolio_private_query") && !portfolio_is_private_request_authenticated()) {
     $query->set("portfolio_private_query", false);
   }
 }
-add_action("pre_get_posts", "portfolio_guard_work_queries", 99);
+add_action("pre_get_posts", "portfolio_apply_work_query_visibility", 99);
 
-function portfolio_work_visibility_clause($table_alias, $visibility)
+function portfolio_build_work_visibility_clause($table_alias, $visibility)
 {
   global $wpdb;
   $status = $visibility === "private" ? "private" : "publish";
@@ -100,36 +100,36 @@ function portfolio_work_visibility_clause($table_alias, $visibility)
   );
 }
 
-function portfolio_filter_works_sql($where, $query)
+function portfolio_apply_works_sql_visibility($where, $query)
 {
   global $wpdb;
-  if (portfolio_private_is_editor_request()) {
+  if (portfolio_is_editor_request()) {
     return $where;
   }
-  $visibility = $query->get("portfolio_private_query") && portfolio_private_is_authenticated() ? "private" : "public";
-  $where .= portfolio_work_visibility_clause($wpdb->posts, $visibility);
-  if (!portfolio_private_is_authenticated()) {
+  $visibility = $query->get("portfolio_private_query") && portfolio_is_private_request_authenticated() ? "private" : "public";
+  $where .= portfolio_build_work_visibility_clause($wpdb->posts, $visibility);
+  if (!portfolio_is_private_request_authenticated()) {
     $where .= " AND NOT ({$wpdb->posts}.post_type = 'page' AND {$wpdb->posts}.post_name = 'private-works')";
   }
   return $where;
 }
-add_filter("posts_where", "portfolio_filter_works_sql", 20, 2);
-function portfolio_filter_adjacent_works($where)
+add_filter("posts_where", "portfolio_apply_works_sql_visibility", 20, 2);
+function portfolio_apply_adjacent_work_visibility($where)
 {
-  return $where . portfolio_work_visibility_clause("p", portfolio_private_is_authenticated() ? "private" : "public");
+  return $where . portfolio_build_work_visibility_clause("p", portfolio_is_private_request_authenticated() ? "private" : "public");
 }
-add_filter("get_previous_post_where", "portfolio_filter_adjacent_works");
-add_filter("get_next_post_where", "portfolio_filter_adjacent_works");
+add_filter("get_previous_post_where", "portfolio_apply_adjacent_work_visibility");
+add_filter("get_next_post_where", "portfolio_apply_adjacent_work_visibility");
 
 /** A query variable never grants access. Guard before templates/SEO execute. */
-function portfolio_private_guard_request()
+function portfolio_handle_private_request()
 {
   if (is_admin()) {
     return;
   }
-  $private = portfolio_private_is_request() || get_query_var("portfolio_private_route") || get_query_var("portfolio_private_media") || is_page("private-works");
+  $private = portfolio_is_private_request() || get_query_var("portfolio_private_route") || get_query_var("portfolio_private_media") || is_page("private-works");
   if (!$private) {
-    if (is_singular("works") && !portfolio_work_is_public(get_queried_object_id())) {
+    if (is_singular("works") && !portfolio_is_public_work(get_queried_object_id())) {
       status_header(404);
       nocache_headers();
       wp_die("ページが見つかりません。", "Not Found", ["response" => 404]);
@@ -139,21 +139,21 @@ function portfolio_private_guard_request()
   nocache_headers();
   header("Cache-Control: private, no-store, max-age=0", true);
   header("X-Robots-Tag: noindex, nofollow, noarchive", true);
-  if (!portfolio_private_is_authenticated()) {
+  if (!portfolio_is_private_request_authenticated()) {
     // The server must perform Basic authentication. PHP never verifies passwords.
     wp_die("この領域はサーバーのBasic認証設定が確認できるまで表示できません。", "Private Works", ["response" => 503]);
   }
   $media_id = (int) get_query_var("portfolio_private_media");
   if ($media_id) {
-    portfolio_private_serve_image($media_id);
+    portfolio_serve_private_image($media_id);
   }
 }
-add_action("template_redirect", "portfolio_private_guard_request", 0);
+add_action("template_redirect", "portfolio_handle_private_request", 0);
 add_filter("redirect_canonical", function ($url) {
-  return portfolio_private_is_request() ? false : $url;
+  return portfolio_is_private_request() ? false : $url;
 });
 add_filter("wp_robots", function ($robots) {
-  if (portfolio_private_is_request() || is_page("private-works")) {
+  if (portfolio_is_private_request() || is_page("private-works")) {
     unset($robots["index"], $robots["follow"]);
     $robots["noindex"] = true;
     $robots["nofollow"] = true;
@@ -183,10 +183,10 @@ add_filter(
 add_filter(
   "rest_pre_dispatch",
   function ($result, $server, $request) {
-    if (!portfolio_private_is_editor_request() && preg_match("#^/wp/v2/works/(\d+)(?:/|$)#", $request->get_route(), $match) && !portfolio_work_is_public((int) $match[1])) {
+    if (!portfolio_is_editor_request() && preg_match("#^/wp/v2/works/(\d+)(?:/|$)#", $request->get_route(), $match) && !portfolio_is_public_work((int) $match[1])) {
       return new WP_Error("rest_no_route", "作品が見つかりません。", ["status" => 404]);
     }
-    if (!portfolio_private_is_editor_request() && preg_match("#^/wp/v2/pages/(\d+)(?:/|$)#", $request->get_route(), $match)) {
+    if (!portfolio_is_editor_request() && preg_match("#^/wp/v2/pages/(\d+)(?:/|$)#", $request->get_route(), $match)) {
       $post = get_post((int) $match[1]);
       if ($post && $post->post_name === "private-works") {
         return new WP_Error("rest_no_route", "ページが見つかりません。", ["status" => 404]);
@@ -200,7 +200,7 @@ add_filter(
 add_filter(
   "rest_prepare_works",
   function ($response, $post) {
-    if (!portfolio_private_is_editor_request() && !portfolio_work_is_public($post->ID)) {
+    if (!portfolio_is_editor_request() && !portfolio_is_public_work($post->ID)) {
       return new WP_Error("rest_no_route", "作品が見つかりません。", ["status" => 404]);
     }
     return $response;
@@ -210,12 +210,12 @@ add_filter(
 );
 
 /** Resolve only allowed raster files inside a directory outside the web root. */
-function portfolio_private_image_path($post_id)
+function portfolio_find_private_image_path($post_id)
 {
-  if (!portfolio_work_can_view($post_id) || portfolio_work_visibility($post_id) !== "private") {
+  if (!portfolio_can_view_work($post_id) || portfolio_get_work_visibility($post_id) !== "private") {
     return false;
   }
-  $configured_root = (string) portfolio_private_server_setting("PORTFOLIO_PRIVATE_MEDIA_DIR");
+  $configured_root = (string) portfolio_get_private_server_setting("PORTFOLIO_PRIVATE_MEDIA_DIR");
   if (trim($configured_root) === "") {
     return false;
   }
@@ -239,9 +239,9 @@ function portfolio_private_image_path($post_id)
   return $path;
 }
 
-function portfolio_private_image($post_id, $attr = [])
+function portfolio_build_private_image($post_id, $attr = [])
 {
-  $path = portfolio_private_image_path($post_id);
+  $path = portfolio_find_private_image_path($post_id);
   if (!$path) {
     return "";
   }
@@ -256,9 +256,9 @@ function portfolio_private_image($post_id, $attr = [])
   return $html . " />";
 }
 
-function portfolio_private_serve_image($post_id)
+function portfolio_serve_private_image($post_id)
 {
-  $path = portfolio_private_image_path($post_id);
+  $path = portfolio_find_private_image_path($post_id);
   if (!$path) {
     wp_die("画像が見つかりません。", "Not Found", ["response" => 404]);
   }

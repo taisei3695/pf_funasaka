@@ -14,7 +14,7 @@ if (!defined("ABSPATH")) {
  *
  * @return array|false manifest配列（開発環境のみ）、失敗時はfalse
  */
-function get_vite_manifest()
+function read_vite_manifest()
 {
   static $manifest = null;
 
@@ -49,7 +49,7 @@ function get_vite_manifest()
  *
  * @return array|false manifest配列（本番環境のみ）、失敗時はfalse
  */
-function get_build_manifest()
+function read_build_manifest()
 {
   static $manifest = null;
 
@@ -86,7 +86,7 @@ function is_vite_dev_mode()
   }
 
   // manifest.dev.jsonが存在し、かつlocalhostであることを確認
-  $dev_manifest = get_vite_manifest();
+  $dev_manifest = read_vite_manifest();
   return $dev_manifest !== false && isset($dev_manifest["url"]);
 }
 
@@ -102,7 +102,7 @@ function get_asset_environment()
     return "dev";
   }
 
-  $build_manifest = get_build_manifest();
+  $build_manifest = read_build_manifest();
   if ($build_manifest !== false) {
     return "manifest";
   }
@@ -116,11 +116,11 @@ function get_asset_environment()
  * @param string $file_path ファイルパス
  * @return int|null ファイルの更新日時（失敗時はnull）
  */
-function get_file_version($file_path)
+function find_file_version($file_path)
 {
   if (!file_exists($file_path) || !is_readable($file_path)) {
     if (defined("WP_DEBUG") && WP_DEBUG) {
-      error_log("[get_file_version] File not found or not readable: " . $file_path);
+      error_log("[find_file_version] File not found or not readable: " . $file_path);
     }
     return null;
   }
@@ -174,7 +174,7 @@ function get_archive_title_parts()
  * デフォルトのハッシュは販売特典SQLに含まれるフォームを指す。
  * 別のフォームを使う場合は theme_cf7_form_hash フィルタで上書きできる。
  */
-function get_theme_contact_form_shortcode()
+function build_theme_contact_form_shortcode()
 {
   if (!class_exists("WPCF7_ContactForm")) {
     return "";

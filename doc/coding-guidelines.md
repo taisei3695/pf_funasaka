@@ -52,3 +52,22 @@
 
 - 変数は **`const` または `let`** を使う。**`var` は使わない**。
 - ES モジュールで記述する。
+
+---
+
+## 関数の命名
+
+[関数名の動詞に関する参照記事](https://ai.itokoba.com/archives/871/)を基準に、名前から対象・処理・副作用が分かるようにする。JavaScript、PHP、開発用スクリプトの独自関数に適用する。
+
+- 言語・WordPress・Viteなどの標準APIと既存の契約を優先する。
+- 名前空間の接頭辞に続けて、処理を表す動詞と具体的な対象を書く。PHPは `portfolio_list_public_works()`、JavaScriptは `updateViewportContent()` のように、各ファイルの表記に合わせる。
+- 単件取得は `get`、不在が通常の結果となる探索は `find`、複数件の列挙は `list` を使う。不在時の戻り値は既存の契約を維持する。
+- ファイルなどの読み取りは `read`、外部通信による取得は `fetch`、値の組み立ては `build`、新規の対象を作る処理は `create` を使う。
+- 真偽値を返す判定は `is`、`has`、`can`、`should` などで条件を示す。
+- 値の設定は `set`、一部変更は `update`、状態の一致は `sync`、必要な状態を成立させる処理は `ensure` を使う。
+- 関連・集合から外す処理は `remove`、対象自体を消す処理は `delete` と区別する。
+- 表示する内容を返す処理は `build`、PHPでその場へ出力する処理は `print` など、返却と出力を区別する。
+- `handle` はイベント受付に限定する。`process`、`manage`、`do`、`perform`、結果が不明な `toggle` は具体的な操作名へ置き換える。
+- `initPortfolioMotion()` の初期化、`debounce()` のアルゴリズム名、`fadeIn()` の演出名、ユーザー指定の `fluid()` など、意味と役割が明確な既存名は維持する。
+
+改名時は定義、呼び出し、import／export、WordPressのhook callback、`function_exists()`、文書中の使用例を同期する。保存済みのoption・meta・ACFキー、URL、公開API、第三者ライブラリの名前を一括置換しない。処理内容の変更が必要なら、命名の整理と分けて扱う。

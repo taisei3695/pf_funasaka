@@ -1,15 +1,15 @@
 import { fileURLToPath } from "node:url";
 import { createInterface } from "node:readline/promises";
 import { resolve } from "path";
-import { checkNode } from "./utils/check-env.js";
+import { assertNodeVersion } from "./utils/check-env.js";
 import { projectRoot, THEME_NAME, paths } from "./utils/paths.js";
-import { resolveThemeConfig } from "./utils/project-config.js";
-import { log, success, error } from "./utils/logger.js";
-import { exists, readJson, writeJson, readFile, writeFile, ensureDir, renameDir } from "./utils/fs-utils.js";
+import { buildThemeConfig } from "./utils/project-config.js";
+import { log, logSuccess, logError } from "./utils/logger.js";
+import { isPathPresent, readJson, writeJson, readFile, writeFile, ensureDir, renameDir } from "./utils/fs-utils.js";
 import { isWordPressEnvRunning, runWpCli } from "./utils/wp-env.js";
 import { mkdirSync, readdirSync, renameSync, rmSync, statSync } from "fs";
 
-checkNode();
+assertNodeVersion();
 
 // コマンドライン引数を取得
 const args = process.argv.slice(2);
@@ -26,21 +26,21 @@ const updateStyleCss = actionArgs.includes("--style-css") || actionArgs.length =
 function ensureProjectConfig() {
   const projectConfigPath = resolve(projectRoot, "config/project.json");
 
-  if (exists(projectConfigPath)) {
+  if (isPathPresent(projectConfigPath)) {
     return true;
   }
 
   try {
-    const themeConfig = resolveThemeConfig();
+    const themeConfig = buildThemeConfig();
     writeJson(projectConfigPath, {
       themeSlug: themeConfig.themeSlug,
       themeName: themeConfig.themeName,
       textDomain: themeConfig.textDomain,
     });
-    success("update-wp-config", "config/project.json を作成しました");
+    logSuccess("update-wp-config", "config/project.json を作成しました");
     return true;
   } catch (err) {
-    error("update-wp-config", "config/project.json の作成に失敗しました", err);
+    logError("update-wp-config", "config/project.json の作成に失敗しました", err);
     return false;
   }
 }
@@ -50,11 +50,11 @@ function ensureProjectConfig() {
  * wordpress/themes/ 内の style.css が存在するディレクトリを探す
  * @returns {string|null} テーマディレクトリ名、見つからない場合は null
  */
-function detectExistingThemeName() {
+function findExistingThemeName() {
   const themesBaseDir = resolve(projectRoot, "wordpress/themes");
 
   // themesディレクトリが存在しない場合は null を返す
-  if (!exists(themesBaseDir)) {
+  if (!isPathPresent(themesBaseDir)) {
     return null;
   }
 
@@ -69,7 +69,7 @@ function detectExistingThemeName() {
     // style.cssが存在するディレクトリを探す（実際のテーマディレクトリ）
     for (const dir of existingThemeDirs) {
       const styleCssPath = resolve(themesBaseDir, dir, "style.css");
-      if (exists(styleCssPath)) {
+      if (isPathPresent(styleCssPath)) {
         return dir;
       }
     }
@@ -85,7 +85,7 @@ function detectExistingThemeName() {
  * @param {string[]} values
  * @returns {string}
  */
-function normalizeStringArray(values) {
+function formatSortedStringArray(values) {
   return JSON.stringify([...values].sort());
 }
 
@@ -94,7 +94,7 @@ function normalizeStringArray(values) {
  * @returns {string}
  */
 function getCurrentStyleCssPath() {
-  const existingThemeName = detectExistingThemeName();
+  const existingThemeName = findExistingThemeName();
 
   if (existingThemeName && existingThemeName !== THEME_NAME) {
     return resolve(projectRoot, `wordpress/themes/${existingThemeName}/style.css`);
@@ -108,7 +108,7 @@ function getCurrentStyleCssPath() {
  * @param {{ themeName: string, textDomain: string }} themeConfig
  * @returns {string}
  */
-function createDefaultStyleCssContent(themeConfig) {
+function generateDefaultStyleCssContent(themeConfig) {
   return `/*!
 Theme Name: ${themeConfig.themeName}
 Description: テンプレート
@@ -135,11 +135,11 @@ function parseStyleCssHeader(content) {
  * style.css の変更プレビューを取得する
  * @returns {string|null}
  */
-function getStyleCssChangePreview() {
-  const themeConfig = resolveThemeConfig();
+function buildStyleCssChangePreview() {
+  const themeConfig = buildThemeConfig();
   const styleCssPath = getCurrentStyleCssPath();
 
-  if (!exists(styleCssPath)) {
+  if (!isPathPresent(styleCssPath)) {
     return `style.css: 未作成のため Theme Name \`${themeConfig.themeName}\`, Text Domain \`${themeConfig.textDomain}\` で作成`;
   }
 
@@ -161,9 +161,9 @@ function getStyleCssChangePreview() {
  * .wp-env.json の変更内容を副作用なしで算出する
  * @returns {{ ok: boolean, changed: boolean, config?: object, messages: string[], errorMessage?: string, errorDetail?: Error }}
  */
-function getWpEnvConfigUpdate() {
+function buildWpEnvConfigUpdate() {
   try {
-    if (!exists(paths.wpEnvConfig)) {
+    if (!isPathPresent(paths.wpEnvConfig)) {
       return {
         ok: false,
         changed: false,
@@ -187,17 +187,17 @@ function getWpEnvConfigUpdate() {
       messages.push(`themes: using mappings (${config.mappings["wp-content/themes"]})`);
     }
 
-    const existingThemeName = detectExistingThemeName();
-    const themeDirName = exists(resolve(projectRoot, `wordpress/themes/${THEME_NAME}`)) ? THEME_NAME : existingThemeName || THEME_NAME;
+    const existingThemeName = findExistingThemeName();
+    const themeDirName = isPathPresent(resolve(projectRoot, `wordpress/themes/${THEME_NAME}`)) ? THEME_NAME : existingThemeName || THEME_NAME;
     const themeDir = resolve(projectRoot, `wordpress/themes/${themeDirName}`);
     const pluginsJsonPath = resolve(themeDir, "config/plugins.json");
-    if (exists(pluginsJsonPath)) {
+    if (isPathPresent(pluginsJsonPath)) {
       try {
         const pluginsData = readJson(pluginsJsonPath);
         if (pluginsData.plugins && Array.isArray(pluginsData.plugins)) {
           const pluginSources = pluginsData.plugins.map(plugin => plugin.source).filter(source => source);
           const currentPlugins = config.plugins || [];
-          const pluginsChanged = normalizeStringArray(currentPlugins) !== normalizeStringArray(pluginSources);
+          const pluginsChanged = formatSortedStringArray(currentPlugins) !== formatSortedStringArray(pluginSources);
 
           if (pluginsChanged) {
             config.plugins = pluginSources;
@@ -240,18 +240,18 @@ function getWpEnvConfigUpdate() {
  * 実行前の変更プレビューを作成する
  * @returns {string[]}
  */
-function getChangePreviewItems() {
+function buildChangePreviewItems() {
   const items = [];
-  const existingThemeName = detectExistingThemeName();
+  const existingThemeName = findExistingThemeName();
 
   if (existingThemeName && existingThemeName !== THEME_NAME) {
     const targetThemeDir = resolve(projectRoot, "wordpress/themes", THEME_NAME);
-    const operation = exists(targetThemeDir) ? "マージ" : "リネーム";
+    const operation = isPathPresent(targetThemeDir) ? "マージ" : "リネーム";
     items.push(`テーマディレクトリ: \`${existingThemeName}\` → \`${THEME_NAME}\`（${operation}）`);
   }
 
   if (updateStyleCss) {
-    const styleCssChange = getStyleCssChangePreview();
+    const styleCssChange = buildStyleCssChangePreview();
     if (styleCssChange) {
       items.push(styleCssChange);
     }
@@ -262,7 +262,7 @@ function getChangePreviewItems() {
   }
 
   if (updateWpEnv) {
-    const wpEnvUpdate = getWpEnvConfigUpdate();
+    const wpEnvUpdate = buildWpEnvConfigUpdate();
     if (wpEnvUpdate.changed) {
       items.push(".wp-env.json: テーマ/プラグイン設定を更新");
     }
@@ -310,18 +310,18 @@ function updateWpEnvConfig() {
 
   log("update-wp-config", `Updating .wp-env.json configuration`);
 
-  const wpEnvUpdate = getWpEnvConfigUpdate();
+  const wpEnvUpdate = buildWpEnvConfigUpdate();
 
   if (!wpEnvUpdate.ok) {
-    error("update-wp-config", wpEnvUpdate.errorMessage || "Failed to update .wp-env.json", wpEnvUpdate.errorDetail || null);
+    logError("update-wp-config", wpEnvUpdate.errorMessage || "Failed to update .wp-env.json", wpEnvUpdate.errorDetail || null);
     return false;
   }
 
   if (wpEnvUpdate.changed) {
     writeJson(paths.wpEnvConfig, wpEnvUpdate.config);
-    success("update-wp-config", `Updated .wp-env.json`);
+    logSuccess("update-wp-config", `Updated .wp-env.json`);
   } else {
-    success("update-wp-config", ".wp-env.json is already correct");
+    logSuccess("update-wp-config", ".wp-env.json is already correct");
   }
 
   if (wpEnvUpdate.config.themes) {
@@ -354,7 +354,7 @@ function mergeDirectoryContents(source_dir, target_dir) {
     const target_path = resolve(target_dir, entry);
     const source_stats = statSync(source_path);
 
-    if (!exists(target_path)) {
+    if (!isPathPresent(target_path)) {
       renameSync(source_path, target_path);
       continue;
     }
@@ -382,17 +382,17 @@ function mergeDirectoryContents(source_dir, target_dir) {
 /**
  * 既存のテーマディレクトリを themeSlug に合わせる
  */
-function renameThemeDirectory() {
+function ensureThemeDirectoryMatchesConfig() {
   const themesBaseDir = resolve(projectRoot, "wordpress/themes");
 
   // themesディレクトリが存在しない場合はスキップ
-  if (!exists(themesBaseDir)) {
+  if (!isPathPresent(themesBaseDir)) {
     return true;
   }
 
   try {
     const targetThemeDir = resolve(themesBaseDir, THEME_NAME);
-    const existingThemeName = detectExistingThemeName();
+    const existingThemeName = findExistingThemeName();
 
     if (!existingThemeName) {
       log("update-wp-config", "style.css を持つテーマディレクトリが見つからないため、リネームをスキップします");
@@ -405,10 +405,10 @@ function renameThemeDirectory() {
 
     const oldPath = resolve(themesBaseDir, existingThemeName);
 
-    if (!exists(targetThemeDir)) {
+    if (!isPathPresent(targetThemeDir)) {
       log("update-wp-config", `テーマディレクトリをリネームします: ${existingThemeName} → ${THEME_NAME}`);
       renameDir(oldPath, targetThemeDir);
-      success("update-wp-config", `テーマディレクトリをリネームしました: ${existingThemeName} → ${THEME_NAME}`);
+      logSuccess("update-wp-config", `テーマディレクトリをリネームしました: ${existingThemeName} → ${THEME_NAME}`);
       return true;
     }
 
@@ -417,14 +417,14 @@ function renameThemeDirectory() {
 
     if (merged_without_conflicts) {
       rmSync(oldPath, { recursive: true, force: true });
-      success("update-wp-config", `テーマディレクトリをマージしました: ${existingThemeName} → ${THEME_NAME}`);
+      logSuccess("update-wp-config", `テーマディレクトリをマージしました: ${existingThemeName} → ${THEME_NAME}`);
       return true;
     }
 
     log("update-wp-config", `衝突があるため移動元ディレクトリを残しました: ${existingThemeName}`, "warn");
     return true;
   } catch (err) {
-    error("update-wp-config", "Failed to rename theme directory", err);
+    logError("update-wp-config", "Failed to rename theme directory", err);
     return false;
   }
 }
@@ -435,16 +435,16 @@ function renameThemeDirectory() {
  */
 export function updateStyleCssFile() {
   try {
-    const themeConfig = resolveThemeConfig();
+    const themeConfig = buildThemeConfig();
     // テーマ名に基づいて style.css のパスを決定
     const styleCssPath = resolve(projectRoot, `wordpress/themes/${THEME_NAME}/style.css`);
 
     // style.css が存在しない場合は作成
-    if (!exists(styleCssPath)) {
+    if (!isPathPresent(styleCssPath)) {
       ensureDir(resolve(styleCssPath, ".."));
 
       // デフォルトの style.css を作成
-      const defaultContent = createDefaultStyleCssContent(themeConfig);
+      const defaultContent = generateDefaultStyleCssContent(themeConfig);
       writeFile(styleCssPath, defaultContent);
       log("update-wp-config", `Created: wordpress/themes/${THEME_NAME}/style.css`);
       return true;
@@ -456,7 +456,7 @@ export function updateStyleCssFile() {
     // コメントブロックが /*! で始まっているか確認
     if (!content.trim().startsWith("/*!")) {
       // コメントブロックがない、または /* で始まっている場合は完全に書き換え
-      const defaultContent = createDefaultStyleCssContent(themeConfig);
+      const defaultContent = generateDefaultStyleCssContent(themeConfig);
       writeFile(styleCssPath, defaultContent);
       log("update-wp-config", "Rewrote style.css with proper header");
       return true;
@@ -488,12 +488,12 @@ export function updateStyleCssFile() {
     const currentContent = readFile(styleCssPath);
     if (content !== currentContent) {
       writeFile(styleCssPath, content);
-      success("update-wp-config", `style.css を更新しました: Theme Name=${themeConfig.themeName}, Text Domain=${themeConfig.textDomain}`);
+      logSuccess("update-wp-config", `style.css を更新しました: Theme Name=${themeConfig.themeName}, Text Domain=${themeConfig.textDomain}`);
     }
 
     return true;
   } catch (err) {
-    error("update-wp-config", "Failed to update style.css", err);
+    logError("update-wp-config", "Failed to update style.css", err);
     return false;
   }
 }
@@ -501,7 +501,7 @@ export function updateStyleCssFile() {
 /**
  * WordPress のデータベース内のテーマ名を更新
  */
-function updateWordPressDatabase() {
+function updateWordPressThemeOptions() {
   if (!updateDb) return;
 
   log("update-wp-config", `Updating WordPress database theme name to: ${THEME_NAME}`);
@@ -527,24 +527,24 @@ function updateWordPressDatabase() {
       try {
         log("update-wp-config", `Executing: ${cmd.label}`);
         runWpCli(cmd.args, { stdio: "inherit" });
-        success("update-wp-config", `Success: ${cmd.label}`);
+        logSuccess("update-wp-config", `Success: ${cmd.label}`);
         successCount++;
       } catch (err) {
-        error("update-wp-config", `Error executing: ${cmd.label}`, err);
+        logError("update-wp-config", `Error executing: ${cmd.label}`, err);
       }
     }
 
     if (successCount > 0) {
       log("update-wp-config", "");
-      success("update-wp-config", "WordPress database theme name updated successfully!");
+      logSuccess("update-wp-config", "WordPress database theme name updated successfully!");
       log("update-wp-config", "Please refresh your WordPress admin panel.");
       return true;
     } else {
-      error("update-wp-config", "Failed to update WordPress database.");
+      logError("update-wp-config", "Failed to update WordPress database.");
       return false;
     }
   } catch (err) {
-    error("update-wp-config", "Failed to update WordPress database", err);
+    logError("update-wp-config", "Failed to update WordPress database", err);
     return false;
   }
 }
@@ -553,7 +553,7 @@ function updateWordPressDatabase() {
 async function main() {
   log("update-wp-config", `Theme name: ${THEME_NAME}\n`);
 
-  const previewItems = getChangePreviewItems();
+  const previewItems = buildChangePreviewItems();
   const confirmed = await confirmChanges(previewItems);
   if (!confirmed) {
     log("update-wp-config", "中止しました");
@@ -570,7 +570,7 @@ async function main() {
   let renameSuccess = true;
 
   // まず既存のテーマディレクトリを themeSlug に合わせる
-  renameSuccess = renameThemeDirectory();
+  renameSuccess = ensureThemeDirectoryMatchesConfig();
 
   if (updateWpEnv) {
     wpEnvSuccess = updateWpEnvConfig();
@@ -581,7 +581,7 @@ async function main() {
   }
 
   if (updateDb) {
-    dbSuccess = updateWordPressDatabase();
+    dbSuccess = updateWordPressThemeOptions();
   }
 
   // 結果をまとめて表示
@@ -610,7 +610,7 @@ async function main() {
  * Viteプラグインとして使用する場合
  * vite-plugin-update-style-css.js の代替として使用可能
  */
-export default function vitePluginUpdateStyleCss() {
+export default function createViteStyleCssPlugin() {
   return {
     name: "update-style-css",
     enforce: "pre",
@@ -631,7 +631,7 @@ const currentFile = fileURLToPath(import.meta.url);
 const scriptFile = resolve(process.argv[1]);
 if (currentFile === scriptFile) {
   main().catch(err => {
-    error("update-wp-config", err.message || "update-wp-config failed", err);
+    logError("update-wp-config", err.message || "update-wp-config failed", err);
     process.exit(1);
   });
 }

@@ -82,6 +82,30 @@ Worksの画像は提供サイトを撮影した実際のスクリーンショッ
 
 ## 開発・ビルド
 
+### 文字サイズと余白の調整
+
+`src/assets/styles/global/_functions.scss` に、375px／1440px、基準16pxの `fluid($min-px, $max-px)` を追加しました。`global/_index.scss` から公開しているため、`@use "../global" as *;` を使うSCSSから呼び出せます。引数にはpxを付けて指定します。
+
+```scss
+font-size: fluid(16px, 24px);
+padding-block: fluid(80px, 128px);
+```
+
+375pxで最小値、1440pxで最大値になり、その間は `rem + vw` の計算で連続して変化します。範囲外はclampで止まります。FV・Works・Skills・About・Contact・詳細ページの文字サイズと、主要なセクション余白へ適用しました。グリッドの切り替えと44px以上の最小タップ領域は既存のルールを使用します。
+
+| 対象 | 375pxの設定 | 1440pxの設定 |
+|---|---:|---:|
+| FVの名前 | 40px | 126px |
+| セクション見出し | 32px | 72px |
+| Worksの作品名 | 28px | 48px |
+| Skillsの項目 | 22px | 34px |
+| About・詳細の日本語本文 | 14px | 15px |
+| セクションの上下余白 | 80px | 128px |
+
+値はブラウザの標準文字サイズが16pxの場合です。実際のvw計算幅はスクロールバーを含む外側の表示幅と異なる場合があります。375px・768px・1440pxの描画結果は `work/portfolio-qa/fluid-measurements.json` に保存しました。各幅で横はみ出しがなく、768pxのSkillsの全項目が1行、1440pxのWorksの全作品名が1行で表示されることを確認しています。
+
+### コマンド
+
 プロジェクトのPowerShellから実行します。WordPressの起動にはDocker Desktopが必要です。
 
 ```powershell

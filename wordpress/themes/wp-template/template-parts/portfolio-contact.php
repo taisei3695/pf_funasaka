@@ -1,4 +1,4 @@
-<?php $contact_email = portfolio_contact_email(); ?>
+<?php $contact_email = portfolio_get_contact_email(); ?>
 <section id="contact" class="p-portfolio-section p-portfolio-contact" aria-labelledby="contact-title">
   <?php get_template_part("template-parts/portfolio-lights", null, ["contact" => true]); ?>
   <div class="l-portfolio-inner">

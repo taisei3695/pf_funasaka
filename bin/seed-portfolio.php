@@ -7,7 +7,7 @@
 if (!defined("WP_CLI") || !WP_CLI || !defined("ABSPATH")) {
   exit("WP-CLI only.\n");
 }
-if (!post_type_exists("works") || !function_exists("portfolio_work_visibility")) {
+if (!post_type_exists("works") || !function_exists("portfolio_get_work_visibility")) {
   WP_CLI::error("Activate the portfolio theme before running this seed.");
 }
 

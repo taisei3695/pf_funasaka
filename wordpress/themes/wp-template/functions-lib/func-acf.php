@@ -29,12 +29,12 @@ if (!defined("ABSPATH")) {
  * @param string $path
  * @return string
  */
-function my_acf_json_save_point($path)
+function my_apply_acf_json_save_path($path)
 {
   $path = get_stylesheet_directory() . "/acf-json";
   return $path;
 }
-add_filter("acf/settings/save_json", "my_acf_json_save_point");
+add_filter("acf/settings/save_json", "my_apply_acf_json_save_path");
 
 /**
  * ACF JSONの読み込み場所をテーマディレクトリに設定
@@ -47,7 +47,7 @@ add_filter("acf/settings/save_json", "my_acf_json_save_point");
  * @param array $paths
  * @return array
  */
-function my_acf_json_load_point($paths)
+function my_ensure_acf_json_load_path($paths)
 {
   $json_path = get_stylesheet_directory() . "/acf-json";
 
@@ -58,7 +58,7 @@ function my_acf_json_load_point($paths)
 
   return $paths;
 }
-add_filter("acf/settings/load_json", "my_acf_json_load_point");
+add_filter("acf/settings/load_json", "my_ensure_acf_json_load_path");
 
 /**
  * ACFのオプションページ設定（必要なら有効化）

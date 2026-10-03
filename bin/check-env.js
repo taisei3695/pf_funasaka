@@ -1,4 +1,4 @@
-import { checkNode, checkYarn } from "./utils/check-env.js";
+import { assertNodeVersion, assertYarnVersion } from "./utils/check-env.js";
 
-checkNode();
-checkYarn();
+assertNodeVersion();
+assertYarnVersion();

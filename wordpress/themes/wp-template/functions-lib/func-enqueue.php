@@ -7,7 +7,7 @@ if (!defined("ABSPATH")) {
  * Vite対応のスクリプトとスタイル読み込み処理
  * 環境変数（WP_DEBUG）とmanifestファイルを活用した環境判定
  */
-function add_vite_scripts()
+function enqueue_vite_assets()
 {
   $environment = get_asset_environment();
 
@@ -33,7 +33,7 @@ function add_vite_scripts()
  */
 function enqueue_dev_assets()
 {
-  $dev_manifest = get_vite_manifest();
+  $dev_manifest = read_vite_manifest();
   if ($dev_manifest === false || !isset($dev_manifest["url"])) {
     return;
   }
@@ -52,7 +52,7 @@ function enqueue_dev_assets()
 function enqueue_production_assets_from_manifest()
 {
   $root = get_template_directory_uri();
-  $build_manifest = get_build_manifest();
+  $build_manifest = read_build_manifest();
 
   if ($build_manifest === false) {
     return;
@@ -106,7 +106,7 @@ function enqueue_production_assets_fallback()
         continue;
       }
 
-      $version = get_file_version($css_file);
+      $version = find_file_version($css_file);
       if ($version !== null) {
         $handle = "theme-" . $filename;
         $library_css_handles[] = $handle;
@@ -117,59 +117,59 @@ function enqueue_production_assets_fallback()
 
   // メインJSを読み込み
   $script_file = $assets_dir . "/js/script.js";
-  $version = get_file_version($script_file);
+  $version = find_file_version($script_file);
   if ($version !== null) {
     wp_enqueue_script("theme-scripts", $root . "/assets/js/script.js", [], $version, true);
   }
 
   // メインCSSを最後に読み込み（ライブラリCSSの後に確実に読み込まれるように依存関係を指定）
   $style_file = $assets_dir . "/styles/style.css";
-  $version = get_file_version($style_file);
+  $version = find_file_version($style_file);
   if ($version !== null) {
     wp_enqueue_style("theme-styles", $root . "/assets/styles/style.css", $library_css_handles, $version, false);
   }
 }
 
-add_action("wp_enqueue_scripts", "add_vite_scripts", 10);
+add_action("wp_enqueue_scripts", "enqueue_vite_assets", 10);
 
 /**
  * global-styles-inline-cssを無効化
  */
-function disable_global_styles()
+function remove_global_styles()
 {
   wp_dequeue_style("global-styles");
   wp_deregister_style("global-styles");
   remove_action("wp_enqueue_scripts", "wp_enqueue_global_styles");
   remove_action("wp_footer", "wp_enqueue_global_styles", 1);
 }
-add_action("wp_enqueue_scripts", "disable_global_styles", 100);
+add_action("wp_enqueue_scripts", "remove_global_styles", 100);
 
 /**
  * after_setup_themeでglobal-stylesを無効化
  */
-function disable_global_styles_on_setup()
+function remove_global_style_hooks_on_setup()
 {
   remove_action("wp_enqueue_scripts", "wp_enqueue_global_styles");
   remove_action("wp_footer", "wp_enqueue_global_styles", 1);
 }
-add_action("after_setup_theme", "disable_global_styles_on_setup", 100);
+add_action("after_setup_theme", "remove_global_style_hooks_on_setup", 100);
 
 /**
  * ES Modules対応（type="module"属性を追加）
  */
-function add_vite_module_attribute($tag, $handle, $src)
+function apply_vite_module_attribute($tag, $handle, $src)
 {
   if (in_array($handle, ["theme-scripts", "vite-client"])) {
     $tag = '<script type="module" src="' . esc_url($src) . '"></script>';
   }
   return $tag;
 }
-add_filter("script_loader_tag", "add_vite_module_attribute", 10, 3);
+add_filter("script_loader_tag", "apply_vite_module_attribute", 10, 3);
 
 /**
  * Google Fonts最適化（プリコネクト）
  */
-function add_font_preconnect($html, $handle)
+function apply_font_preconnect_markup($html, $handle)
 {
   if ("google-fonts" === $handle) {
     $html = <<<EOT
@@ -180,4 +180,4 @@ function add_font_preconnect($html, $handle)
   }
   return $html;
 }
-add_filter("style_loader_tag", "add_font_preconnect", 10, 2);
+add_filter("style_loader_tag", "apply_font_preconnect_markup", 10, 2);

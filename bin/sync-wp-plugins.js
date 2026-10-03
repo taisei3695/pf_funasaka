@@ -2,7 +2,7 @@
 import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { log, error } from "./utils/logger.js";
+import { log, logError } from "./utils/logger.js";
 import { projectRoot, paths } from "./utils/paths.js";
 
 const MODULE = "sync-wp-plugins";
@@ -14,7 +14,7 @@ const WP_ORG_API_BASE = "https://api.wordpress.org/plugins/info/1.0/";
  * plugins エントリから slug を抽出する。
  * wp.org 形式（バージョン付きも対応）のみ対象。それ以外は null を返す。
  */
-function extractSlugFromEntry(entry) {
+function parsePluginSlug(entry) {
   const match = entry.match(/\/plugin\/(.+?)(?:\.[\d.]+)?\.zip$/);
   return match ? match[1] : null;
 }
@@ -23,10 +23,10 @@ function extractSlugFromEntry(entry) {
  * .wp-env.json の plugins 配列から slug を抽出する。
  * wp.org 形式（バージョン付きも対応）のみ対象。それ以外はスキップ。
  */
-function extractCoveredSlugs(plugins) {
+function listCoveredPluginSlugs(plugins) {
   const covered = new Set();
   for (const entry of plugins) {
-    const slug = extractSlugFromEntry(entry);
+    const slug = parsePluginSlug(entry);
     if (slug) {
       covered.add(slug);
     }
@@ -37,7 +37,7 @@ function extractCoveredSlugs(plugins) {
 /**
  * wordpress/plugins/ 直下のディレクトリ名（隠しディレクトリ除外）を返す
  */
-function getInstalledSlugs() {
+function listInstalledSlugs() {
   try {
     return readdirSync(WP_PLUGINS_DIR).filter(name => {
       if (name.startsWith(".")) return false;
@@ -52,7 +52,7 @@ function getInstalledSlugs() {
  * wp.org API でプラグインの存在確認
  * @returns {Promise<boolean>}
  */
-async function existsOnWpOrg(slug) {
+async function isPluginOnWpOrg(slug) {
   try {
     const res = await fetch(`${WP_ORG_API_BASE}${slug}.json`);
     if (!res.ok) return false;
@@ -72,8 +72,8 @@ export async function getPluginSyncDiff({ verify_wp_org = false } = {}) {
   const config = JSON.parse(raw);
   const plugins = config.plugins ?? [];
 
-  const coveredSlugs = extractCoveredSlugs(plugins);
-  const installedSlugs = getInstalledSlugs();
+  const coveredSlugs = listCoveredPluginSlugs(plugins);
+  const installedSlugs = listInstalledSlugs();
 
   if (installedSlugs.length === 0) {
     throw new Error("wordpress/plugins/ が空か存在しません。wp-env が未起動（またはクローン直後）の可能性があります。`yarn wp-start` で環境を起動してから再実行してください");
@@ -90,7 +90,7 @@ export async function getPluginSyncDiff({ verify_wp_org = false } = {}) {
 
   if (verify_wp_org) {
     for (const slug of toAdd) {
-      const exists = await existsOnWpOrg(slug);
+      const exists = await isPluginOnWpOrg(slug);
       if (exists) {
         wpOrgSlugs.push(slug);
       } else {
@@ -144,7 +144,7 @@ async function main() {
         if (isDryRun) {
           log(MODULE, `[dry-run] 削除予定 (--prune): ${slug}`);
         } else {
-          const idx = newPlugins.findIndex(entry => extractSlugFromEntry(entry) === slug);
+          const idx = newPlugins.findIndex(entry => parsePluginSlug(entry) === slug);
           if (idx !== -1) newPlugins.splice(idx, 1);
           log(MODULE, `削除 (--prune): ${slug}`);
         }
@@ -174,7 +174,7 @@ const currentFile = fileURLToPath(import.meta.url);
 const scriptFile = process.argv[1] ? resolve(process.argv[1]) : "";
 if (currentFile === scriptFile) {
   main().catch(err => {
-    error(MODULE, err.message, err);
+    logError(MODULE, err.message, err);
     process.exit(1);
   });
 }

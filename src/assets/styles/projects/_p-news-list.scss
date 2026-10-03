@@ -45,6 +45,11 @@
   @media (any-hover: hover) {
     &:hover {
       background-color: oklch(from var(--color-gray) l c h / 50%);
+
+      .p-news-list__arrow {
+        color: var(--color-text);
+        transform: translateX(calc(4 * var(--to-rem)));
+      }
     }
   }
 }
@@ -132,11 +137,6 @@
     width: 100%;
     height: 100%;
   }
-}
-
-.p-news-list__item:hover .p-news-list__arrow {
-  color: var(--color-text);
-  transform: translateX(calc(4 * var(--to-rem)));
 }
 
 // 空状態

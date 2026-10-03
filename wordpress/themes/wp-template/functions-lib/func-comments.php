@@ -11,14 +11,14 @@ if (!defined("ABSPATH")) {
 /**
  * 投稿・固定ページのコメント／トラックバックのサポートを解除
  */
-function disable_comments_post_types_support()
+function remove_comments_post_type_support()
 {
   remove_post_type_support("post", "comments");
   remove_post_type_support("post", "trackbacks");
   remove_post_type_support("page", "comments");
   remove_post_type_support("page", "trackbacks");
 }
-add_action("init", "disable_comments_post_types_support", 100);
+add_action("init", "remove_comments_post_type_support", 100);
 
 /**
  * コメント・トラックバックの受付を強制的に閉じる

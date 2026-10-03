@@ -8,20 +8,20 @@ if (!defined("ABSPATH")) {
  * パス・URL 用ヘルパー
  *
  * 画像:
- *   img_path('/common/logo.svg') →https://xxx.com/.../assets/images/common/logo.svg
+ *   print_image_url('/common/logo.svg') →https://xxx.com/.../assets/images/common/logo.svg
  *
- * 固定ページ・表示設定のパス（page_path）:
- *   page_path()           → https://xxx.com/
- *   page_path('news')     → https://xxx.com/news/  （表示設定の「投稿ページ」など）
- *   page_path('contact') → https://xxx.com/contact/
- *   page_path('#section') → https://xxx.com/#section
- *   page_path('doc.pdf')  → https://xxx.com/doc.pdf
+ * 固定ページ・表示設定のURL出力（print_page_url）:
+ *   print_page_url()           → https://xxx.com/
+ *   print_page_url('news')     → https://xxx.com/news/  （表示設定の「投稿ページ」など）
+ *   print_page_url('contact') → https://xxx.com/contact/
+ *   print_page_url('#section') → https://xxx.com/#section
+ *   print_page_url('doc.pdf')  → https://xxx.com/doc.pdf
  *
  * 制作実績アーカイブ（他リンクと同様にスラッグで指定）:
- *   page_path('works') / get_page_url('works') → https://xxx.com/works/
+ *   print_page_url('works') / build_page_url('works') → https://xxx.com/works/
  *
  * 通常投稿カテゴリー:
- *   category_path($slug) で return されるので echo で出力する
+ *   find_category_url($slug) で return されるので echo で出力する
  *
  * @package WordPress
  */
@@ -31,30 +31,30 @@ if (!defined("WP_DEBUG")) {
   define("WP_DEBUG", false);
 }
 
-/* テンプレートパスを返す */
-function temp_path($file = "")
+/* テーマ内ファイルのURLを出力する（echo） */
+function print_theme_url($file = "")
 {
   echo esc_url(get_theme_file_uri($file));
 }
-/* assetsパスを返す */
-function assets_path($file = "")
+/* assets配下のURLを出力する（echo） */
+function print_assets_url($file = "")
 {
   echo esc_url(get_theme_file_uri("/assets" . $file));
 }
-/* 画像パスを返す */
-function img_path($file = "")
+/* 画像ファイルのURLを出力する（echo） */
+function print_image_url($file = "")
 {
   echo esc_url(get_theme_file_uri("/assets/images" . $file));
 }
-/* mediaフォルダへのURL */
-function uploads_path()
+/* メディアアップロードのベースURLを出力する（echo） */
+function print_uploads_url()
 {
   // アップロードディレクトリ情報を取得し、異常があれば空文字を出力して中断。
   $upload_dir = wp_upload_dir();
 
   if (!empty($upload_dir["error"])) {
     if (defined("WP_DEBUG") && WP_DEBUG) {
-      error_log("[uploads_path] " . $upload_dir["error"]);
+      error_log("[print_uploads_url] " . $upload_dir["error"]);
     }
     echo "";
     return;
@@ -64,8 +64,8 @@ function uploads_path()
   echo esc_url($upload_dir["baseurl"]);
 }
 
-/* ホームURLを返す（return）。変数に代入するとき用 */
-function get_page_url($page = "")
+/* 指定ページのURLを組み立てて返す（return） */
+function build_page_url($page = "")
 {
   if (strpos($page, "#") === false && strpos($page, "?") === false && !preg_match('/\.[a-zA-Z0-9]+$/', $page)) {
     $page .= "/";
@@ -73,14 +73,14 @@ function get_page_url($page = "")
   return esc_url(home_url($page));
 }
 
-/* ホームURLのパスを出力する（echo） */
-function page_path($page = "")
+/* 指定ページのURLを出力する（echo） */
+function print_page_url($page = "")
 {
-  echo get_page_url($page);
+  echo build_page_url($page);
 }
 
-/* カテゴリーリンクを返す（echoではなくreturn） */
-function category_path($category_slug = "")
+/* カテゴリーURLを検索して返す（return）。見つからない場合は #。 */
+function find_category_url($category_slug = "")
 {
   if (empty($category_slug)) {
     return "#"; // 空なら # を返すようにして安全対策
@@ -97,7 +97,7 @@ function category_path($category_slug = "")
   // リンク取得時にWP_Errorが返るケースをログに残し、利用者にはダミーを返す。
   if ($link instanceof WP_Error) {
     if (defined("WP_DEBUG") && WP_DEBUG) {
-      error_log("[category_path] " . $link->get_error_message());
+      error_log("[find_category_url] " . $link->get_error_message());
     }
     return "#";
   }

@@ -79,18 +79,10 @@ body.portfolio-site {
     display: flex;
     align-items: center;
     min-height: 44px;
-    font-size: 12px;
+    font-size: fluid(12px, 18px);
     font-weight: 400;
     letter-spacing: 0.16em;
     white-space: nowrap;
-
-    @include mq(md) {
-      font-size: 14px;
-    }
-
-    @include mq(lg) {
-      font-size: 18px;
-    }
   }
 
   &__nav {
@@ -112,16 +104,13 @@ body.portfolio-site {
       align-items: center;
       min-width: 44px;
       min-height: 44px;
-      font-size: 14px;
+      font-size: fluid(14px, 18px);
       font-weight: 400;
       letter-spacing: 0.025em;
-      transition: opacity 0.25s ease;
-
-      @include mq(lg) {
-        font-size: 18px;
-      }
 
       @media (any-hover: hover) {
+        transition: opacity 0.25s ease;
+
         &:hover {
           opacity: 0.65;
         }
@@ -167,19 +156,14 @@ body.portfolio-site:not(.home) .p-portfolio-header {
     display: grid;
     gap: 8px;
     font-family: var(--portfolio-font);
-    font-size: clamp(40px, 10.6vw, 144px);
+    font-size: fluid(40px, 126px);
     font-weight: 300;
     line-height: 1.05;
     letter-spacing: 0.16em;
 
     @include mq(md) {
       gap: 9px;
-      font-size: clamp(72px, 9.6vw, 140px);
       letter-spacing: 0.2em;
-    }
-
-    @include mq(lg) {
-      font-size: clamp(96px, 8.7vw, 140px);
     }
   }
 
@@ -200,15 +184,13 @@ body.portfolio-site:not(.home) .p-portfolio-header {
 
   &__label {
     overflow: hidden;
-    margin-block-start: 32px;
-    font-size: 13px;
+    margin-block-start: fluid(32px, 34px);
+    font-size: fluid(13px, 17px);
     font-weight: 400;
     line-height: 1.8;
     letter-spacing: 0.4em;
 
     @include mq(md) {
-      margin-block-start: 34px;
-      font-size: 17px;
       letter-spacing: 0.42em;
     }
 
@@ -220,50 +202,28 @@ body.portfolio-site:not(.home) .p-portfolio-header {
 }
 
 .portfolio-site .p-portfolio-section {
-  padding-block: 80px;
-
-  @include mq(md) {
-    padding-block: 112px;
-  }
-
-  @include mq(lg) {
-    padding-block: 128px;
-  }
+  padding-block: fluid(80px, 128px);
 
   &__title {
-    margin-block-end: 40px;
+    margin-block-end: fluid(40px, 64px);
     font-family: var(--portfolio-font);
-    font-size: 32px;
+    font-size: fluid(32px, 72px);
     font-weight: 300;
     line-height: 1.25;
     letter-spacing: 0.15em;
 
     @include mq(md) {
-      margin-block-end: 64px;
-      font-size: 48px;
       letter-spacing: 0.16em;
-    }
-
-    @include mq(lg) {
-      font-size: 72px;
     }
   }
 }
 
 .portfolio-site .p-portfolio-works {
-  padding-block-start: 56px;
-
-  @include mq(md) {
-    padding-block-start: 72px;
-  }
+  padding-block-start: fluid(56px, 72px);
 
   &__list {
     display: grid;
-    gap: 64px;
-
-    @include mq(md) {
-      gap: 88px;
-    }
+    gap: fluid(64px, 88px);
   }
 
   &__more {
@@ -279,17 +239,22 @@ body.portfolio-site:not(.home) .p-portfolio-header {
       min-height: 48px;
       padding-block: 8px;
       border-block-end: 1px solid #7c7c77;
-      font-size: 17px;
+      font-size: fluid(17px, 20px);
       letter-spacing: 0.04em;
 
       span[aria-hidden="true"] {
         display: inline-block;
-        transition: transform 0.25s ease;
       }
 
       @media (any-hover: hover) {
-        &:hover span[aria-hidden="true"] {
-          transform: translateX(4px);
+        span[aria-hidden="true"] {
+          transition: transform 0.25s ease;
+        }
+
+        &:hover {
+          span[aria-hidden="true"] {
+            transform: translateX(4px);
+          }
         }
       }
     }
@@ -339,12 +304,17 @@ body.portfolio-site:not(.home) .p-portfolio-header {
       height: 100%;
       object-fit: cover;
       object-position: top center;
-      transition: transform 0.7s ease;
     }
 
     @media (any-hover: hover) {
-      &:hover img {
-        transform: scale(1.03);
+      img {
+        transition: transform 0.7s ease;
+      }
+
+      &:hover {
+        img {
+          transform: scale(1.03);
+        }
       }
     }
   }
@@ -357,15 +327,11 @@ body.portfolio-site:not(.home) .p-portfolio-header {
 
   &__title {
     font-family: inherit;
-    font-size: clamp(28px, 2.7vw, 40px);
+    font-size: fluid(28px, 48px);
     font-weight: 300;
     line-height: 1.3;
     letter-spacing: 0.015em;
     overflow-wrap: anywhere;
-
-    @include mq(lg) {
-      font-size: clamp(40px, 3.4vw, 50px);
-    }
 
     a {
       display: inline-flex;
@@ -378,25 +344,17 @@ body.portfolio-site:not(.home) .p-portfolio-header {
   &__type {
     margin-block-start: 10px;
     color: var(--portfolio-muted);
-    font-size: 19px;
+    font-size: fluid(19px, 24px);
     line-height: 1.5;
     letter-spacing: 0.025em;
-
-    @include mq(lg) {
-      font-size: 24px;
-    }
   }
 
   &__technology {
     margin-block-start: 12px;
     color: var(--portfolio-muted);
-    font-size: 15px;
+    font-size: fluid(15px, 21px);
     line-height: 1.7;
     letter-spacing: 0.01em;
-
-    @include mq(lg) {
-      font-size: 21px;
-    }
   }
 
   &__link {
@@ -404,25 +362,24 @@ body.portfolio-site:not(.home) .p-portfolio-header {
     gap: 16px;
     align-items: center;
     min-height: 44px;
-    margin-block-start: 22px;
+    margin-block-start: fluid(22px, 36px);
     padding-block: 6px;
     border-block-end: 1px solid #7c7c77;
-    font-size: 17px;
+    font-size: fluid(17px, 24px);
     line-height: 1.6;
     letter-spacing: 0.01em;
-    transition: opacity 0.25s ease;
 
     span[aria-hidden="true"] {
       display: inline-block;
-      transition: transform 0.25s ease;
-    }
-
-    @include mq(lg) {
-      margin-block-start: 36px;
-      font-size: 24px;
     }
 
     @media (any-hover: hover) {
+      transition: opacity 0.25s ease;
+
+      span[aria-hidden="true"] {
+        transition: transform 0.25s ease;
+      }
+
       &:hover {
         opacity: 0.6;
 
@@ -437,7 +394,7 @@ body.portfolio-site:not(.home) .p-portfolio-header {
     margin-block-start: 12px;
     color: var(--portfolio-muted);
     font-family: var(--portfolio-japanese);
-    font-size: 11px;
+    font-size: fluid(11px, 12px);
     line-height: 1.8;
   }
 }
@@ -459,7 +416,7 @@ body.portfolio-site:not(.home) .p-portfolio-header {
     li {
       padding-block: 14px;
       border-block-end: 1px solid #deded7;
-      font-size: clamp(22px, 2.6vw, 34px);
+      font-size: fluid(22px, 34px);
       font-weight: 300;
       line-height: 1.5;
       letter-spacing: 0.025em;
@@ -471,7 +428,7 @@ body.portfolio-site:not(.home) .p-portfolio-header {
       margin-block-start: 8px;
       color: var(--portfolio-muted);
       font-family: var(--portfolio-japanese);
-      font-size: 12px;
+      font-size: fluid(12px, 13px);
       font-weight: 400;
       line-height: 1.8;
       letter-spacing: 0.04em;
@@ -495,7 +452,7 @@ body.portfolio-site:not(.home) .p-portfolio-header {
 
     h3 {
       font-family: var(--portfolio-japanese);
-      font-size: 24px;
+      font-size: fluid(24px, 28px);
       font-weight: 400;
       line-height: 1.8;
       letter-spacing: 0.08em;
@@ -503,7 +460,7 @@ body.portfolio-site:not(.home) .p-portfolio-header {
 
     p {
       margin-block-start: 8px;
-      font-size: 15px;
+      font-size: fluid(15px, 16px);
       line-height: 1.6;
       letter-spacing: 0.08em;
     }
@@ -525,7 +482,7 @@ body.portfolio-site:not(.home) .p-portfolio-header {
   &__body {
     min-width: 0;
     font-family: var(--portfolio-japanese);
-    font-size: 14px;
+    font-size: fluid(14px, 15px);
     font-weight: 400;
     line-height: 2.15;
     letter-spacing: 0.045em;
@@ -533,7 +490,6 @@ body.portfolio-site:not(.home) .p-portfolio-header {
     @include mq(md) {
       grid-column: 2;
       grid-row: 1 / span 2;
-      font-size: 15px;
     }
 
     p + p {
@@ -546,13 +502,13 @@ body.portfolio-site:not(.home) .p-portfolio-header {
     padding-block-start: 24px;
     border-block-start: 1px solid #deded7;
     font-family: var(--portfolio-japanese);
-    font-size: 12px;
+    font-size: fluid(12px, 13px);
     line-height: 1.9;
 
     span {
       margin-inline-end: 16px;
       font-family: var(--portfolio-font);
-      font-size: 15px;
+      font-size: fluid(15px, 16px);
       letter-spacing: 0.04em;
     }
   }
@@ -561,14 +517,10 @@ body.portfolio-site:not(.home) .p-portfolio-header {
 .portfolio-site .p-portfolio-contact {
   position: relative;
   overflow: hidden;
-  padding-block: 88px 100px;
+  padding-block: fluid(88px, 128px) fluid(100px, 144px);
   background-color: var(--portfolio-night);
   color: #f4f4f0;
   isolation: isolate;
-
-  @include mq(md) {
-    padding-block: 128px 144px;
-  }
 
   .l-portfolio-inner {
     position: relative;
@@ -582,7 +534,7 @@ body.portfolio-site:not(.home) .p-portfolio-header {
   &__text {
     max-width: 560px;
     font-family: var(--portfolio-japanese);
-    font-size: 14px;
+    font-size: fluid(14px, 16px);
     font-weight: 400;
     line-height: 2;
     letter-spacing: 0.04em;
@@ -597,19 +549,23 @@ body.portfolio-site:not(.home) .p-portfolio-header {
     margin-block-start: 40px;
     padding-block: 8px;
     border-block-end: 1px solid rgb(244 244 240 / 55%);
-    font-size: clamp(24px, 4vw, 48px);
+    font-size: fluid(24px, 48px);
     font-weight: 300;
     line-height: 1.4;
     letter-spacing: 0.025em;
     overflow-wrap: anywhere;
-    transition: opacity 0.25s ease;
 
     span[aria-hidden="true"] {
       display: inline-block;
-      transition: transform 0.25s ease;
     }
 
     @media (any-hover: hover) {
+      transition: opacity 0.25s ease;
+
+      span[aria-hidden="true"] {
+        transition: transform 0.25s ease;
+      }
+
       &:hover {
         opacity: 0.65;
 
@@ -624,7 +580,7 @@ body.portfolio-site:not(.home) .p-portfolio-header {
     margin-block-start: 24px;
     color: #d2d2cc;
     font-family: var(--portfolio-japanese);
-    font-size: 12px;
+    font-size: fluid(12px, 13px);
     line-height: 1.9;
   }
 }
@@ -633,7 +589,7 @@ body.portfolio-site:not(.home) .p-portfolio-header {
   padding-block: 28px;
   background-color: var(--portfolio-night);
   color: #c9c9c3;
-  font-size: 11px;
+  font-size: fluid(11px, 12px);
   line-height: 1.8;
   letter-spacing: 0.08em;
 
@@ -666,7 +622,7 @@ body.portfolio-site:not(.home) .p-portfolio-header {
     align-items: center;
     margin-block-end: 32px;
     color: var(--portfolio-muted);
-    font-size: 13px;
+    font-size: fluid(13px, 14px);
     line-height: 1.8;
 
     a {
@@ -679,7 +635,7 @@ body.portfolio-site:not(.home) .p-portfolio-header {
   &__title {
     max-width: 960px;
     font-family: var(--portfolio-font);
-    font-size: clamp(36px, 6vw, 72px);
+    font-size: fluid(36px, 72px);
     font-weight: 300;
     line-height: 1.2;
     letter-spacing: 0.035em;
@@ -689,7 +645,7 @@ body.portfolio-site:not(.home) .p-portfolio-header {
   &__subtitle {
     margin-block-start: 16px;
     color: var(--portfolio-muted);
-    font-size: 20px;
+    font-size: fluid(20px, 24px);
     line-height: 1.6;
     letter-spacing: 0.025em;
   }
@@ -698,7 +654,7 @@ body.portfolio-site:not(.home) .p-portfolio-header {
     margin-block-start: 24px;
     color: var(--portfolio-muted);
     font-family: var(--portfolio-japanese);
-    font-size: 12px;
+    font-size: fluid(12px, 13px);
     font-weight: 400;
     line-height: 1.9;
   }
@@ -708,7 +664,7 @@ body.portfolio-site:not(.home) .p-portfolio-header {
     grid-template-columns: 100px minmax(0, 1fr);
     gap: 16px 24px;
     margin: 40px 0;
-    font-size: 15px;
+    font-size: fluid(15px, 16px);
     line-height: 1.8;
 
     @include mq(md) {
@@ -748,14 +704,10 @@ body.portfolio-site:not(.home) .p-portfolio-header {
     width: min(800px, 100%);
     margin-inline: auto;
     font-family: var(--portfolio-japanese);
-    font-size: 14px;
+    font-size: fluid(14px, 15px);
     font-weight: 400;
     line-height: 2.1;
     letter-spacing: 0.035em;
-
-    @include mq(md) {
-      font-size: 15px;
-    }
 
     > section + section {
       margin-block-start: 48px;
@@ -764,7 +716,7 @@ body.portfolio-site:not(.home) .p-portfolio-header {
     h2 {
       margin-block-end: 20px;
       font-family: var(--portfolio-font);
-      font-size: 28px;
+      font-size: fluid(28px, 32px);
       font-weight: 300;
       line-height: 1.5;
       letter-spacing: 0.04em;
@@ -772,7 +724,7 @@ body.portfolio-site:not(.home) .p-portfolio-header {
 
     h3 {
       margin-block: 24px 12px;
-      font-size: 18px;
+      font-size: fluid(18px, 20px);
       font-weight: 400;
     }
 
@@ -804,7 +756,7 @@ body.portfolio-site:not(.home) .p-portfolio-header {
     margin-block-start: 80px;
     padding-block-start: 28px;
     border-block-start: 1px solid #deded7;
-    font-size: 17px;
+    font-size: fluid(17px, 20px);
     line-height: 1.8;
 
     a {
@@ -823,7 +775,7 @@ body.portfolio-site:not(.home) .p-portfolio-header {
   padding-block: 80px;
 
   h1 {
-    font-size: 40px;
+    font-size: fluid(32px, 40px);
     font-weight: 300;
     line-height: 1.4;
     letter-spacing: 0.08em;
@@ -832,7 +784,7 @@ body.portfolio-site:not(.home) .p-portfolio-header {
   p {
     margin-block-start: 24px;
     font-family: var(--portfolio-japanese);
-    font-size: 14px;
+    font-size: fluid(14px, 15px);
     line-height: 2;
   }
 

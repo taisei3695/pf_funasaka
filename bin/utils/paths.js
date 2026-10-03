@@ -3,7 +3,7 @@
  */
 import { fileURLToPath } from "node:url";
 import { resolve, dirname, sep } from "path";
-import { resolveThemeConfig, validateThemeSlug } from "./project-config.js";
+import { buildThemeConfig, assertValidThemeSlug } from "./project-config.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -12,9 +12,9 @@ const __dirname = dirname(__filename);
 export const projectRoot = resolve(__dirname, "..", "..");
 
 // テーマ名（config/project.json の themeSlug を正本にし、未作成時のみフォルダ名へフォールバック）
-export const THEME_NAME = resolveThemeConfig().themeSlug;
+export const THEME_NAME = buildThemeConfig().themeSlug;
 
-export { validateThemeSlug };
+export { assertValidThemeSlug };
 
 // よく使うパス
 export const paths = {
@@ -34,6 +34,6 @@ export const paths = {
  * @param {string} p - 変換対象のパス
  * @returns {string} POSIX形式に変換されたパス
  */
-export function toPosixPath(p) {
+export function convertToPosixPath(p) {
   return p.split(sep).join("/");
 }

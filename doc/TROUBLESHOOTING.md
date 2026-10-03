@@ -164,7 +164,7 @@ unable to get image 'mariadb:lts': Cannot connect to the Docker daemon at unix:/
 **解決方法**:
 
 1. 画像の配置場所を確認: `src/assets/images/`
-2. WordPress開発時は、PHPから画像を読み込む場合は`img_path()`関数を使用
+2. WordPress開発時は、PHPから画像URLを出力する場合は`print_image_url()`関数を使用
 3. ビルド後に画像が出力されているか確認（`wordpress/themes/{THEME_NAME}/assets/images/`）
 
 ## プラグインがインストールされない

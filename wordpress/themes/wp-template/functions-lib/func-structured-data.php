@@ -14,12 +14,12 @@ function get_simple_structured_data_config()
   ]);
 }
 
-function add_simple_structured_data()
+function print_simple_structured_data()
 {
-  if ((function_exists("portfolio_private_is_request") && portfolio_private_is_request()) || is_page("private-works")) {
+  if ((function_exists("portfolio_is_private_request") && portfolio_is_private_request()) || is_page("private-works")) {
     return;
   }
-  if (is_singular("works") && (!function_exists("portfolio_work_is_public") || !portfolio_work_is_public(get_queried_object_id()))) {
+  if (is_singular("works") && (!function_exists("portfolio_is_public_work") || !portfolio_is_public_work(get_queried_object_id()))) {
     return;
   }
   $config = get_simple_structured_data_config();
@@ -43,23 +43,23 @@ function add_simple_structured_data()
       "author" => ["@id" => home_url("/#person")],
     ];
   } elseif (is_singular()) {
-    $page = add_page_structured_data($config);
+    $page = build_page_structured_data($config);
     if ($page) {
       $data[] = $page;
     }
   }
   echo '<script type="application/ld+json">' . wp_json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_HEX_APOS) . "</script>" . PHP_EOL;
 }
-add_action("wp_head", "add_simple_structured_data", 20);
+add_action("wp_head", "print_simple_structured_data", 20);
 
-function add_page_structured_data($config)
+function build_page_structured_data($config)
 {
   $post = get_post();
   if (!$post || $post->post_name === "private-works") {
     return null;
   }
   $is_work = $post->post_type === "works";
-  if ($is_work && !portfolio_work_is_public($post->ID)) {
+  if ($is_work && !portfolio_is_public_work($post->ID)) {
     return null;
   }
   $page = [

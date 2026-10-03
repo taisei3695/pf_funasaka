@@ -16,7 +16,7 @@ const project_config_path = resolve(project_root, "config/project.json");
  * @param {string} name - テーマスラッグ
  * @returns {string} 検証済みのテーマスラッグ
  */
-export function validateThemeSlug(name) {
+export function assertValidThemeSlug(name) {
   if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(name)) {
     throw new Error(`テーマスラッグ「${name}」は使用できません（半角英数・ハイフン・アンダースコア・ドットのみ、先頭は英数字）。config/project.json の themeSlug を修正してください。`);
   }
@@ -33,7 +33,7 @@ export function validateThemeSlug(name) {
  * @param {string} theme_slug - テーマスラッグ
  * @returns {string} 表示用テーマ名
  */
-export function createThemeName(theme_slug) {
+export function generateThemeName(theme_slug) {
   return theme_slug
     .split(/[-_]+/)
     .filter(Boolean)
@@ -45,7 +45,7 @@ export function createThemeName(theme_slug) {
  * config/project.json を読み込む
  * @returns {object|null} project.json の内容。存在しない場合は null
  */
-export function loadProjectConfig() {
+export function readProjectConfig() {
   if (!existsSync(project_config_path)) {
     return null;
   }
@@ -57,25 +57,25 @@ export function loadProjectConfig() {
  * テーマ設定を解決する
  * @returns {{ themeSlug: string, themeName: string, textDomain: string, source: "config"|"basename" }}
  */
-export function resolveThemeConfig() {
-  const project_config = loadProjectConfig();
+export function buildThemeConfig() {
+  const project_config = readProjectConfig();
 
   if (project_config) {
     if (!project_config.themeSlug) {
       throw new Error("config/project.json の themeSlug は必須です。");
     }
 
-    const theme_slug = validateThemeSlug(project_config.themeSlug);
+    const theme_slug = assertValidThemeSlug(project_config.themeSlug);
 
     return {
       themeSlug: theme_slug,
-      themeName: project_config.themeName || createThemeName(theme_slug),
+      themeName: project_config.themeName || generateThemeName(theme_slug),
       textDomain: project_config.textDomain || theme_slug,
       source: "config",
     };
   }
 
-  const theme_slug = validateThemeSlug(basename(project_root));
+  const theme_slug = assertValidThemeSlug(basename(project_root));
 
   return {
     themeSlug: theme_slug,

@@ -4,8 +4,8 @@
 
 import { watch } from "chokidar";
 import { resolve, relative } from "path";
-import { paths, projectRoot, toPosixPath } from "./utils/paths.js";
-import { log, error } from "./utils/logger.js";
+import { paths, projectRoot, convertToPosixPath } from "./utils/paths.js";
+import { log, logError } from "./utils/logger.js";
 import { touchFile } from "./utils/fs-utils.js";
 
 const ROOT = projectRoot;
@@ -17,7 +17,7 @@ async function touchStyle(reason = "") {
     await touchFile(STYLE_ENTRY);
     log("watch-scss", `style.scss touched${reason ? ` (${reason})` : ""}`);
   } catch (e) {
-    error("watch-scss", "Touch failed", e);
+    logError("watch-scss", "Touch failed", e);
   }
 }
 
@@ -26,23 +26,23 @@ async function main() {
   await touchStyle("startup");
 
   const watcher = watch(
-    TARGET_DIRS.map(dir => `${toPosixPath(dir)}/**/*.scss`),
+    TARGET_DIRS.map(dir => `${convertToPosixPath(dir)}/**/*.scss`),
     {
       ignoreInitial: true,
     },
   );
 
-  const onAdd = async filePath => {
+  const handleScssAdded = async filePath => {
     log("watch-scss", `File added: ${relative(ROOT, filePath)}`);
     await touchStyle("add");
   };
-  const onUnlink = async filePath => {
+  const handleScssRemoved = async filePath => {
     log("watch-scss", `File removed: ${relative(ROOT, filePath)}`);
     await touchStyle("unlink");
   };
 
-  watcher.on("add", onAdd);
-  watcher.on("unlink", onUnlink);
+  watcher.on("add", handleScssAdded);
+  watcher.on("unlink", handleScssRemoved);
 }
 
 main();

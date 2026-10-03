@@ -11,7 +11,7 @@ const activeAnimations = new WeakMap();
 
 // === ユーティリティ関数 ===
 
-function animate(element, updateFn, completeFn = () => {}, duration = ANIMATION.DURATION) {
+function runAnimation(element, updateFn, completeFn = () => {}, duration = ANIMATION.DURATION) {
   const prevState = activeAnimations.get(element);
   if (prevState) {
     prevState.cancelled = true;
@@ -24,7 +24,7 @@ function animate(element, updateFn, completeFn = () => {}, duration = ANIMATION.
     rafId: 0,
   };
 
-  function frame(timestamp) {
+  function updateAnimationFrame(timestamp) {
     if (state.cancelled) return;
     if (!start) start = timestamp;
     const progress = timestamp - start;
@@ -33,18 +33,18 @@ function animate(element, updateFn, completeFn = () => {}, duration = ANIMATION.
     updateFn(ratio);
 
     if (ratio < 1) {
-      state.rafId = requestAnimationFrame(frame);
+      state.rafId = requestAnimationFrame(updateAnimationFrame);
     } else {
       activeAnimations.delete(element);
       completeFn();
     }
   }
 
-  state.rafId = requestAnimationFrame(frame);
+  state.rafId = requestAnimationFrame(updateAnimationFrame);
   activeAnimations.set(element, state);
 }
 
-function throttle(callback, delay = 100) {
+function debounce(callback, delay = 100) {
   let timeoutId;
   return function () {
     if (timeoutId) clearTimeout(timeoutId);
@@ -55,7 +55,7 @@ function throttle(callback, delay = 100) {
   };
 }
 
-function rememberDisplay(element) {
+function ensureOriginalDisplay(element) {
   if (!element.dataset.originalDisplay) {
     const computedDisplay = window.getComputedStyle(element).display;
     if (computedDisplay && computedDisplay !== "none") {
@@ -65,7 +65,7 @@ function rememberDisplay(element) {
 }
 
 function showElement(element) {
-  rememberDisplay(element);
+  ensureOriginalDisplay(element);
   element.style.display = element.dataset.originalDisplay || "block";
 }
 
@@ -101,7 +101,7 @@ function fadeIn(element, duration = ANIMATION.DURATION) {
   const startOpacity = parseFloat(window.getComputedStyle(element).opacity) || 0;
   element.style.opacity = String(startOpacity);
 
-  animate(
+  runAnimation(
     element,
     ratio => {
       element.style.opacity = String(startOpacity + (1 - startOpacity) * ratio);
@@ -114,10 +114,10 @@ function fadeIn(element, duration = ANIMATION.DURATION) {
 }
 
 function fadeOut(element, duration = ANIMATION.DURATION) {
-  rememberDisplay(element);
+  ensureOriginalDisplay(element);
   const startOpacity = parseFloat(window.getComputedStyle(element).opacity) || 1;
 
-  animate(
+  runAnimation(
     element,
     ratio => {
       element.style.opacity = String(startOpacity * (1 - ratio));
@@ -175,7 +175,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // タブレットサイズ以上にリサイズした時にドロワーを閉じる
     window.addEventListener(
       "resize",
-      throttle(() => {
+      debounce(() => {
         if (window.matchMedia(`(min-width: ${BREAKPOINTS.TABLET}px)`).matches) {
           if (hamburger.classList.contains("is-open")) {
             hamburger.classList.remove("is-open");

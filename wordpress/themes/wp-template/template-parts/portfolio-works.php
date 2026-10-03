@@ -2,7 +2,7 @@
   <div class="l-portfolio-inner">
     <h2 id="works-title" class="p-portfolio-section__title js-fade-up">WORKS</h2>
     <div class="p-portfolio-works__list">
-      <?php foreach (portfolio_public_works(3) as $work_post) {
+      <?php foreach (portfolio_list_public_works(3) as $work_post) {
         get_template_part("template-parts/portfolio-work-card", null, ["id" => $work_post->ID]);
       } ?>
     </div>

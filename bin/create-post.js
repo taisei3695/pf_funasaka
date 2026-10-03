@@ -1,7 +1,7 @@
 import readline from "readline";
 import { resolve } from "path";
-import { readJson, exists, writeFile, ensureDir } from "./utils/fs-utils.js";
-import { log, success, error } from "./utils/logger.js";
+import { readJson, isPathPresent, writeFile, ensureDir } from "./utils/fs-utils.js";
+import { log, logSuccess, logError } from "./utils/logger.js";
 import { projectRoot } from "./utils/paths.js";
 import { isWordPressEnvRunning, runWpCli } from "./utils/wp-env.js";
 
@@ -53,9 +53,9 @@ WP_CLI::log('CREATED_POST_ID:' . $post_id);
 WP_CLI::success('Post created.');
 `;
 
-function ensureWordPressEnvRunning() {
+function assertWordPressEnvRunning() {
   if (!isWordPressEnvRunning()) {
-    error(MODULE_NAME, "WordPress環境が起動していません。先に yarn wp-start を実行してください。");
+    logError(MODULE_NAME, "WordPress環境が起動していません。先に yarn wp-start を実行してください。");
     process.exit(1);
   }
 }
@@ -79,7 +79,7 @@ function askQuestion(rl, question) {
  * @param {string|Array<number|string>} categories - カテゴリID（配列またはカンマ区切り文字列）
  * @returns {string} カンマ区切りのカテゴリID文字列
  */
-function normalizeCategories(categories) {
+function formatCategoryIds(categories) {
   if (!categories) {
     return "";
   }
@@ -89,7 +89,7 @@ function normalizeCategories(categories) {
   return String(categories).trim();
 }
 
-function ensureEvalScript() {
+function writeEvalScript() {
   ensureDir(UPLOADS_DIR);
   writeFile(EVAL_PHP_PATH, EVAL_PHP_CONTENT);
 }
@@ -112,8 +112,8 @@ function createPost(options) {
     throw new Error("タイトルは必須です");
   }
 
-  ensureEvalScript();
-  const normalizedCategories = Array.isArray(categories) ? categories : normalizeCategories(categories);
+  writeEvalScript();
+  const normalizedCategories = Array.isArray(categories) ? categories : formatCategoryIds(categories);
   writePostDataFile({
     title,
     content,
@@ -133,7 +133,7 @@ function createPost(options) {
  * カテゴリ一覧を取得
  * @returns {Array<Object>} カテゴリリスト
  */
-function getCategories() {
+function listCategories() {
   try {
     const result = runWpCli(["term", "list", "category", "--format=json"]);
     return JSON.parse(result);
@@ -146,7 +146,7 @@ function getCategories() {
  * メイン処理
  */
 async function main() {
-  ensureWordPressEnvRunning();
+  assertWordPressEnvRunning();
 
   const rl = readline.createInterface({
     input: process.stdin,
@@ -159,7 +159,7 @@ async function main() {
     // タイトル入力
     const title = await askQuestion(rl, "タイトル: ");
     if (!title) {
-      error(MODULE_NAME, "タイトルが入力されていません");
+      logError(MODULE_NAME, "タイトルが入力されていません");
       rl.close();
       process.exit(1);
     }
@@ -187,7 +187,7 @@ async function main() {
     const status = statusMap[statusChoice] || "publish";
 
     // カテゴリ選択
-    const categories = getCategories();
+    const categories = listCategories();
     let categoryIds = "";
     if (categories.length > 0) {
       log(MODULE_NAME, "\n利用可能なカテゴリ:");
@@ -212,13 +212,13 @@ async function main() {
     });
 
     if (postId) {
-      success(MODULE_NAME, `投稿を作成しました！投稿ID: ${postId}`);
+      logSuccess(MODULE_NAME, `投稿を作成しました！投稿ID: ${postId}`);
       log(MODULE_NAME, `投稿URL: http://localhost:8888/?p=${postId}`);
     } else {
-      error(MODULE_NAME, "投稿の作成に失敗しました");
+      logError(MODULE_NAME, "投稿の作成に失敗しました");
     }
   } catch (err) {
-    error(MODULE_NAME, err.message, err);
+    logError(MODULE_NAME, err.message, err);
     process.exit(1);
   } finally {
     rl.close();
@@ -230,12 +230,12 @@ async function main() {
  * @param {string} jsonPath - JSONファイルのパス
  */
 function createPostsFromJson(jsonPath) {
-  ensureWordPressEnvRunning();
+  assertWordPressEnvRunning();
 
   const absolutePath = resolve(projectRoot, jsonPath);
 
-  if (!exists(absolutePath)) {
-    error(MODULE_NAME, `JSONファイルが見つかりません: ${jsonPath}`);
+  if (!isPathPresent(absolutePath)) {
+    logError(MODULE_NAME, `JSONファイルが見つかりません: ${jsonPath}`);
     process.exit(1);
   }
 
@@ -243,12 +243,12 @@ function createPostsFromJson(jsonPath) {
     const posts = readJson(absolutePath);
 
     if (!Array.isArray(posts)) {
-      error(MODULE_NAME, "JSONファイルは配列形式である必要があります");
+      logError(MODULE_NAME, "JSONファイルは配列形式である必要があります");
       process.exit(1);
     }
 
     if (posts.length === 0) {
-      error(MODULE_NAME, "JSONファイルに投稿データが含まれていません");
+      logError(MODULE_NAME, "JSONファイルに投稿データが含まれていません");
       process.exit(1);
     }
 
@@ -281,14 +281,14 @@ function createPostsFromJson(jsonPath) {
             postId,
             url: `http://localhost:8888/?p=${postId}`,
           });
-          success(MODULE_NAME, `  ✓ 作成成功 (ID: ${postId})`);
+          logSuccess(MODULE_NAME, `  ✓ 作成成功 (ID: ${postId})`);
         } else {
           results.failed.push({
             index: postNumber,
             title: post.title,
             error: "投稿IDの取得に失敗",
           });
-          error(MODULE_NAME, `  ✗ 作成失敗`);
+          logError(MODULE_NAME, `  ✗ 作成失敗`);
         }
       } catch (err) {
         results.failed.push({
@@ -296,7 +296,7 @@ function createPostsFromJson(jsonPath) {
           title: post.title,
           error: err.message,
         });
-        error(MODULE_NAME, `  ✗ エラー: ${err.message}`);
+        logError(MODULE_NAME, `  ✗ エラー: ${err.message}`);
       }
     });
 
@@ -323,7 +323,7 @@ function createPostsFromJson(jsonPath) {
       process.exit(1);
     }
   } catch (err) {
-    error(MODULE_NAME, `JSONファイルの読み込みエラー: ${err.message}`, err);
+    logError(MODULE_NAME, `JSONファイルの読み込みエラー: ${err.message}`, err);
     process.exit(1);
   }
 }
@@ -339,7 +339,7 @@ if (args.length === 0) {
   createPostsFromJson(args[0]);
 } else {
   // 簡易モード: yarn wp-post:create "タイトル" "本文"
-  ensureWordPressEnvRunning();
+  assertWordPressEnvRunning();
 
   const title = args[0];
   const content = args[1] || "";
@@ -352,13 +352,13 @@ if (args.length === 0) {
       status,
     });
     if (postId) {
-      success(MODULE_NAME, `投稿を作成しました！投稿ID: ${postId}`);
+      logSuccess(MODULE_NAME, `投稿を作成しました！投稿ID: ${postId}`);
       log(MODULE_NAME, `投稿URL: http://localhost:8888/?p=${postId}`);
     } else {
-      error(MODULE_NAME, "投稿の作成に失敗しました");
+      logError(MODULE_NAME, "投稿の作成に失敗しました");
     }
   } catch (err) {
-    error(MODULE_NAME, err.message, err);
+    logError(MODULE_NAME, err.message, err);
     process.exit(1);
   }
 }

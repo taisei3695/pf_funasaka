@@ -8,7 +8,7 @@ if (!defined("ABSPATH")) {
  */
 
 // 投稿タイプのラベル変更
-function change_post_labels()
+function set_post_labels()
 {
   global $wp_post_types;
 
@@ -25,7 +25,7 @@ function change_post_labels()
 }
 
 // 管理画面メニューのラベル変更
-function change_post_menu_labels()
+function set_post_menu_labels()
 {
   global $menu, $submenu;
 
@@ -34,14 +34,14 @@ function change_post_menu_labels()
   $submenu["edit.php"][10][0] = "新しいニュース";
 }
 
-add_action("init", "change_post_labels");
-add_action("admin_menu", "change_post_menu_labels");
+add_action("init", "set_post_labels");
+add_action("admin_menu", "set_post_menu_labels");
 
 /**
  * 通常投稿（post）のアーカイブを有効化し、スラッグを「news」に設定
  * これにより /news/ で archive-news.php が使用される
  */
-function enable_post_archive_with_slug($args, $post_type)
+function apply_post_archive_slug($args, $post_type)
 {
   if ($post_type === "post") {
     $args["has_archive"] = true;
@@ -52,4 +52,4 @@ function enable_post_archive_with_slug($args, $post_type)
   }
   return $args;
 }
-add_filter("register_post_type_args", "enable_post_archive_with_slug", 10, 2);
+add_filter("register_post_type_args", "apply_post_archive_slug", 10, 2);
