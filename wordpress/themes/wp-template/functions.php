@@ -33,7 +33,10 @@ get_template_part("functions-lib/func-url");
 // デフォルト投稿タイプのラベル変更
 get_template_part("functions-lib/func-add-posttype-post");
 
-// カスタム投稿タイプ（works 等）はプラグイン（CPT UI 等）で登録
+// Portfolio content and access boundaries are owned by this theme.
+get_template_part("functions-lib/func-works");
+get_template_part("functions-lib/func-private-works");
+get_template_part("functions-lib/func-portfolio");
 
 // 構造化データの設定（汎用化済み）
 get_template_part("functions-lib/func-structured-data");

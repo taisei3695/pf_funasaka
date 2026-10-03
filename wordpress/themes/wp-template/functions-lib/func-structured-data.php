@@ -3,175 +3,87 @@ if (!defined("ABSPATH")) {
   exit();
 }
 
-/**
- * シンプル構造化データ（JSON-LD）システム
- * 必要最小限の構造化データを出力
- */
-
-/**
- * 構造化データの基本設定
- * 必要に応じてここの値を直接変更してください
- */
+/** Public-only metadata; confidential projects never reach the document head. */
 function get_simple_structured_data_config()
 {
   return apply_filters("simple_structured_data_config", [
-    // 組織名（サイト名）
-    "organization_name" => get_bloginfo("name"),
-    // 組織のURL（サイトURL）
+    "organization_name" => "TAISEI FUNASAKA",
     "organization_url" => home_url("/"),
-    // 組織のロゴ画像URL（適宜パスを変更してください）
-    "organization_logo" => get_template_directory_uri() . "/assets/images/logo_vite.svg",
-    // パンくずリスト構造化データの出力フラグ
-    "enable_breadcrumbs" => true,
+    "organization_logo" => "",
+    "enable_breadcrumbs" => false,
   ]);
 }
 
-/**
- * 構造化データを出力
- */
 function add_simple_structured_data()
 {
-  $structured_data = [];
-  $config = get_simple_structured_data_config();
-
-  // Organization（組織情報）- 全ページ共通
-  // SEO効果：サイト運営者の信頼性向上
-  $organization = [
-    "@context" => "https://schema.org",
-    "@type" => "Organization",
-    "name" => $config["organization_name"],
-    "url" => $config["organization_url"],
-  ];
-
-  // ロゴがある場合は追加
-  if (!empty($config["organization_logo"])) {
-    $organization["logo"] = [
-      "@type" => "ImageObject",
-      "url" => $config["organization_logo"],
-    ];
+  if ((function_exists("portfolio_private_is_request") && portfolio_private_is_request()) || is_page("private-works")) {
+    return;
   }
-
-  $structured_data[] = $organization;
-
-  // WebSite（サイト情報）- トップページのみ
-  // SEO効果：サイト全体の概要を検索エンジンに伝達
+  if (is_singular("works") && (!function_exists("portfolio_work_is_public") || !portfolio_work_is_public(get_queried_object_id()))) {
+    return;
+  }
+  $config = get_simple_structured_data_config();
+  $person = [
+    "@context" => "https://schema.org",
+    "@type" => "Person",
+    "@id" => home_url("/#person"),
+    "name" => "舩坂 太成",
+    "alternateName" => $config["organization_name"],
+    "url" => $config["organization_url"],
+    "jobTitle" => "Web Coder / WordPress Developer",
+  ];
+  $data = [$person];
   if (is_front_page()) {
-    $website = [
+    $data[] = [
       "@context" => "https://schema.org",
       "@type" => "WebSite",
-      "name" => get_bloginfo("name"),
+      "name" => "TAISEI FUNASAKA — Portfolio",
       "url" => home_url("/"),
       "description" => get_bloginfo("description"),
-      "publisher" => [
-        "@type" => "Organization",
-        "name" => $config["organization_name"],
-      ],
+      "author" => ["@id" => home_url("/#person")],
     ];
-    $structured_data[] = $website;
-  }
-
-  // Article/WebPage（記事・ページ）- 個別ページ
-  // SEO効果：記事やページの詳細情報を検索エンジンに提供
-  if (is_singular()) {
-    $page_data = add_page_structured_data($config);
-    if ($page_data) {
-      $structured_data[] = $page_data;
+  } elseif (is_singular()) {
+    $page = add_page_structured_data($config);
+    if ($page) {
+      $data[] = $page;
     }
   }
-
-  // BreadcrumbList（パンくずリスト）- トップページ以外
-  // SEO効果：サイト構造の理解とナビゲーション向上
-  // Breadcrumb NavXTプラグインが有効な場合はプラグイン側で構造化データを自動出力するため、ここでは出力しない
-  // プラグインの設定（設定 → Breadcrumb NavXT）で構造化データの出力を有効にしてください
-
-  // JSON-LD形式で出力（headタグ内に挿入）
-  // Google推奨のJSON-LD形式で構造化データを出力
-  if (!empty($structured_data)) {
-    echo '<script type="application/ld+json">' . PHP_EOL;
-    echo json_encode($structured_data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) . PHP_EOL;
-    echo "</script>" . PHP_EOL;
-  }
+  echo '<script type="application/ld+json">' . wp_json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_HEX_APOS) . "</script>" . PHP_EOL;
 }
 add_action("wp_head", "add_simple_structured_data", 20);
 
-/**
- * ページの構造化データを生成
- */
 function add_page_structured_data($config)
 {
   $post = get_post();
-  if (!$post) {
+  if (!$post || $post->post_name === "private-works") {
     return null;
   }
-
-  $page_data = [
+  $is_work = $post->post_type === "works";
+  if ($is_work && !portfolio_work_is_public($post->ID)) {
+    return null;
+  }
+  $page = [
     "@context" => "https://schema.org",
-    "@type" => is_single() ? "Article" : "WebPage",
-    "headline" => get_the_title(),
-    "url" => get_permalink(),
-    "datePublished" => get_the_date("c"),
-    "dateModified" => get_the_modified_date("c"),
-    "author" => [
-      "@type" => "Organization",
-      "name" => $config["organization_name"],
-    ],
-    "publisher" => [
-      "@type" => "Organization",
-      "name" => $config["organization_name"],
-    ],
+    "@type" => $is_work ? "CreativeWork" : "WebPage",
+    "name" => get_the_title($post),
+    "url" => get_permalink($post),
+    "datePublished" => get_the_date("c", $post),
+    "dateModified" => get_the_modified_date("c", $post),
+    "creator" => ["@id" => home_url("/#person")],
   ];
-
-  // 抜粋または概要を説明として追加
-  // SEO効果：検索結果のスニペット表示改善
-  $description = get_the_excerpt();
-  if (empty($description)) {
-    $description = wp_trim_words(strip_tags(get_the_content()), 30);
-  }
+  $description = $is_work ? get_post_meta($post->ID, "works_overview", true) : get_the_excerpt($post);
   if ($description) {
-    $page_data["description"] = $description;
+    $page["description"] = wp_strip_all_tags($description);
   }
-
-  // アイキャッチ画像（OGP画像としても使用）
-  // SEO効果：検索結果やSNSシェア時の視覚的訴求力向上
-  if (has_post_thumbnail()) {
-    $thumbnail_url = wp_get_attachment_image_url(get_post_thumbnail_id(), "full");
-    if ($thumbnail_url) {
-      $page_data["image"] = [
-        "@type" => "ImageObject",
-        "url" => $thumbnail_url,
-      ];
+  if ($is_work && get_post_meta($post->ID, "works_origin", true) === "school_graduation") {
+    $page["educationalUse"] = "School Graduation Project";
+  }
+  $image_id = $is_work ? (int) get_post_meta($post->ID, "works_gallery", true) : get_post_thumbnail_id($post);
+  if ($image_id) {
+    $image = wp_get_attachment_image_url($image_id, "full");
+    if ($image) {
+      $page["image"] = $image;
     }
   }
-
-  return $page_data;
+  return $page;
 }
-
-/**
- * ========================================
- * カスタマイズ方法（このファイル内で完結）
- * ========================================
- *
- * 1. 基本設定の変更
- *    get_simple_structured_data_config() 関数内の値を直接編集
- *    例：organization_name を '株式会社サンプル' に変更
- *        organization_logo を '/images/logo.svg' に変更
- *
- * 2. フィルターを使用したカスタマイズ
- *    このファイルの最下部に以下のような関数を追加：
- *
- * function custom_structured_data_config($config) {
- *     $config['organization_name'] = '株式会社サンプル';
- *     $config['organization_logo'] = get_template_directory_uri() . '/images/logo.svg';
- *     $config['enable_breadcrumbs'] = false; // パンくず無効化
- *     return $config;
- * }
- * add_filter('simple_structured_data_config', 'custom_structured_data_config');
- *
- * ========================================
- * 出力される構造化データの種類
- * ========================================
- * - Organization: 組織情報（全ページ）
- * - WebSite: サイト情報（トップページのみ）
- * - Article/WebPage: 記事・ページ情報（個別ページ）
- * - BreadcrumbList: パンくずリスト（トップページ以外）
- */

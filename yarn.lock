@@ -3905,6 +3905,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"gsap@npm:^3.15.0":
+  version: 3.15.0
+  resolution: "gsap@npm:3.15.0"
+  checksum: 10c0/5d86de72cb0bd6b20502c34c329a83a7d679979731bb465164407b7a5225aa61d612beee740eea36258622897c116cd2ca35320d530b7cf68bad62522361fcf7
+  languageName: node
+  linkType: hard
+
 "has-flag@npm:^3.0.0":
   version: 3.0.0
   resolution: "has-flag@npm:3.0.0"
@@ -6795,6 +6802,7 @@ __metadata:
     eslint: "npm:8.56.0"
     eslint-config-prettier: "npm:9.1.0"
     glob: "npm:10.5.0"
+    gsap: "npm:^3.15.0"
     kiso.css: "npm:^1.1.4"
     postcss: "npm:^8.5.13"
     prettier: "npm:^3.8.3"

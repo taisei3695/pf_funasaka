@@ -1,170 +1,321 @@
 {
-    "key": "group_877134248a9c6",
-    "title": "制作実績設定",
-    "fields": [
-        {
-            "key": "field_32de524203bd8",
-            "label": "クライアント名",
-            "name": "works_client",
-            "aria-label": "",
-            "type": "text",
-            "instructions": "制作実績のクライアント名を入力してください",
-            "required": 0,
-            "conditional_logic": 0,
-            "wrapper": {
-                "width": "",
-                "class": "",
-                "id": ""
-            },
-            "default_value": "",
-            "maxlength": "",
-            "allow_in_bindings": 0,
-            "placeholder": "例：株式会社サンプル",
-            "prepend": "",
-            "append": ""
-        },
-        {
-            "key": "field_ea7c9e720f0cf",
-            "label": "制作期間",
-            "name": "works_period",
-            "aria-label": "",
-            "type": "text",
-            "instructions": "制作期間を入力してください（例：2024年1月〜2024年3月）",
-            "required": 0,
-            "conditional_logic": 0,
-            "wrapper": {
-                "width": "",
-                "class": "",
-                "id": ""
-            },
-            "default_value": "",
-            "maxlength": "",
-            "placeholder": "例：2024年1月〜2024年3月",
-            "prepend": "",
-            "append": "",
-            "allow_in_bindings": 0
-        },
-        {
-            "key": "field_2ccef63afe357",
-            "label": "使用技術",
-            "name": "works_technologies",
-            "aria-label": "",
-            "type": "checkbox",
-            "instructions": "使用した技術を選択してください（複数選択可）",
-            "required": 0,
-            "conditional_logic": 0,
-            "wrapper": {
-                "width": "",
-                "class": "",
-                "id": ""
-            },
-            "choices": {
-                "html": "HTML",
-                "css": "CSS",
-                "javascript": "JavaScript",
-                "php": "PHP",
-                "wordpress": "WordPress",
-                "react": "React",
-                "vue": "Vue.js",
-                "node": "Node.js",
-                "python": "Python",
-                "ruby": "Ruby",
-                "java": "Java",
-                "design": "デザイン"
-            },
-            "default_value": [],
-            "return_format": "value",
-            "allow_custom": 0,
-            "layout": "vertical",
-            "toggle": 0,
-            "allow_in_bindings": 0,
-            "save_custom": 0,
-            "custom_choice_button_text": "新規選択肢を追加"
-        },
-        {
-            "key": "field_6ca866c6fca79",
-            "label": "URL",
-            "name": "works_url",
-            "aria-label": "",
-            "type": "url",
-            "instructions": "制作物のURLを入力してください",
-            "required": 0,
-            "conditional_logic": 0,
-            "wrapper": {
-                "width": "",
-                "class": "",
-                "id": ""
-            },
-            "default_value": "",
-            "placeholder": "https:\/\/example.com",
-            "allow_in_bindings": 0
-        },
-        {
-            "key": "field_173ddf06747ba",
-            "label": "制作画像",
-            "name": "works_gallery",
-            "aria-label": "",
-            "type": "image",
-            "instructions": "制作実績の画像をアップロードしてください",
-            "required": 0,
-            "conditional_logic": 0,
-            "wrapper": {
-                "width": "",
-                "class": "",
-                "id": ""
-            },
-            "return_format": "array",
-            "library": "all",
-            "min_width": "",
-            "min_height": "",
-            "min_size": "",
-            "max_width": "",
-            "max_height": "",
-            "max_size": "",
-            "mime_types": "",
-            "allow_in_bindings": 0,
-            "preview_size": "medium"
-        },
-        {
-            "key": "field_17b8c702bbece",
-            "label": "制作内容の詳細",
-            "name": "works_description",
-            "aria-label": "",
-            "type": "wysiwyg",
-            "instructions": "制作内容の詳細を記述してください",
-            "required": 0,
-            "conditional_logic": 0,
-            "wrapper": {
-                "width": "",
-                "class": "",
-                "id": ""
-            },
-            "default_value": "",
-            "tabs": "all",
-            "toolbar": "full",
-            "media_upload": 1,
-            "delay": 0,
-            "allow_in_bindings": 0
-        }
-    ],
-    "location": [
+  "key": "group_877134248a9c6",
+  "title": "制作実績設定",
+  "fields": [
+    {
+      "key": "field_portfolio_visibility",
+      "label": "掲載範囲",
+      "name": "works_visibility",
+      "type": "select",
+      "instructions": "公開実績に掲載する作品だけ「公開実績」を選択してください。未設定の作品はサイトへ表示しません。「非公開実績」の画像は公開メディアライブラリへ置かず、専用保管領域を利用してください。",
+      "required": 1,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "choices": {
+        "public": "公開実績",
+        "private": "非公開実績（サーバーのBasic認証が必要）"
+      },
+      "default_value": "",
+      "allow_null": 1,
+      "multiple": 0,
+      "ui": 0,
+      "return_format": "value"
+    },
+    {
+      "key": "field_portfolio_subtitle",
+      "label": "サブタイトル",
+      "name": "works_subtitle",
+      "type": "text",
+      "instructions": "",
+      "required": 0,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "maxlength": 120
+    },
+    {
+      "key": "field_portfolio_project_type",
+      "label": "サイト種別",
+      "name": "works_project_type",
+      "type": "text",
+      "instructions": "",
+      "required": 1,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "placeholder": "例：Corporate Website"
+    },
+    {
+      "key": "field_portfolio_role",
+      "label": "担当範囲",
+      "name": "works_role",
+      "type": "text",
+      "instructions": "",
+      "required": 1,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "placeholder": "例：Coding / WordPress / JavaScript"
+    },
+    {
+      "key": "field_2ccef63afe357",
+      "label": "使用技術",
+      "name": "works_technologies",
+      "type": "checkbox",
+      "instructions": "",
+      "required": 0,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "choices": {
+        "html": "HTML",
+        "css": "CSS / Sass",
+        "javascript": "JavaScript",
+        "jquery": "jQuery",
+        "php": "PHP",
+        "wordpress": "WordPress",
+        "git": "Git",
+        "figma": "Figma",
+        "adobe_xd": "Adobe XD",
+        "react": "React",
+        "vue": "Vue.js",
+        "node": "Node.js",
+        "python": "Python",
+        "ruby": "Ruby",
+        "java": "Java",
+        "design": "デザイン"
+      },
+      "default_value": [],
+      "return_format": "value",
+      "layout": "horizontal",
+      "toggle": 0,
+      "allow_custom": 0,
+      "save_custom": 0
+    },
+    {
+      "key": "field_portfolio_origin",
+      "label": "制作区分",
+      "name": "works_origin",
+      "type": "select",
+      "instructions": "Next Realty / Kidsland / Valentine Rose は「スクール卒業制作」を選択してください。掲載許可がない案件は登録しないでください。",
+      "required": 0,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "choices": {
+        "school_graduation": "スクール卒業制作",
+        "client": "許可を得たクライアントワーク",
+        "personal": "自主制作"
+      },
+      "default_value": "",
+      "allow_null": 1,
+      "return_format": "value"
+    },
+    {
+      "key": "field_173ddf06747ba",
+      "label": "メイン画像（公開実績のみ）",
+      "name": "works_gallery",
+      "type": "image",
+      "instructions": "この画像は通常の公開メディアです。非公開実績の画像をここへアップロードしないでください。",
+      "required": 0,
+      "conditional_logic": [
         [
-            {
-                "param": "post_type",
-                "operator": "==",
-                "value": "works"
-            }
+          {
+            "field": "field_portfolio_visibility",
+            "operator": "==",
+            "value": "public"
+          }
         ]
-    ],
-    "menu_order": 0,
-    "position": "normal",
-    "style": "default",
-    "label_placement": "top",
-    "instruction_placement": "label",
-    "hide_on_screen": "",
-    "active": true,
-    "description": "制作実績の詳細情報を管理するフィールドグループです",
-    "show_in_rest": 0,
-    "display_title": "",
-    "modified": 1770195732
+      ],
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "return_format": "id",
+      "library": "all",
+      "preview_size": "medium",
+      "mime_types": "jpg,jpeg,png,webp,avif"
+    },
+    {
+      "key": "field_portfolio_private_image",
+      "label": "非公開画像の保管キー",
+      "name": "works_private_image_key",
+      "type": "text",
+      "instructions": "サーバーの専用保管領域に配置したファイル名を入力します（例：project-main.webp）。URLや /wp-content/uploads/ 内の画像を指定しないでください。保護設定前は画像を表示しません。",
+      "required": 0,
+      "conditional_logic": [
+        [
+          {
+            "field": "field_portfolio_visibility",
+            "operator": "==",
+            "value": "private"
+          }
+        ]
+      ],
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "placeholder": "project-main.webp"
+    },
+    {
+      "key": "field_portfolio_overview",
+      "label": "概要",
+      "name": "works_overview",
+      "type": "textarea",
+      "instructions": "",
+      "required": 0,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "rows": 4,
+      "new_lines": ""
+    },
+    {
+      "key": "field_portfolio_implementation",
+      "label": "実装内容",
+      "name": "works_implementation",
+      "type": "wysiwyg",
+      "instructions": "",
+      "required": 0,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "tabs": "all",
+      "toolbar": "basic",
+      "media_upload": 0,
+      "delay": 0
+    },
+    {
+      "key": "field_6ca866c6fca79",
+      "label": "公開サイトURL",
+      "name": "works_url",
+      "type": "url",
+      "instructions": "実際のURLがある場合のみ入力してください。未設定ではリンクを出力しません。",
+      "required": 0,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "placeholder": "https://example.com"
+    },
+    {
+      "key": "field_portfolio_demo_access_note",
+      "label": "公開デモの閲覧情報（任意）",
+      "name": "works_demo_access_note",
+      "type": "textarea",
+      "instructions": "公開許可がある制作実績のデモ閲覧情報だけを入力してください。この値は公開詳細ページへ表示します。Private Works用のID・Password、社外秘の認証情報を入力しないでください。",
+      "required": 0,
+      "conditional_logic": [
+        [
+          {
+            "field": "field_portfolio_visibility",
+            "operator": "==",
+            "value": "public"
+          }
+        ]
+      ],
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "rows": 3,
+      "new_lines": ""
+    },
+    {
+      "key": "field_32de524203bd8",
+      "label": "クライアント名（任意）",
+      "name": "works_client",
+      "type": "text",
+      "instructions": "",
+      "required": 0,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      }
+    },
+    {
+      "key": "field_ea7c9e720f0cf",
+      "label": "制作期間（任意）",
+      "name": "works_period",
+      "type": "text",
+      "instructions": "",
+      "required": 0,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      }
+    },
+    {
+      "key": "field_17b8c702bbece",
+      "label": "旧制作内容（既存データ用）",
+      "name": "works_description",
+      "type": "wysiwyg",
+      "instructions": "テンプレートの既存データを維持するための項目です。新しい実績では概要・実装内容を使用してください。",
+      "required": 0,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "tabs": "all",
+      "toolbar": "basic",
+      "media_upload": 0,
+      "delay": 0
+    }
+  ],
+  "location": [
+    [
+      {
+        "param": "post_type",
+        "operator": "==",
+        "value": "works"
+      }
+    ]
+  ],
+  "menu_order": 0,
+  "position": "normal",
+  "style": "default",
+  "label_placement": "top",
+  "instruction_placement": "label",
+  "hide_on_screen": ["the_content", "excerpt", "featured_image"],
+  "active": true,
+  "description": "ポートフォリオの実績・掲載範囲を管理します。非公開実績にはWebサーバーの認証と専用画像保管が必要です。",
+  "show_in_rest": 0,
+  "modified": 1791026752
 }

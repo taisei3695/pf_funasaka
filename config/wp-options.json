@@ -1,5 +1,8 @@
 {
   "options": {
+    "blogname": "TAISEI FUNASAKA | Portfolio",
+    "blogdescription": "舩坂太成のポートフォリオ",
+    "portfolio_contact_email": "funasaka195@gmail.com",
     "timezone_string": "Asia/Tokyo",
     "date_format": "Y-m-d",
     "time_format": "H:i",
@@ -13,13 +16,13 @@
   "posts_page": null,
   "pages": [
     {
-      "slug": "contact",
-      "title": "お問い合わせ",
+      "slug": "private-works",
+      "title": "Private Works",
       "content": ""
     }
   ],
-  "seed_posts_json": "post-data/posts-sample.json",
-  "seed_posts_if_empty": true,
+  "seed_posts_json": null,
+  "seed_posts_if_empty": false,
   "permalink_structure": "/%postname%/",
   "category_base": "",
   "tag_base": ""

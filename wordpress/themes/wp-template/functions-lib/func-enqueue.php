@@ -25,8 +25,7 @@ function add_vite_scripts()
       break;
   }
 
-  // Google Fonts（開発環境以外で読み込み）
-  wp_enqueue_style("google-fonts", "https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&family=Noto+Serif+JP:wght@200..900&display=swap", false);
+  // Portfolio typography is served locally through the Vite stylesheet.
 }
 
 /**

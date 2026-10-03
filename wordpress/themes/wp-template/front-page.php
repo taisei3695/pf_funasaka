@@ -1,8 +1,9 @@
 <?php get_header(); ?>
-
-<main class="l-main" id="main">
-  <?php get_template_part("template-parts/front-page/section-mv"); ?>
-  <?php get_template_part("template-parts/front-page/section-sample"); ?>
+<main id="main" class="l-main">
+  <?php get_template_part("template-parts/portfolio-hero"); ?>
+  <?php get_template_part("template-parts/portfolio-works"); ?>
+  <?php get_template_part("template-parts/portfolio-skills"); ?>
+  <?php get_template_part("template-parts/portfolio-about"); ?>
+  <?php get_template_part("template-parts/portfolio-contact"); ?>
 </main>
-
 <?php get_footer(); ?>

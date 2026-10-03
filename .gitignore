@@ -115,6 +115,8 @@ tramp
 .env.development.local
 .env.test.local
 .env.production.local
+# Private Works server credentials and machine-specific mounts
+.wp-env.override.json
 
 # ============================================
 # Testing / Coverage
@@ -173,6 +175,7 @@ wordpress/themes/*/.vite/
 # ビルド成果物（yarn build:wp で自動生成されるため。assets/images はデモ画像を追跡）
 wordpress/themes/*/assets/js/
 wordpress/themes/*/assets/styles/
+wordpress/themes/*/assets/*.woff2
 
 # ============================================
 # Husky
