@@ -1,4 +1,4 @@
-<section class="p-portfolio-hero" aria-label="TAISEI FUNASAKA PORTFOLIO">
+<section id="portfolio-hero" class="p-portfolio-hero" aria-label="TAISEI FUNASAKA PORTFOLIO">
   <?php get_template_part("template-parts/portfolio-lights"); ?>
   <div class="p-portfolio-hero__type">
     <h1 class="p-portfolio-hero__name">

@@ -16,11 +16,25 @@ TOPは公開実績の新着3件を取得します。一覧と取得ヘルパー�
 
 ## アニメーションと表示
 
-GSAPとScrollTriggerをViteのJavaScriptエントリへ組み込みました。FVの文字は行単位で順に表示し、スクロールに合わせて文字と光を少し上へ動かします。作品画像はマスクと弱い拡大縮小で表示し、デスクトップでは小さな移動を加えます。Skillsは軽いstagger、AboutはFade Up、リンクと画像は小さなhover変化を使用します。
+GSAPとScrollTriggerをViteのJavaScriptエントリへ組み込みました。FVの文字は行単位で順に表示し、スクロールに合わせて文字と光を少し上へ動かします。作品画像はマスクと弱い拡大縮小で表示し、デスクトップでは小さな移動を加えます。Skillsの項目は軽いstagger、Aboutの本文はFade Upで表示します。
 
-光は透明な単一光源のWebPを14列×7行（スマホは7列×7行）に配置し、GSAPで5種類の点灯と余韻をつくります。再生ごとに直前と異なる種類をランダムに選びます。画面外・非表示タブ・描画省略時には現在位置で停止し、可視になったときに再開します。画面幅や `prefers-reduced-motion` の変更に合わせて再設定し、動きを減らす設定では静止光と内容を表示状態に保ちます。調整方法と素材の記録は [light-motion.md](light-motion.md)、最新の画面確認は [design-qa.md](../design-qa.md) を参照してください。
+セクション見出しは文字ごとに0.6秒・開始間隔0.045秒で、左から順に光が点くように表示します。opacityのみを変え、文字とglyphをinline、単語をinline-block・nowrapにして位置と字間を保ちます。Works・Skills・Aboutは見出し下の光点cueと同じtimelineで同時に始め、ContactとWorks一覧の見出しはScrollTriggerで初回表示時に再生します。見出しのタグ・ID・Jostとfluid()の設定を維持し、分割した単語をaria-hidden、見出しのaria-labelを元の全文にして読み上げ名を保ちます。完了した見出しは再初期化で再演せず、cleanupでは元の子ノードとlabelを復元します。JavaScript無効・IntersectionObserver非対応・動きを減らす設定では原文を表示します。FVの名前・作品名・日本語の名前は既存構造のままです。
+
+作品画像リンクのhoverでは、既存の透明WebPを12pxで表示し、輪郭を0.65秒で1周します。View Project・All Works・Gmail・ヘッダーナビ・詳細ページの戻る／Contactリンクでは、同じWebPを10pxにして下線上を0.35秒で一度だけ流します。リンク下線の光源はbackground-positionで移動し、文字と光源の寸法を保ちます。hoverはany-hover: hoverの条件で有効にし、focusでは静止した輪郭・下線と既存のfocus-visibleを表示します。動きを減らす設定では移動を停止し、強制カラーでは光源を隠して通常の線とfocusを維持します。リンクのURL・操作・読み上げ名は維持しています。追加3演出はビルド・lint・制御試験43件とPC／スマホのブラウザー確認を完了しました。証跡と検証範囲は [design-qa.md](../design-qa.md) に記録しています。
+
+Aboutの右側には、1280px以上で8列×12段の光点イコライザーを表示します。初回は高さ0から0.79秒で初期高さへ立ち上げ、その後はspectrum（不規則な上下）、wave（横へ進む波）、ripple（中央から外へ広がる左右対称の波）、alternating（偶数列と奇数列が交互に高くなる）、sweep（左右を往復する細い山）、pulse（全列が同じタイミングで跳ねる）の6種類を再生します。直前の種類を除いてランダムに選び、3.68〜4.90秒の各周期の始点・終点を共通の初期高さへそろえて連続して切り替えます。
+
+1拍は0.24〜0.38秒で、上昇を0.192〜0.24秒、下降を拍全体で滑らかに補間し、固定した光点を下から順に点灯・減衰させます。列の時間差は初回の立ち上がりだけに使い、以後は列の開始時刻をそろえます。上昇を終えた列は拍の残りで頂点を保ち、拍と拍の間には休止を追加しません。本文の幅・左端は維持し、装飾との間隔を48px以上確保します。画面外・非表示タブ・描画省略時は停止し、狭い画面では非表示、動きを減らす設定では高さの異なる静止表示にします。
+
+FVとContactの光は透明な単一光源のWebPを14列×7行（スマホは7列×7行）に配置し、GSAPで5種類の点灯と余韻をつくります。再生ごとに直前と異なる種類をランダムに選びます。FVは`timeScale(1 / 0.85)`で周期を15%短縮し、再生時の周辺の通常opacityを0.28に増やしました。文字の背後は通常0.1・最大0.4を維持します。Contactは`timeScale(1 / 0.92)`で周期を8%短縮し、親opacityを0.70に増やしました。周辺の通常opacityは0.22のままとし、左揃えの本文・Gmailの背後は光量を抑えます。14列表示では中央の5行の左半分、7列表示では中央の5行の全列を抑え、右側または上下端に強い光を残します。Contactのpeakへ掛ける係数0.9も維持します。
+
+画面外・非表示タブ・描画省略時には現在位置で停止し、可視になったときに再開します。画面幅や `prefers-reduced-motion` の変更に合わせて再設定し、動きを減らす設定では静止光と内容を表示状態に保ちます。調整方法と素材の記録は [light-motion.md](light-motion.md)、最新の画面確認は [design-qa.md](../design-qa.md) を参照してください。
 
 スタイルには375pxを想定した左右20pxの余白、可変文字サイズ、リンクの44px以上のタップ領域、キーボード用のfocus-visibleを設定しています。実ブラウザでの結果は末尾に記録しています。
+
+Worksから詳細への画像遷移、FV／Contactのマウス付近の点灯、画面上端のスクロール進捗線を追加しました。画像遷移は独立したheadエントリ`portfolio-transition.js`で同一オリジンのView Transitionを使い、通常のWordPressリンクを維持します。読み込み済みの画像が画面内にある時は0.38秒でつなぎ、画面外の場合は短いフェードへ切り替えます。対応しないブラウザーと動きを減らす設定では通常の移動です。
+
+マウス反応と進捗線は`_portfolio-interaction.js`で管理します。マウスの追加光は別格子にして、既存のランダム点灯と干渉しないようにしました。文字背後の追加光量を抑え、タッチ操作では反応しません。非表示・画面外の更新と不要なRAFを止め、media変更・ページ移動・BFCache復元時に片付けと再設定を行います。進捗線は管理バーの高さに合わせ、短いページでは隠します。両装飾は動きを減らす設定と強制カラーで非表示です。詳しい仕様は [light-motion.md](light-motion.md)、最終検証は [design-qa.md](../design-qa.md) を参照してください。
 
 ## Worksの追加と編集
 
@@ -43,14 +57,14 @@ WordPress管理画面の「制作実績 → 新規追加」から登録します
 | 作品 | サイト種別 | 担当範囲 | 提供URL |
 |---|---|---|---|
 | Next Realty | Corporate Website | Coding / WordPress / JavaScript | [Next Realty](https://schiff.wpx.jp/nextrealty/?utm_source=mail&utm_medium=email&utm_campaign=pf001) |
-| Kidsland | School Website | Coding / WordPress | [Kidsland](https://schiff.wpx.jp/kidsland/?utm_source=mail&utm_medium=email&utm_campaign=pf001) |
-| Valentine Rose | Reservation Website | Coding / WordPress / JavaScript | [Valentine Rose](https://schiff.wpx.jp/valentine_rose/?utm_source=mail&utm_medium=email&utm_campaign=pf001) |
+| Kidsland | Kindergarten / Nursery Website | Coding / WordPress / JavaScript | [Kidsland](https://schiff.wpx.jp/kidsland/?utm_source=mail&utm_medium=email&utm_campaign=pf001) |
+| Valentine Rose | Beauty Salon Website | Coding / WordPress / JavaScript | [Valentine Rose](https://schiff.wpx.jp/valentine_rose/?utm_source=mail&utm_medium=email&utm_campaign=pf001) |
 
 この3件の公開デモ案内は、本人から公開許可を得た **閲覧用ID: demo / Password: demo** です。公開詳細ページに表示しています。ポートフォリオ自身のPrivate Worksを保護する資格情報とは別の情報です。
 
 Contactはフォームを使用せず、[funasaka195@gmail.com](mailto:funasaka195@gmail.com) へのmailtoリンクを設定しました。WordPressの `portfolio_contact_email` オプションに保存し、初期設定用の `config/wp-options.json` にも反映しています。既存の本番DBへ移行する場合は、このオプションまたは `wp-config.php` の `PORTFOLIO_CONTACT_EMAIL` を設定してください。
 
-Worksの画像は提供サイトを撮影した実際のスクリーンショットです。WordPressのメディア画像として登録し、画像の寸法とレスポンシブ画像を利用します。AboutのPCデスクとギターの写真はデザイン用の生成イメージで、本人の実際の作業環境を撮影した写真ではありません。画像の記録は [portfolio-images.md](portfolio-images.md) にあります。
+Worksの画像は提供サイトを撮影した実際のスクリーンショットです。WordPressのメディア画像として登録し、画像の寸法とレスポンシブ画像を利用します。Aboutは画像を外し、名前・肩書き・経歴・関心分野を文章で表示します。画面幅にかかわらず1列で、名前・肩書きの下に本文を配置します。見出し・光点・名前・本文はWorks・Skills・Contactと同じ左端へそろえ、名前・肩書き・本文の幅を45rem（標準フォント設定で720px）以内に抑えます。文章は左揃えで、経歴本文は2026年10月4日のユーザー指定の4段落を使用しています。以前の生成イメージは配信用アセットから外してローカルに保全しました。画像の記録は [portfolio-images.md](portfolio-images.md) にあります。
 
 ## Private Worksの保護
 
@@ -74,7 +88,7 @@ Worksの画像は提供サイトを撮影した実際のスクリーンショッ
 | ACF | 同テーマの `acf-json/group_877134248a9c6.json` | Works管理項目と掲載範囲 |
 | スタイル | `src/assets/styles/components/_c-portfolio-font.scss`、`_c-light-stage.scss`、`projects/_p-portfolio.scss` | フォント、光、ポートフォリオ全体のレイアウトと状態 |
 | JavaScript | `src/assets/js/script.js`、`_portfolio-animation.js` | GSAP、ScrollTrigger、光、Reveal、reduced-motion対応 |
-| 画像・フォント | `src/assets/images/portfolio-*.webp`、`src/assets/fonts/`、テーマ側の対応アセット、`wordpress/uploads/` | 実績スクリーンショット、About生成画像、Jost、公開メディア |
+| 画像・フォント | `src/assets/images/portfolio-*.webp`、`src/assets/fonts/`、テーマ側の対応アセット、`wordpress/uploads/` | 実績スクリーンショット、Jost、公開メディア |
 | 環境・運用 | `package.json`、`yarn.lock`、`.gitignore`、`config/wp-options.json`、`bin/seed-portfolio.php`、`bin/setup-private-works.js` | GSAP導入、再現用seed、ローカル認証・画像同期、除外設定 |
 | 記録 | `doc/portfolio-implementation.md`、`portfolio-images.md`、`portfolio-privacy-qa.md`、`private-works.md` | 実装、画像出典、保護検証、運用手順 |
 
@@ -128,7 +142,7 @@ WordPressは `http://localhost:8888/`、Viteは `http://localhost:5173/` です�
 
 現在の実績Overviewは「スクール卒業制作。」、Implementationの詳細は未入力です。実際の制作意図、担当範囲、WordPressの管理項目、JavaScriptの処理、工夫した点を各作品へ追記してください。未入力のImplementationは詳細ページへ表示しません。制作成果や担当内容を推測で追加していません。
 
-About画像は生成イメージのまま使用できます。本人の作業環境を伝えたい場合は実際の写真へ差し替えてください。本番ではWordPressのDB・画像の移行、サイトURL、Gmail設定、Basic認証・非公開画像領域を確認します。
+Aboutは画像なしで表示します。以前の生成イメージは配信用アセットから外し、原本とWebPをローカルの `work/` に保全しています。本番ではWordPressのDB・画像の移行、サイトURL、Gmail設定、Basic認証・非公開画像領域を確認します。
 
 ## 初期実装時のブラウザ確認（面状光の変更前）
 

@@ -22,7 +22,12 @@ $archive_url = $private ? home_url("/private-works/") : get_post_type_archive_li
       <?php if ($work["url"]): ?><dt>Website</dt><dd><a href="<?php echo esc_url($work["url"]); ?>" target="_blank" rel="noopener noreferrer">Visit Website <span aria-hidden="true">↗</span></a></dd><?php endif; ?>
     </dl>
     <?php if (!$private && !empty($work["demo_access_note"])): ?><p class="p-portfolio-detail__origin"><?php echo nl2br(esc_html($work["demo_access_note"])); ?></p><?php endif; ?>
-    <div class="p-portfolio-detail__image js-work-reveal"><?php echo portfolio_build_work_image($work_id, "full", ["sizes" => "(min-width: 1440px) 1280px, (min-width: 1024px) calc(100vw - 160px), calc(100vw - 40px)"]); ?></div>
+    <div id="portfolio-work-image-<?php echo esc_attr($work_id); ?>" class="p-portfolio-detail__image js-work-reveal" data-portfolio-transition-image data-portfolio-work-url="<?php echo esc_url(
+  $work["permalink"],
+); ?>"><?php echo portfolio_build_work_image($work_id, "full", [
+  "loading" => "eager",
+  "sizes" => "(min-width: 1440px) 1280px, (min-width: 1024px) calc(100vw - 160px), (min-width: 768px) calc(100vw - 96px), calc(100vw - 40px)",
+]); ?></div>
     <?php if ($work["demo_image"]): ?><p class="p-portfolio-detail__origin">画像はデザイン確認用の仮画像です。実際の制作画面へ差し替え予定です。</p><?php endif; ?>
     <div class="p-portfolio-detail__body">
       <?php if ($work["overview"]): ?><section><h2>Overview</h2><?php echo wp_kses_post(wpautop($work["overview"])); ?></section><?php endif; ?>

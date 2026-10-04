@@ -1,0 +1,76 @@
+@use "../global" as *;
+
+.portfolio-site .c-portfolio-progress {
+  --portfolio-progress-glow-size: #{fluid(10px, 12px)};
+  --portfolio-progress-light: 0.28;
+
+  position: fixed;
+  inset-inline: 0;
+  inset-block-start: var(--portfolio-progress-top, 0);
+  z-index: 30;
+  contain: layout style paint;
+  overflow: hidden;
+  height: 8px;
+  color: var(--portfolio-ink, #242424);
+  opacity: 0;
+  pointer-events: none;
+
+  &[data-portfolio-dark="true"] {
+    --portfolio-progress-light: 1;
+
+    color: var(--portfolio-paper, #fafaf8);
+  }
+
+  &.is-portfolio-progress-ready {
+    opacity: 1;
+  }
+
+  &[data-portfolio-scrollable="false"] {
+    opacity: 0;
+  }
+}
+
+.portfolio-site .c-portfolio-progress__track {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: currentcolor;
+    opacity: 0.18;
+  }
+}
+
+.portfolio-site .c-portfolio-progress__line {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background-color: currentcolor;
+  opacity: 0.8;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.portfolio-site .c-portfolio-progress__light {
+  position: absolute;
+  inset-block-start: calc(0.5px - var(--portfolio-progress-glow-size) / 2);
+  inset-inline-start: 0;
+  display: block;
+  width: var(--portfolio-progress-glow-size);
+  height: var(--portfolio-progress-glow-size);
+  background-image: url("../../images/light_strobe.webp");
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.85;
+  filter: grayscale(1) brightness(var(--portfolio-progress-light));
+}
+
+@media (prefers-reduced-motion: reduce), (forced-colors: active) {
+  .portfolio-site .c-portfolio-progress {
+    display: none;
+  }
+}

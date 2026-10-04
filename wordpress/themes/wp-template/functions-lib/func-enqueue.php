@@ -166,6 +166,95 @@ function apply_vite_module_attribute($tag, $handle, $src)
 }
 add_filter("script_loader_tag", "apply_vite_module_attribute", 10, 3);
 
+/** Register the small navigation entry in the head before the first rendered frame. */
+function portfolio_enqueue_transition_assets()
+{
+  $source = null;
+  $version = null;
+  $environment = get_asset_environment();
+  if ($environment === "dev") {
+    $manifest = read_vite_manifest();
+    if ($manifest && isset($manifest["url"], $manifest["inputs"]["portfolio-transition"])) {
+      $source = $manifest["url"] . $manifest["inputs"]["portfolio-transition"];
+    }
+  } elseif ($environment === "manifest") {
+    $manifest = read_build_manifest();
+    if ($manifest && isset($manifest["assets/js/portfolio-transition.js"]["file"])) {
+      $source = get_template_directory_uri() . "/" . $manifest["assets/js/portfolio-transition.js"]["file"];
+    }
+  } else {
+    $file = get_template_directory() . "/assets/js/portfolio-transition.js";
+    $version = find_file_version($file);
+    if ($version !== null) {
+      $source = get_template_directory_uri() . "/assets/js/portfolio-transition.js";
+    }
+  }
+  if ($source) {
+    wp_enqueue_script("portfolio-transition", $source, [], $version, false);
+  }
+}
+add_action("wp_enqueue_scripts", "portfolio_enqueue_transition_assets", 11);
+
+/** Render-blocking module execution ensures the pagereveal listener is already registered. */
+function portfolio_apply_transition_script_attributes($tag, $handle, $source)
+{
+  if ($handle === "portfolio-transition") {
+    return '<script type="module" async blocking="render" src="' . esc_url($source) . '"></script>';
+  }
+  return $tag;
+}
+add_filter("script_loader_tag", "portfolio_apply_transition_script_attributes", 11, 3);
+
+/** Reuse the rendered main image's source contract so responsive preload never requests a second candidate. */
+function portfolio_build_transition_image_preload($post_id)
+{
+  if (!class_exists("WP_HTML_Tag_Processor")) {
+    return "";
+  }
+  $image = portfolio_build_work_image($post_id, "full", [
+    "loading" => "eager",
+    "sizes" => "(min-width: 1440px) 1280px, (min-width: 1024px) calc(100vw - 160px), (min-width: 768px) calc(100vw - 96px), calc(100vw - 40px)",
+  ]);
+  $processor = new WP_HTML_Tag_Processor($image);
+  if (!$processor->next_tag("IMG")) {
+    return "";
+  }
+  $source = $processor->get_attribute("src");
+  if (!is_string($source) || !$source) {
+    return "";
+  }
+  $markup = '<link rel="preload" as="image" fetchpriority="high" href="' . esc_url($source) . '"';
+  foreach (["srcset" => "imagesrcset", "sizes" => "imagesizes"] as $image_attribute => $link_attribute) {
+    $value = $processor->get_attribute($image_attribute);
+    if (is_string($value) && $value) {
+      $markup .= " " . $link_attribute . '="' . esc_attr($value) . '"';
+    }
+  }
+  return $markup . ' media="(prefers-reduced-motion: no-preference)">' . "\n";
+}
+
+/** Expect only the first visible scene's markup; images and below-fold content are not awaited. */
+function portfolio_print_transition_render_expectation()
+{
+  $target = null;
+  if (is_front_page()) {
+    $target = "portfolio-hero";
+  } elseif (is_singular("works") && portfolio_find_work_data(get_queried_object_id())) {
+    $target = "portfolio-work-image-" . get_queried_object_id();
+    echo portfolio_build_transition_image_preload(get_queried_object_id());
+  } elseif (is_post_type_archive("works")) {
+    global $wp_query;
+    $first_post = $wp_query->posts[0] ?? null;
+    if ($first_post && portfolio_find_work_data($first_post->ID)) {
+      $target = "portfolio-work-image-" . $first_post->ID;
+    }
+  }
+  if ($target) {
+    echo '<link rel="expect" blocking="render" href="#' . esc_attr($target) . '" media="(prefers-reduced-motion: no-preference)">' . "\n";
+  }
+}
+add_action("wp_head", "portfolio_print_transition_render_expectation", 2);
+
 /**
  * Google Fonts最適化（プリコネクト）
  */

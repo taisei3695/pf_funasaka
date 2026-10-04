@@ -1,0 +1,52 @@
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+
+  ::view-transition-group(root),
+  ::view-transition-group(portfolio-work-image) {
+    animation-duration: 0.38s;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  ::view-transition-old(portfolio-work-image),
+  ::view-transition-new(portfolio-work-image) {
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    mix-blend-mode: normal;
+    animation-duration: 0.38s;
+  }
+}
+
+.portfolio-site .is-portfolio-transition-image {
+  content-visibility: visible !important;
+  visibility: visible !important;
+  clip-path: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+  view-transition-name: portfolio-work-image;
+}
+
+.portfolio-site .is-portfolio-transition-image img {
+  transform: none !important;
+}
+
+.portfolio-site .is-portfolio-transition-image::before,
+.portfolio-site .is-portfolio-transition-image::after {
+  opacity: 0 !important;
+  animation: none !important;
+}
+
+// Keep an already-revealed incoming image stable if the footer GSAP entry ran before pagereveal.
+.portfolio-site [data-portfolio-transition-image][data-portfolio-transition-revealed="true"] {
+  content-visibility: visible !important;
+  visibility: visible !important;
+  clip-path: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.portfolio-site [data-portfolio-transition-image][data-portfolio-transition-revealed="true"] img {
+  transform: none !important;
+}

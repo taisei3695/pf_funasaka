@@ -63,7 +63,11 @@ function portfolio_can_view_work($post_id)
   if (portfolio_is_public_work($post_id)) {
     return true;
   }
-  return get_post_type($post_id) === "works" && get_post_status($post_id) === "private" && portfolio_get_work_visibility($post_id) === "private" && function_exists("portfolio_is_private_request_authenticated") && portfolio_is_private_request_authenticated();
+  return get_post_type($post_id) === "works" &&
+    get_post_status($post_id) === "private" &&
+    portfolio_get_work_visibility($post_id) === "private" &&
+    function_exists("portfolio_is_private_request_authenticated") &&
+    portfolio_is_private_request_authenticated();
 }
 
 /** Public helpers return WP_Post objects, ordered by publication, newest first. */
@@ -158,23 +162,7 @@ function portfolio_build_work_image($post_id = 0, $size = "large", $attr = [])
   if (!in_array($filename, $allowed, true)) {
     return "";
   }
-  $path = get_theme_file_path("/assets/images/" . $filename);
-  $dimensions = is_file($path) ? wp_getimagesize($path) : false;
-  if (!$dimensions) {
-    return "";
-  }
-  $attributes = array_merge($attr, [
-    "src" => get_theme_file_uri("/assets/images/" . $filename),
-    "width" => (int) $dimensions[0],
-    "height" => (int) $dimensions[1],
-  ]);
-  $html = "<img";
-  foreach ($attributes as $name => $value) {
-    if (preg_match("/^(?:src|alt|width|height|loading|decoding|class|sizes|fetchpriority)$/", $name)) {
-      $html .= " " . $name . '="' . esc_attr($value) . '"';
-    }
-  }
-  return $html . " />";
+  return portfolio_build_theme_image($filename, $attr);
 }
 
 function portfolio_apply_work_permalink($url, $post)

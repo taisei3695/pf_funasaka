@@ -2,6 +2,8 @@
 import "kiso.css";
 import "./_viewport.js";
 import "./_portfolio-animation.js";
+import "./_portfolio-interaction.js";
+import "./_portfolio-navigation.js";
 
 // 開発環境でのみCSSをインポート（JS経由でスタイルを注入）
 if (import.meta.env.DEV) {

@@ -15,7 +15,8 @@ $samples = [
   [
     "slug" => "valentine-rose",
     "title" => "Valentine Rose",
-    "type" => "Reservation Website",
+    "type" => "Beauty Salon Website",
+    "overview" => "美容サロンのWebサイト。スクール卒業制作。",
     "role" => "Coding / WordPress / JavaScript",
     "technologies" => ["html", "css", "wordpress", "javascript"],
     "asset" => "portfolio-valentine-rose.webp",
@@ -24,9 +25,10 @@ $samples = [
   [
     "slug" => "kidsland",
     "title" => "Kidsland",
-    "type" => "School Website",
-    "role" => "Coding / WordPress",
-    "technologies" => ["html", "css", "wordpress"],
+    "type" => "Kindergarten / Nursery Website",
+    "overview" => "幼稚園・保育園のWebサイト。スクール卒業制作。",
+    "role" => "Coding / WordPress / JavaScript",
+    "technologies" => ["html", "css", "wordpress", "javascript"],
     "asset" => "portfolio-kidsland.webp",
     "url" => "https://schiff.wpx.jp/kidsland/?utm_source=mail&utm_medium=email&utm_campaign=pf001",
   ],
@@ -81,7 +83,7 @@ foreach ($samples as $sample) {
     "works_role" => $sample["role"],
     "works_technologies" => $sample["technologies"],
     "works_origin" => "school_graduation",
-    "works_overview" => "スクール卒業制作。",
+    "works_overview" => $sample["overview"] ?? "スクール卒業制作。",
     "works_implementation" => "",
     "works_url" => $sample["url"],
     // These are explicitly approved public demo access details, not Private Works credentials.

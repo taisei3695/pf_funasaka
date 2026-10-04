@@ -11,5 +11,6 @@
 
 <body <?php body_class("portfolio-site"); ?>>
   <?php wp_body_open(); ?>
+  <?php get_template_part("template-parts/portfolio-scroll-progress"); ?>
   <a class="c-skip-link" href="#main"><?php esc_html_e("本文へスキップ", "wp-template"); ?></a>
   <?php get_template_part("template-parts/header"); ?>

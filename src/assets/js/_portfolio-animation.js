@@ -1,7 +1,10 @@
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { createWebglLightStage } from "./_portfolio-webgl.js";
 
 gsap.registerPlugin(ScrollTrigger);
+
+const LIGHT_PEAK_INTENSITY = 1.25;
 
 function listLightPatterns(columns) {
   const reverse = Math.random() < 0.5;
@@ -14,40 +17,37 @@ function listLightPatterns(columns) {
   ];
 }
 
+function buildLightFadeProgress(progress) {
+  // Keep velocity and acceleration at zero where a light rises, peaks and settles.
+  return progress * progress * progress * (progress * (progress * 6 - 15) + 10);
+}
+
 function createLightSequence(stage) {
   const lights = [...stage.querySelectorAll(".c-light")].filter(light => getComputedStyle(light).display !== "none");
   const columns = Math.max(...lights.map(light => Number(light.dataset.lightColumn))) + 1;
-  const quiet = stage.classList.contains("c-light-stage--contact");
+  const contact = stage.classList.contains("c-light-stage--contact");
+  const base = contact ? 0.22 : 0.28;
   const patterns = listLightPatterns(columns);
   let activeIndex = -1;
   let playing = false;
 
   // Build a bounded set inside matchMedia's GSAP context. Only one timeline runs at a time.
   const sequences = patterns.map(pattern => {
-    const sequence = gsap.timeline({ paused: true, defaults: { ease: "sine.inOut" }, onComplete: playNextLightPattern });
+    const sequence = gsap.timeline({ paused: true, defaults: { ease: buildLightFadeProgress }, onComplete: playNextLightPattern }).timeScale(1 / (contact ? 0.7 : 0.64));
     lights.forEach(light => {
       const row = Number(light.dataset.lightRow);
       const column = Number(light.dataset.lightColumn);
-      const isBehindTitle = row >= 2 && row <= 4 && column >= columns * 0.2 && column <= columns * 0.8;
-      const base = isBehindTitle ? 0.1 : 0.22;
-      const peak = (isBehindTitle ? 0.4 : 1) * pattern.strength * (quiet ? 0.9 : 1);
+      const peak = LIGHT_PEAK_INTENSITY * pattern.strength * (contact ? 0.9 : 1);
       const start = pattern.buildStartTime(row, column);
 
-      sequence
-        .fromTo(light, { opacity: base, scale: 1 }, { opacity: peak, scale: isBehindTitle ? 1.05 : 1.2, duration: pattern.rise, immediateRender: false }, start)
-        .to(light, { opacity: base, scale: 1, duration: pattern.fade }, start + pattern.rise);
+      sequence.fromTo(light, { opacity: base, scale: 1 }, { opacity: peak, scale: 1.2, duration: pattern.rise, immediateRender: false }, start).to(light, { opacity: base, scale: 1, duration: pattern.fade }, start + pattern.rise);
     });
     // The quiet gap belongs to the timeline, so pausing also stops the next pattern's countdown.
-    sequence.to({}, { duration: 1.6 });
+    sequence.to({}, { duration: 0.9 });
     return sequence;
   });
 
-  lights.forEach(light => {
-    const row = Number(light.dataset.lightRow);
-    const column = Number(light.dataset.lightColumn);
-    const isBehindTitle = row >= 2 && row <= 4 && column >= columns * 0.2 && column <= columns * 0.8;
-    gsap.set(light, { opacity: isBehindTitle ? 0.1 : 0.22, scale: 1 });
-  });
+  gsap.set(lights, { opacity: base, scale: 1 });
 
   function playNextLightPattern() {
     if (!playing) return;
@@ -73,7 +73,76 @@ function createLightSequence(stage) {
   };
 }
 
-function createLightCueSequence(stage) {
+function createHeadingLetters(heading) {
+  const originalChildren = [...heading.childNodes];
+  const originalLabel = heading.getAttribute("aria-label");
+  const text = heading.textContent;
+  const fragment = document.createDocumentFragment();
+  const glyphs = [];
+  text
+    .split(/(\s+)/)
+    .filter(Boolean)
+    .forEach(part => {
+      if (/^\s+$/.test(part)) {
+        fragment.appendChild(document.createTextNode(part));
+        return;
+      }
+      const word = document.createElement("span");
+      word.className = "c-heading-word";
+      word.setAttribute("aria-hidden", "true");
+      [...part].forEach(character => {
+        const letter = document.createElement("span");
+        letter.className = "c-heading-letter";
+        const glyph = document.createElement("span");
+        glyph.className = "c-heading-letter__glyph";
+        glyph.textContent = character;
+        letter.appendChild(glyph);
+        word.appendChild(letter);
+        glyphs.push(glyph);
+      });
+      fragment.appendChild(word);
+    });
+  heading.setAttribute("aria-label", originalLabel ?? text.trim());
+  heading.replaceChildren(fragment);
+  return {
+    glyphs,
+    restore: () => {
+      heading.replaceChildren(...originalChildren);
+      if (originalLabel === null) heading.removeAttribute("aria-label");
+      else heading.setAttribute("aria-label", originalLabel);
+    },
+  };
+}
+
+function initHeadingReveals(revealedHeadings) {
+  const cues = new Map();
+  const restores = [];
+  // Cue playback uses viewport observation; keep its heading readable with the same fallback.
+  if (typeof IntersectionObserver !== "function") return { cues, restore: () => {} };
+  document.querySelectorAll(".p-portfolio-section__title").forEach(heading => {
+    if (revealedHeadings.has(heading)) return;
+    const { glyphs, restore } = createHeadingLetters(heading);
+    restores.push(restore);
+    const reveal = { glyphs, onComplete: () => revealedHeadings.add(heading) };
+    const cue = heading.nextElementSibling;
+    if (cue?.classList.contains("js-light-cue")) {
+      cues.set(cue, reveal);
+      return;
+    }
+    gsap.from(glyphs, {
+      opacity: 0,
+      duration: 0.6,
+      stagger: 0.045,
+      ease: "power3.out",
+      clearProps: "opacity",
+      onComplete: reveal.onComplete,
+      scrollTrigger: { trigger: heading, start: "top 94%", once: true },
+    });
+  });
+  return { cues, restore: () => restores.forEach(restore => restore()) };
+}
+
+function createLightCueSequence(stage, headingReveal) {
   const lights = [...stage.querySelectorAll(".c-light")];
   const sequence = gsap.timeline({ paused: true, onComplete: () => (stage.dataset.lightPlayback = "complete") });
   const patterns = ["sweep", "ripple", "sparkle"];
@@ -81,6 +150,19 @@ function createLightCueSequence(stage) {
   const reverse = Math.random() < 0.5;
   stage.dataset.lightPattern = pattern;
   gsap.set(lights, { opacity: 0.2, scale: 1 });
+  if (headingReveal)
+    sequence.from(
+      headingReveal.glyphs,
+      {
+        opacity: 0,
+        duration: 0.6,
+        stagger: 0.045,
+        ease: "power3.out",
+        clearProps: "opacity",
+        onComplete: headingReveal.onComplete,
+      },
+      0,
+    );
   lights.forEach((light, index) => {
     const start = pattern === "ripple" ? Math.abs(index - 3) * 0.16 : pattern === "sparkle" ? Math.random() * 0.9 : (reverse ? lights.length - 1 - index : index) * 0.14;
     sequence.to(light, { opacity: 1, scale: 1.15, duration: 0.7, ease: "sine.inOut" }, start);
@@ -89,20 +171,148 @@ function createLightCueSequence(stage) {
   return { isComplete: () => sequence.progress() === 1, pause: () => sequence.pause(), resume: () => sequence.resume() };
 }
 
-function initLightPlayback() {
+function buildLightEqualizerOpacity(row, height) {
+  const level = 12 - row;
+  const fill = Math.max(0, Math.min(1, height - level + 1));
+  const peak = Math.max(0, 1 - Math.abs(height - level));
+  return 0.16 + 0.52 * fill + 0.16 * peak;
+}
+
+function listLightEqualizerPatterns(initialHeights) {
+  const spectrum = [
+    { heights: [11, 6, 3, 10, 5, 12, 4, 8], beat: 0.34 },
+    { heights: [4, 11, 8, 3, 12, 6, 10, 4], beat: 0.28 },
+    { heights: [9, 4, 12, 7, 4, 10, 3, 11], beat: 0.32 },
+    { heights: [3, 8, 5, 12, 9, 3, 11, 6], beat: 0.24 },
+    { heights: [12, 5, 10, 4, 7, 11, 5, 9], beat: 0.38 },
+    { heights: [6, 12, 4, 9, 3, 7, 12, 3], beat: 0.28 },
+    { heights: [10, 3, 9, 5, 12, 4, 8, 11], beat: 0.34 },
+    { heights: [4, 9, 3, 11, 6, 10, 4, 7], beat: 0.26 },
+    { heights: [11, 6, 12, 4, 10, 5, 9, 3], beat: 0.36 },
+    { heights: [3, 11, 5, 9, 4, 12, 6, 10], beat: 0.28 },
+    { heights: [9, 4, 10, 12, 7, 3, 11, 5], beat: 0.32 },
+    { heights: [5, 10, 3, 6, 12, 9, 4, 11], beat: 0.24 },
+    { heights: [12, 3, 8, 11, 5, 10, 7, 4], beat: 0.38 },
+    { heights: [4, 12, 5, 3, 11, 6, 10, 8], beat: 0.28 },
+    { heights: [9, 5, 11, 8, 3, 12, 4, 10], beat: 0.34 },
+    { heights: initialHeights, beat: 0.26 },
+  ];
+  const wave = Array.from({ length: 16 }, (_, step) => ({ heights: initialHeights.map((_, column) => Math.round(7.5 + 4.5 * Math.cos(((column - step) * Math.PI) / 4))), beat: 0.28 }));
+  const ripple = Array.from({ length: 12 }, (_, step) => ({ heights: initialHeights.map((_, column) => Math.round(7.5 + 4.5 * Math.cos((step * Math.PI) / 3 - Math.abs(column - 3.5) * 0.9))), beat: step % 2 ? 0.32 : 0.24 }));
+  const alternating = Array.from({ length: 12 }, (_, step) => ({ heights: initialHeights.map((_, column) => (column % 2 === step % 2 ? 11 + (step % 2) : 3 + (column % 3))), beat: step % 4 === 3 ? 0.36 : 0.26 }));
+  const sweep = Array.from({ length: 16 }, (_, step) => ({ heights: initialHeights.map((_, column) => Math.round(3 + 9 * Math.max(0, 1 - Math.abs(column - (step < 8 ? step : 15 - step)) / 2.5))), beat: 0.24 }));
+  const pulse = Array.from({ length: 12 }, (_, step) => ({ heights: step % 2 ? [3, 4, 5, 4, 4, 5, 4, 3] : [9, 10, 12, 11, 11, 12, 10, 9], beat: step % 2 ? 0.36 : 0.26 }));
+  const closingStep = { heights: initialHeights, beat: 0.32 };
+  return [
+    { name: "spectrum", steps: spectrum },
+    { name: "wave", steps: [...wave, closingStep] },
+    { name: "ripple", steps: [...ripple, closingStep] },
+    { name: "alternating", steps: [...alternating, closingStep] },
+    { name: "sweep", steps: [...sweep, closingStep] },
+    { name: "pulse", steps: [...pulse, closingStep] },
+  ];
+}
+
+function createLightEqualizerSequence(stage) {
+  const lights = [...stage.querySelectorAll(".c-light")];
+  const initialHeights = [4, 7, 10, 6, 11, 8, 5, 3];
+  // Register opacity with the media context before using direct setters, so revert restores CSS.
+  gsap.set(lights, { opacity: (_, light) => buildLightEqualizerOpacity(Number(light.dataset.lightRow), initialHeights[Number(light.dataset.lightColumn)]), scale: 1 });
+  const columns = initialHeights.map((_, column) => ({
+    height: 0,
+    lights: lights.filter(light => Number(light.dataset.lightColumn) === column).map(light => ({ row: Number(light.dataset.lightRow), setOpacity: gsap.quickSetter(light, "opacity"), opacity: -1 })),
+  }));
+  const patterns = listLightEqualizerPatterns(initialHeights);
+  let activeIndex = -1;
+  let introComplete = false;
+  let playing = false;
+
+  function updateLightEqualizer() {
+    columns.forEach(column => {
+      column.lights.forEach(light => {
+        const opacity = buildLightEqualizerOpacity(light.row, column.height);
+        if (Math.abs(opacity - light.opacity) < 0.0001) return;
+        light.setOpacity(opacity);
+        light.opacity = opacity;
+      });
+    });
+  }
+
+  updateLightEqualizer();
+  const intro = gsap.timeline({
+    paused: true,
+    onUpdate: updateLightEqualizer,
+    onComplete: () => {
+      introComplete = true;
+      playNextLightEqualizerPattern();
+    },
+  });
+  intro.to(columns, { height: index => initialHeights[index], duration: 0.65, stagger: 0.02, ease: "sine.out" });
+
+  // Prebuild every finite pattern in the media context. Shared endpoints keep switches continuous.
+  const sequences = patterns.map(pattern => {
+    const sequence = gsap.timeline({ paused: true, onUpdate: updateLightEqualizer, onComplete: playNextLightEqualizerPattern });
+    let start = 0;
+    let previousHeights = initialHeights;
+    pattern.steps.forEach(step => {
+      columns.forEach((column, index) => {
+        const rising = step.heights[index] > previousHeights[index];
+        sequence.fromTo(column, { height: previousHeights[index] }, { height: step.heights[index], duration: rising ? Math.min(0.24, step.beat * 0.8) : step.beat, ease: rising ? "sine.out" : "sine.inOut", immediateRender: false }, start);
+      });
+      start += step.beat;
+      previousHeights = step.heights;
+    });
+    sequence.to({}, { duration: start }, 0);
+    return sequence;
+  });
+
+  function playNextLightEqualizerPattern() {
+    if (!playing) return;
+    intro.pause();
+    if (activeIndex >= 0) sequences[activeIndex].pause();
+    const candidates = patterns.map((_, index) => index).filter(index => index !== activeIndex);
+    activeIndex = candidates[Math.floor(Math.random() * candidates.length)];
+    stage.dataset.lightPattern = `equalizer-${patterns[activeIndex].name}`;
+    sequences[activeIndex].restart();
+  }
+
+  stage.dataset.lightPattern = "equalizer-intro";
+  return {
+    isComplete: () => false,
+    pause: () => {
+      playing = false;
+      intro.pause();
+      if (activeIndex >= 0) sequences[activeIndex].pause();
+    },
+    resume: () => {
+      if (playing) return;
+      playing = true;
+      if (!introComplete) intro.resume();
+      else if (activeIndex < 0) playNextLightEqualizerPattern();
+      else sequences[activeIndex].resume();
+    },
+  };
+}
+
+function initLightPlayback(selector = ".js-light-stage, .js-light-cue", headingReveals = new Map()) {
   // Keep the CSS light wall static when viewport observation is unavailable.
   if (typeof IntersectionObserver !== "function") return () => {};
-  const stages = [...document.querySelectorAll(".js-light-stage, .js-light-cue")];
+  const stages = [...document.querySelectorAll(selector)];
+  if (!stages.length) return () => {};
   const stageVisible = new Map(stages.map(stage => [stage, false]));
   const renderSkipped = new Map();
-  const sequences = stages.map(stage => ({ stage, loop: stage.classList.contains("js-light-cue") ? createLightCueSequence(stage) : createLightSequence(stage) }));
+  const sequences = stages.map(stage => {
+    const loop = stage.classList.contains("js-light-equalizer") ? createLightEqualizerSequence(stage) : stage.classList.contains("js-light-cue") ? createLightCueSequence(stage, headingReveals.get(stage)) : createLightSequence(stage);
+    const renderer = stage.classList.contains("js-light-stage") ? createWebglLightStage(stage) : null;
+    return { stage, loop, renderer };
+  });
   const observer = new IntersectionObserver(entries => {
     entries.forEach(entry => stageVisible.set(entry.target, entry.isIntersecting));
     syncLightPlayback();
   });
 
   function syncLightPlayback() {
-    sequences.forEach(({ stage, loop }) => {
+    sequences.forEach(({ stage, loop, renderer }) => {
       if (loop.isComplete()) {
         stage.dataset.lightPlayback = "complete";
         return;
@@ -110,6 +320,7 @@ function initLightPlayback() {
       const shouldPlay = !document.hidden && stageVisible.get(stage) && !renderSkipped.get(stage);
       if (shouldPlay) loop.resume();
       else loop.pause();
+      renderer?.setAvailable(shouldPlay);
       stage.dataset.lightPlayback = shouldPlay ? "playing" : "paused";
     });
   }
@@ -130,7 +341,10 @@ function initLightPlayback() {
   return () => {
     observer.disconnect();
     document.removeEventListener("visibilitychange", syncLightPlayback);
-    sequences.forEach(({ loop }) => loop.pause());
+    sequences.forEach(({ loop, renderer }) => {
+      loop.pause();
+      renderer?.destroy();
+    });
     stages.forEach(stage => {
       stage.removeEventListener("contentvisibilityautostatechange", handleLightRenderState);
       stage.removeAttribute("data-light-playback");
@@ -142,10 +356,12 @@ function initLightPlayback() {
 function initPortfolioMotion() {
   if (!document.body.classList.contains("portfolio-site")) return;
   const media = gsap.matchMedia();
+  const revealedHeadings = new WeakSet();
 
   // Progressive enhancement: all content stays visible without JS or with reduced motion.
-  media.add({ desktop: "(min-width: 1024px)", mobile: "(max-width: 767px)", motion: "(prefers-reduced-motion: no-preference)" }, context => {
+  media.add({ desktop: "(min-width: 1024px)", mobile: "(max-width: 767px)", motion: "(prefers-reduced-motion: no-preference) and (forced-colors: none)" }, context => {
     if (!context.conditions.motion) return;
+    const headingReveals = initHeadingReveals(revealedHeadings);
     const desktop = context.conditions.desktop;
     const hero = document.querySelector(".p-portfolio-hero");
     if (hero) {
@@ -165,6 +381,8 @@ function initPortfolioMotion() {
     document.querySelectorAll(".js-work-reveal").forEach(frame => {
       const image = frame.querySelector("img");
       if (!image) return;
+      // Shared-image navigation already reveals this frame, including bfcache restores.
+      if (frame.dataset.portfolioTransitionRevealed === "true") return;
       gsap
         .timeline({ scrollTrigger: { trigger: frame, start: "top 90%", once: true } })
         .from(frame, { clipPath: "inset(0 0 100% 0)", duration: 1.05, ease: "power3.out", clearProps: "clipPath" })
@@ -182,6 +400,7 @@ function initPortfolioMotion() {
       }
     });
     document.querySelectorAll(".js-fade-up").forEach(element => {
+      if (element.classList.contains("p-portfolio-section__title")) return;
       gsap.from(element, {
         y: 22,
         opacity: 0,
@@ -203,7 +422,17 @@ function initPortfolioMotion() {
         scrollTrigger: { trigger: skills, start: "top 92%", once: true },
       });
 
-    return initLightPlayback();
+    const stopLightPlayback = initLightPlayback(undefined, headingReveals.cues);
+    return () => {
+      stopLightPlayback();
+      headingReveals.restore();
+    };
+  });
+
+  // The About decoration has its own breakpoint, so resizing it does not replay the other sections.
+  media.add({ wide: "(min-width: 1280px)", motion: "(prefers-reduced-motion: no-preference)" }, context => {
+    if (!context.conditions.wide || !context.conditions.motion) return;
+    return initLightPlayback(".js-light-equalizer");
   });
 
   document.fonts.ready.then(() => ScrollTrigger.refresh());
