@@ -1,5 +1,7 @@
 // リセット（node_modules の kiso.css）
 import "kiso.css";
+import "../styles/portfolio-hero-reveal.css";
+import "../styles/portfolio-light-depth.css";
 import "./_viewport.js";
 import "./_portfolio-animation.js";
 import "./_portfolio-interaction.js";

@@ -13,6 +13,8 @@
 | [coding-guidelines.md](./coding-guidelines.md) | コーディング規則（簡易） |
 | [pr-issue-guidelines.md](./pr-issue-guidelines.md) | PR / Issue 運用 |
 | [DEPLOY.md](./DEPLOY.md) | デプロイ手順 |
+| [private-works-posting-manual.md](./private-works-posting-manual.md) | 非公開実績の投稿・画像配置・閲覧確認の操作手順 |
+| [private-works.md](./private-works.md) | 非公開実績のサーバー認証と画像保管の設定 |
 
 ## 読み方の目安
 

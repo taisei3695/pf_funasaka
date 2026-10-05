@@ -38,26 +38,6 @@ function my_theme_register_required_plugins()
       "required" => true,
     ],
     [
-      "name" => "Custom Post Type UI",
-      "slug" => "custom-post-type-ui",
-      "required" => true,
-    ],
-    [
-      "name" => "Contact Form 7",
-      "slug" => "contact-form-7",
-      "required" => true,
-    ],
-    [
-      "name" => "Breadcrumb NavXT",
-      "slug" => "breadcrumb-navxt",
-      "required" => true,
-    ],
-    [
-      "name" => "Show Current Template",
-      "slug" => "show-current-template",
-      "required" => false,
-    ],
-    [
       "name" => "WPvivid Backup Plugin",
       "slug" => "wpvivid-backuprestore",
       "required" => false,

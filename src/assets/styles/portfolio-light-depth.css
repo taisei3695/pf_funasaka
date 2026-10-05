@@ -1,0 +1,10 @@
+/* Match the DOM fallback's wall plane to WebGL before the first canvas frame. */
+.portfolio-site .c-light-stage__grid {
+  transform: translateY(-4%) scale(0.9, 0.76);
+  transform-origin: center;
+}
+
+/* Keep each sprite round at the shader's 0.82 base size while its pulse uses transform. */
+.portfolio-site .c-light-stage__grid > .c-light {
+  scale: calc(0.82 / 0.9) calc(0.82 / 0.76);
+}

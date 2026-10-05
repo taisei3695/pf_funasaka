@@ -23,7 +23,8 @@ function portfolio_register_works()
     "public" => true,
     "has_archive" => "works",
     "rewrite" => ["slug" => "works", "with_front" => false],
-    "supports" => ["title", "editor", "thumbnail", "excerpt", "revisions"],
+    // Works content is edited through ACF overview/implementation fields.
+    "supports" => ["title", "thumbnail", "excerpt", "revisions"],
     "show_in_rest" => true,
     "menu_icon" => "dashicons-portfolio",
     "menu_position" => 5,

@@ -50,12 +50,10 @@ DB や uploads の移行はテーマアップロードとは別に行います�
 |------------|------|------|
 | WP Multibyte Patch | 残す | 日本語サイトの文字化け対策として有効 |
 | SEO Simple Pack | 残す | メタタグ・SEO 設定で使用 |
-| Advanced Custom Fields | 残す | テーマのカスタムフィールド表示に必要 |
-| Custom Post Type UI | 残す | DB 側で投稿タイプ・タクソノミーを管理する場合に必要 |
-| Contact Form 7 | 残す | お問い合わせフォームを使う場合に必要 |
-| Breadcrumb NavXT | 残す | パンくずリスト表示・構造化データで使用 |
-| Show Current Template | 外す | 開発確認用。本番では不要 |
+| Advanced Custom Fields | 残す | 制作実績設定の入力・編集に使用 |
 | WPvivid Backup Plugin | 任意 | 本番バックアップ運用で使う場合のみ残す |
+
+制作実績の投稿タイプ・分類、パンくず表示、構造化データはテーマが管理します。お問い合わせは Gmail へのメールリンクです。Custom Post Type UI、Contact Form 7、Breadcrumb NavXT、Show Current Template は現在のポートフォリオでは不要で、テーマの必須・推奨登録とローカルの導入一覧には含めません。
 
 ## 移行後チェックリスト
 
@@ -64,9 +62,11 @@ DB や uploads の移行はテーマアップロードとは別に行います�
 - CSS / JS が `assets/` 配下のハッシュ付きファイルから読み込まれている。
 - `.vite/manifest.json` が本番テーマ内に存在する。
 - トップページ、固定ページ、投稿詳細、アーカイブ、404 が表示できる。
-- お問い合わせフォームが送信できる。
+- CONTACT の Gmail リンクが設定したメールアドレスへの `mailto:` になっている。
 - パンくず、メタタグ、OGP、favicon が意図通り。
+- 初期faviconはテーマ同梱のTFマーク、OGPの未設定時は `assets/images/ogp_portfolio.jpg`（1200×630）。SEO Simple Packを有効化する。管理画面で設定したサイトアイコンや実績個別のOGP画像は優先される。
 - ACF フィールドが反映されている。
+- Works編集画面でタイトルと「制作実績設定」が表示される。実績の本文はACFの「概要・実装内容」で編集するため、Worksではブロック本文エディターを使用しない。
 - パーマリンク設定を保存し直し、一覧・詳細 URL が 404 にならない。
 - 不要な開発用プラグインが無効化または削除されている。
 - DB 移行後、管理ユーザー・メールアドレス・サイト URL を本番用に確認済み。

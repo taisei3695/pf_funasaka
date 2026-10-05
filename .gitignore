@@ -139,6 +139,7 @@ coverage/
 tmp/
 # ローカル作業用キャッシュ
 /work/
+/.quality-audit/backups/
 
 # ============================================
 # WordPress

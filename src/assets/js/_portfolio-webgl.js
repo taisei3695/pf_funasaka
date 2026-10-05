@@ -1,6 +1,12 @@
 const LIGHT_SPRITE_URL = new URL("../images/light_strobe.webp", import.meta.url).href;
-const MAX_RENDER_PIXELS = 1800000;
+const REFERENCE_RENDER_PIXELS = 1800000;
+const MAX_RENDER_PIXELS = 650000;
 const BLOOM_RESOLUTION = 0.25;
+const LIGHT_FRAME_INTERVAL = 1000 / 60;
+const LIGHT_RENDER_SCALES = [1, 0.85, 0.7, 0.6];
+const LIGHT_RENDER_BUDGET = 12;
+const LIGHT_SLOW_FRAME_LIMIT = 8;
+const LIGHT_BUDGET_CHANGE_INTERVAL = 1000;
 const FOREGROUND_LIGHTS = [
   [0.035, 0.16, 0.85],
   [0.965, 0.27, 1],
@@ -239,6 +245,17 @@ function buildLightWallPosition(light, width, height, perspectiveDepth) {
   return { x: width * 0.5 + (light.x - width * 0.5) * 0.9 * perspective, y: height * 0.46 + (light.y - height * 0.5) * 0.76 * perspective };
 }
 
+function getLightLayoutCenter(light, stage) {
+  let x = light.offsetWidth * 0.5;
+  let y = light.offsetHeight * 0.5;
+  // Read the layout plane, before grid depth, sprite pulses, and stage parallax transforms.
+  for (let element = light; element && element !== stage; element = element.offsetParent) {
+    x += element.offsetLeft;
+    y += element.offsetTop;
+  }
+  return { x, y };
+}
+
 function buildLightFixtureGeometry(lights, width, height, perspectiveDepth) {
   const vertices = [];
   const fixtures = lights.map(light => {
@@ -303,8 +320,8 @@ function removeMediaListener(query, listener) {
   else query.removeListener(listener);
 }
 
-/** Read GSAP's DOM lights without taking ownership of their opacity or transforms. */
-export function createWebglLightStage(stage) {
+/** Render the same numerical light levels as the DOM fallback. */
+export function createWebglLightStage(stage, lightStates, setDomFallback = () => {}) {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const forcedColors = window.matchMedia("(forced-colors: active)");
   if (reducedMotion.matches || forcedColors.matches) return null;
@@ -338,9 +355,14 @@ export function createWebglLightStage(stage) {
   let firstDraw = true;
   let geometryDirty = true;
   let frame = 0;
+  let nextDrawTime = 0;
+  let renderScaleIndex = 0;
+  let slowRenderFrames = 0;
+  let lastBudgetChange = -Infinity;
   let width = 1;
   let height = 1;
   let pixelRatio = 1;
+  let renderScale = 1;
   let devicePixelRatio = window.devicePixelRatio || 1;
   let records = [];
   let drawRecords = [];
@@ -350,7 +372,102 @@ export function createWebglLightStage(stage) {
   let floorStart = 0.76;
   const perspectiveDepth = 0;
   let fixtureVertexCount = 0;
+  let renderState;
+  initLightRenderState();
   stage.appendChild(canvas);
+
+  function resetLightRenderState() {
+    renderState = { program: null, framebuffer: undefined, width: 0, height: 0, blending: undefined, texture: null, vertexLayout: null, attributes: -1 };
+  }
+
+  function initLightRenderState() {
+    resetLightRenderState();
+    gl.activeTexture(gl.TEXTURE0);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.clearColor(0, 0, 0, 0);
+    setLightProgram(resources.light.program);
+    gl.uniform1i(resources.light.uniforms.u_sprite, 0);
+    setLightProgram(resources.blur.program);
+    gl.uniform1i(resources.blur.uniforms.u_texture, 0);
+    setLightProgram(resources.bloom.program);
+    gl.uniform1i(resources.bloom.uniforms.u_texture, 0);
+  }
+
+  function setLightProgram(program) {
+    if (renderState.program === program) return;
+    gl.useProgram(program);
+    renderState.program = program;
+  }
+
+  function setLightRenderTarget(target) {
+    const framebuffer = target ? target.framebuffer : null;
+    const targetWidth = target ? target.width : canvas.width;
+    const targetHeight = target ? target.height : canvas.height;
+    if (renderState.framebuffer !== framebuffer) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+      renderState.framebuffer = framebuffer;
+    }
+    if (renderState.width !== targetWidth || renderState.height !== targetHeight) {
+      gl.viewport(0, 0, targetWidth, targetHeight);
+      renderState.width = targetWidth;
+      renderState.height = targetHeight;
+    }
+  }
+
+  function setLightBlending(enabled) {
+    if (renderState.blending === enabled) return;
+    if (enabled) gl.enable(gl.BLEND);
+    else gl.disable(gl.BLEND);
+    renderState.blending = enabled;
+  }
+
+  function setLightTexture(texture) {
+    if (renderState.texture === texture) return;
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    renderState.texture = texture;
+  }
+
+  function setLightVertexLayout(layout) {
+    if (renderState.vertexLayout === layout) return;
+    const attributes = layout === "light" ? 7 : layout === "fixture" ? 3 : 1;
+    for (let index = 0; index < 3; index++) {
+      const enabled = Boolean(attributes & (1 << index));
+      if (renderState.attributes >= 0 && Boolean(renderState.attributes & (1 << index)) === enabled) continue;
+      if (enabled) gl.enableVertexAttribArray(index);
+      else gl.disableVertexAttribArray(index);
+    }
+    renderState.attributes = attributes;
+    if (layout === "light") {
+      gl.bindBuffer(gl.ARRAY_BUFFER, resources.geometryBuffer);
+      gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 0, 0);
+      gl.bindBuffer(gl.ARRAY_BUFFER, resources.levelBuffer);
+      gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 0, 0);
+      gl.bindBuffer(gl.ARRAY_BUFFER, resources.layerBuffer);
+      gl.vertexAttribPointer(2, 1, gl.FLOAT, false, 0, 0);
+    } else if (layout === "fixture") {
+      gl.bindBuffer(gl.ARRAY_BUFFER, resources.fixtureBuffer);
+      gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 24, 0);
+      gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 24, 16);
+    } else {
+      gl.bindBuffer(gl.ARRAY_BUFFER, resources.quadBuffer);
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    }
+    renderState.vertexLayout = layout;
+  }
+
+  function updateLightUniforms() {
+    const light = resources.light;
+    setLightProgram(light.program);
+    gl.uniform2f(light.uniforms.u_size, width, height);
+    gl.uniform2f(light.uniforms.u_wallRange, ...wallRange);
+    gl.uniform1f(light.uniforms.u_floorStart, floorStart);
+    gl.uniform1f(light.uniforms.u_perspectiveDepth, perspectiveDepth);
+    gl.uniform1f(light.uniforms.u_pointLimit, resources.pointLimit * renderScale);
+    setLightProgram(resources.fixture.program);
+    gl.uniform2f(resources.fixture.uniforms.u_size, width, height);
+    setLightProgram(resources.bloom.program);
+    gl.uniform1f(resources.bloom.uniforms.u_strength, desktop.matches ? 0.18 : 0.14);
+  }
 
   function shouldRenderLightStage() {
     return available && !destroyed && !failed && !contextLost && !pageSuspended && spriteReady && !document.hidden && !reducedMotion.matches && !forcedColors.matches;
@@ -359,6 +476,8 @@ export function createWebglLightStage(stage) {
   function stopLightFrames() {
     if (frame) window.cancelAnimationFrame(frame);
     frame = 0;
+    nextDrawTime = 0;
+    slowRenderFrames = 0;
   }
 
   function syncLightRendering() {
@@ -368,7 +487,10 @@ export function createWebglLightStage(stage) {
     }
     if (!shouldRenderLightStage()) {
       stopLightFrames();
-      if (reducedMotion.matches || forcedColors.matches || failed || contextLost) stage.classList.remove("is-webgl-light");
+      if (reducedMotion.matches || forcedColors.matches || failed || contextLost) {
+        stage.classList.remove("is-webgl-light");
+        setDomFallback(true);
+      }
       return;
     }
     if (!frame) frame = window.requestAnimationFrame(drawLightFrame);
@@ -376,7 +498,9 @@ export function createWebglLightStage(stage) {
 
   function setAvailable(value) {
     if (destroyed) return;
-    available = Boolean(value);
+    const next = Boolean(value);
+    if (available === next) return;
+    available = next;
     if (available) {
       geometryDirty = true;
     }
@@ -388,6 +512,7 @@ export function createWebglLightStage(stage) {
     spriteReady = false;
     resources = null;
     stage.classList.remove("is-webgl-light");
+    setDomFallback(true);
     stopLightFrames();
   }
 
@@ -427,30 +552,33 @@ export function createWebglLightStage(stage) {
     width = Math.max(1, stage.clientWidth || stageBounds.width);
     height = Math.max(1, stage.clientHeight || stageBounds.height);
     devicePixelRatio = window.devicePixelRatio || 1;
-    pixelRatio = Math.min(
+    const referencePixelRatio = Math.min(
       devicePixelRatio,
       desktop.matches ? 1.5 : 1,
-      Math.sqrt(MAX_RENDER_PIXELS / (width * height)),
+      Math.sqrt(REFERENCE_RENDER_PIXELS / (width * height)),
       resources.maxTextureSize / width,
       resources.maxTextureSize / height,
       resources.maxViewport[0] / width,
       resources.maxViewport[1] / height,
     );
+    pixelRatio = Math.min(referencePixelRatio, Math.sqrt(MAX_RENDER_PIXELS / (width * height))) * LIGHT_RENDER_SCALES[renderScaleIndex];
+    renderScale = pixelRatio / referencePixelRatio;
     canvas.width = Math.max(1, Math.round(width * pixelRatio));
     canvas.height = Math.max(1, Math.round(height * pixelRatio));
     const lights = [...stage.querySelectorAll(".c-light-stage__grid > .c-light")].filter(light => getComputedStyle(light).display !== "none");
     const columns = Math.max(0, ...lights.map(light => Number(light.dataset.lightColumn))) + 1;
     records = lights.map(light => {
-      const bounds = light.getBoundingClientRect();
+      const position = getLightLayoutCenter(light, stage);
       const style = getComputedStyle(light);
       const row = Number(light.dataset.lightRow);
       const column = Number(light.dataset.lightColumn);
       return {
         light,
+        state: lightStates.get(light),
         row,
         column,
-        x: bounds.left + bounds.width * 0.5 - stageBounds.left,
-        y: bounds.top + bounds.height * 0.5 - stageBounds.top,
+        x: position.x,
+        y: position.y,
         size: parseFloat(style.width) || 40,
         base: parseFloat(style.opacity) || 0.22,
       };
@@ -493,92 +621,63 @@ export function createWebglLightStage(stage) {
       resources.bloomTargets.push(createRenderTarget(gl, bloomWidth, bloomHeight, resources));
       if (gl.getError() !== gl.NO_ERROR) throw new Error("Light framebuffer allocation failed");
     }
+    // Buffer/target allocation above changes GL bindings outside the draw-state helpers.
+    resetLightRenderState();
+    updateLightUniforms();
     geometryDirty = false;
   }
 
   function updateLightLevels() {
+    let changed = false;
     records.forEach((record, index) => {
-      const inlineOpacity = parseFloat(record.light.style.opacity);
-      const source = Number.isFinite(inlineOpacity) ? inlineOpacity : record.base;
-      const level = Math.max(0, Math.min(1.25, source));
+      const source = record.state?.opacity;
+      const opacity = Number.isFinite(source) ? Math.round(source * 10000) / 10000 : record.base;
+      const level = Math.fround(Math.max(0, Math.min(1.25, opacity)));
+      if (sourceLevels[index] !== level) changed = true;
       sourceLevels[index] = level;
     });
+    if (!changed) return false;
     drawRecords.forEach((record, index) => {
       levels[index] = sourceLevels[record.sourceIndex] * record.gain;
     });
     gl.bindBuffer(gl.ARRAY_BUFFER, resources.levelBuffer);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, levels);
+    return true;
   }
 
   function drawLightPoints(target, bloom) {
     const targetWidth = target ? target.width : canvas.width;
-    const targetHeight = target ? target.height : canvas.height;
-    gl.bindFramebuffer(gl.FRAMEBUFFER, target ? target.framebuffer : null);
-    gl.viewport(0, 0, targetWidth, targetHeight);
+    setLightRenderTarget(target);
     if (target) gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    setLightBlending(true);
     const { program, uniforms } = resources.light;
-    gl.useProgram(program);
-    gl.bindBuffer(gl.ARRAY_BUFFER, resources.geometryBuffer);
-    gl.enableVertexAttribArray(0);
-    gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 0, 0);
-    gl.bindBuffer(gl.ARRAY_BUFFER, resources.levelBuffer);
-    gl.enableVertexAttribArray(1);
-    gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 0, 0);
-    gl.bindBuffer(gl.ARRAY_BUFFER, resources.layerBuffer);
-    gl.enableVertexAttribArray(2);
-    gl.vertexAttribPointer(2, 1, gl.FLOAT, false, 0, 0);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, resources.sprite);
-    gl.uniform1i(uniforms.u_sprite, 0);
-    gl.uniform2f(uniforms.u_size, width, height);
-    gl.uniform2f(uniforms.u_wallRange, ...wallRange);
-    gl.uniform1f(uniforms.u_floorStart, floorStart);
-    gl.uniform1f(uniforms.u_perspectiveDepth, perspectiveDepth);
+    setLightProgram(program);
+    setLightVertexLayout("light");
+    setLightTexture(resources.sprite);
     gl.uniform1f(uniforms.u_pixelRatio, (pixelRatio * targetWidth) / canvas.width);
-    gl.uniform1f(uniforms.u_pointLimit, resources.pointLimit);
     gl.uniform1f(uniforms.u_bloom, bloom ? 1 : 0);
-    gl.drawArrays(gl.POINTS, 0, drawRecords.length);
+    // Foreground sprites contribute only bloom; their main-pass alpha is always zero.
+    gl.drawArrays(gl.POINTS, 0, bloom ? drawRecords.length : records.length * 2);
   }
 
   function drawLightFixtures() {
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.viewport(0, 0, canvas.width, canvas.height);
+    setLightRenderTarget(null);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    const { program, uniforms } = resources.fixture;
-    gl.useProgram(program);
-    gl.bindBuffer(gl.ARRAY_BUFFER, resources.fixtureBuffer);
-    gl.enableVertexAttribArray(0);
-    gl.enableVertexAttribArray(1);
-    gl.disableVertexAttribArray(2);
-    gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 24, 0);
-    gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 24, 16);
-    gl.uniform2f(uniforms.u_size, width, height);
+    setLightBlending(true);
+    setLightProgram(resources.fixture.program);
+    setLightVertexLayout("fixture");
     gl.drawArrays(gl.TRIANGLES, 0, fixtureVertexCount);
   }
 
-  function setQuadAttributes() {
-    gl.bindBuffer(gl.ARRAY_BUFFER, resources.quadBuffer);
-    gl.enableVertexAttribArray(0);
-    gl.disableVertexAttribArray(1);
-    gl.disableVertexAttribArray(2);
-    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-  }
-
   function drawBlurPass(source, target, horizontal) {
-    gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
-    gl.viewport(0, 0, target.width, target.height);
-    gl.disable(gl.BLEND);
+    setLightRenderTarget(target);
+    setLightBlending(false);
     const { program, uniforms } = resources.blur;
-    gl.useProgram(program);
-    setQuadAttributes();
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, source.texture);
-    gl.uniform1i(uniforms.u_texture, 0);
-    gl.uniform2f(uniforms.u_step, horizontal ? 1.4 / source.width : 0, horizontal ? 0 : 1.4 / source.height);
+    setLightProgram(program);
+    setLightVertexLayout("quad");
+    setLightTexture(source.texture);
+    const blurStep = 1.4 * renderScale;
+    gl.uniform2f(uniforms.u_step, horizontal ? blurStep / source.width : 0, horizontal ? 0 : blurStep / source.height);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
 
@@ -587,41 +686,69 @@ export function createWebglLightStage(stage) {
     drawLightPoints(source, true);
     drawBlurPass(source, blurred, true);
     drawBlurPass(blurred, source, false);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    const { program, uniforms } = resources.bloom;
-    gl.useProgram(program);
-    setQuadAttributes();
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, source.texture);
-    gl.uniform1i(uniforms.u_texture, 0);
-    gl.uniform1f(uniforms.u_strength, desktop.matches ? 0.18 : 0.14);
+    setLightRenderTarget(null);
+    setLightBlending(true);
+    setLightProgram(resources.bloom.program);
+    setLightVertexLayout("quad");
+    setLightTexture(source.texture);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
 
-  function drawLightFrame() {
+  function updateLightRenderBudget(duration, timestamp) {
+    if (duration <= LIGHT_RENDER_BUDGET) {
+      slowRenderFrames = 0;
+      return;
+    }
+    slowRenderFrames += 1;
+    if (slowRenderFrames < LIGHT_SLOW_FRAME_LIMIT || renderScaleIndex === LIGHT_RENDER_SCALES.length - 1 || timestamp - lastBudgetChange < LIGHT_BUDGET_CHANGE_INTERVAL) return;
+    // Observe actual work only. Keep a chosen quality level stable for this stage's lifetime.
+    renderScaleIndex += 1;
+    lastBudgetChange = timestamp;
+    slowRenderFrames = 0;
+    geometryDirty = true;
+  }
+
+  function drawLightFrame(timestamp) {
     frame = 0;
     if (!shouldRenderLightStage()) return;
+    // Keep the animation clock unchanged and sample its latest state at most sixty times a second.
+    if (timestamp + 0.25 < nextDrawTime) {
+      syncLightRendering();
+      return;
+    }
+    nextDrawTime = nextDrawTime ? nextDrawTime + Math.max(1, Math.floor((timestamp - nextDrawTime) / LIGHT_FRAME_INTERVAL) + 1) * LIGHT_FRAME_INTERVAL : timestamp + LIGHT_FRAME_INTERVAL;
     try {
       if (gl.isContextLost()) {
         stopLostLightContext();
         return;
       }
       if (devicePixelRatio !== (window.devicePixelRatio || 1)) geometryDirty = true;
+      const geometryChanged = geometryDirty;
       if (geometryDirty) updateLightGeometry();
       if (!records.length) return;
-      updateLightLevels();
-      gl.clearColor(0, 0, 0, 0);
+      const shouldMeasureRender = !geometryChanged && !firstDraw;
+      const renderStarted = performance.now();
+      const levelsChanged = updateLightLevels();
+      const needsReveal = !stage.classList.contains("is-webgl-light");
+      if (!geometryChanged && !levelsChanged && !firstDraw && !needsReveal) {
+        slowRenderFrames = 0;
+        syncLightRendering();
+        return;
+      }
       drawLightFixtures();
       drawLightPoints(null, false);
       drawBloom();
+      if (shouldMeasureRender) updateLightRenderBudget(performance.now() - renderStarted, timestamp);
+      else slowRenderFrames = 0;
       if (firstDraw) {
         if (gl.isContextLost() || gl.getError() !== gl.NO_ERROR) throw new Error("Light drawing failed");
         firstDraw = false;
         stage.classList.add("is-webgl-light");
-      } else if (!stage.classList.contains("is-webgl-light")) stage.classList.add("is-webgl-light");
+        setDomFallback(false);
+      } else if (needsReveal) {
+        stage.classList.add("is-webgl-light");
+        setDomFallback(false);
+      }
     } catch {
       stopFailedLightRenderer();
       return;
@@ -662,6 +789,7 @@ export function createWebglLightStage(stage) {
     if (destroyed) return;
     try {
       resources = createWebglResources(gl);
+      initLightRenderState();
       contextLost = false;
       failed = false;
       firstDraw = true;
@@ -690,9 +818,11 @@ export function createWebglLightStage(stage) {
     sprite.onload = null;
     sprite.onerror = null;
     stage.classList.remove("is-webgl-light");
+    setDomFallback(true);
     canvas.remove();
     if (!contextLost) deleteWebglResources(gl, resources);
     resources = null;
+    resetLightRenderState();
     records = [];
     drawRecords = [];
   }

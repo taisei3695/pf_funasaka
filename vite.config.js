@@ -18,6 +18,7 @@ const isDev = process.env.NODE_ENV === "development";
 const imageConfig = {
   format: "webp",
   copyOriginal: false,
+  preserveOriginal: ["ogp_portfolio.jpg", ...[32, 180, 192, 512].map(size => `icon_favicon-${size}.png`)],
   optimize: { png: 80, jpeg: 80, jpg: 80, webp: 80, avif: 80 },
 };
 
@@ -79,6 +80,7 @@ export default defineConfig(({ mode }) => ({
     createViteImageOptimizationPlugin({
       format: imageConfig.format,
       copyOriginal: imageConfig.copyOriginal,
+      preserveOriginal: imageConfig.preserveOriginal,
       optimize: imageConfig.optimize,
       isDev,
       root,

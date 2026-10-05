@@ -22,95 +22,10 @@ function my_apply_theme_setup()
   // ブロックエディタのスタイルサポート
   add_theme_support("editor-styles");
 
-  // 環境変数（WP_DEBUG）とmanifestファイルを活用したエディタスタイル読み込み
-  enqueue_editor_styles();
+  // 公開ページのreset・レイアウト・アニメーションを編集画面へ持ち込まない。
+  add_editor_style("editor-style.css");
 }
 add_action("after_setup_theme", "my_apply_theme_setup");
-
-/**
- * エディタスタイルを環境に応じて読み込み
- * 環境変数（WP_DEBUG）とmanifestファイルを活用
- */
-function enqueue_editor_styles()
-{
-  $environment = get_asset_environment();
-
-  switch ($environment) {
-    case "dev":
-      // ============================================
-      // 開発環境（Vite開発サーバーから読み込み）
-      // WP_DEBUG=true かつ manifest.dev.json存在 かつ localhost
-      // ============================================
-      enqueue_editor_style_dev();
-      break;
-
-    case "manifest":
-      // ============================================
-      // 本番環境（manifest.jsonを使用）
-      // ハッシュ付きファイル名で確実なキャッシュバスティング
-      // ============================================
-      enqueue_editor_style_from_manifest();
-      break;
-
-    case "fallback":
-      // ============================================
-      // フォールバック（固定ファイル名 + filemtime）
-      // manifest.jsonが存在しない場合の安全策
-      // ============================================
-      enqueue_editor_style_fallback();
-      break;
-  }
-}
-
-/**
- * 開発環境のエディタスタイルを読み込み
- */
-function enqueue_editor_style_dev()
-{
-  $dev_manifest = read_vite_manifest();
-  if ($dev_manifest === false || !isset($dev_manifest["url"])) {
-    return;
-  }
-
-  $baseUrl = $dev_manifest["url"];
-  if (isset($dev_manifest["inputs"]["style"])) {
-    add_editor_style($baseUrl . $dev_manifest["inputs"]["style"]);
-  }
-}
-
-/**
- * manifest.jsonを使用した本番環境のエディタスタイルを読み込み
- */
-function enqueue_editor_style_from_manifest()
-{
-  $build_manifest = read_build_manifest();
-  if ($build_manifest === false) {
-    return;
-  }
-
-  $style_entry = $build_manifest["assets/styles/style.scss"] ?? null;
-  if ($style_entry && isset($style_entry["file"])) {
-    $style_path = get_template_directory_uri() . "/" . $style_entry["file"];
-    add_editor_style($style_path);
-  }
-}
-
-/**
- * フォールバック方式で本番環境のエディタスタイルを読み込み
- * manifest.jsonが存在しない場合の安全策
- */
-function enqueue_editor_style_fallback()
-{
-  $style_path = get_template_directory_uri() . "/assets/styles/style.css";
-  $style_file = get_template_directory() . "/assets/styles/style.css";
-  $version = find_file_version($style_file);
-  // add_editor_style()はバージョンパラメータをサポートしていないため、URLに直接追加
-  if ($version !== null) {
-    add_editor_style($style_path . "?ver=" . $version);
-  } else {
-    add_editor_style($style_path);
-  }
-}
 
 // カスタムページにbodyクラスを追加（汎用化）
 function apply_custom_page_body_classes($classes)

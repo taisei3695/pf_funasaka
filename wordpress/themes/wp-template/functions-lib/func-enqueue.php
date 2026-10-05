@@ -195,15 +195,52 @@ function portfolio_enqueue_transition_assets()
 }
 add_action("wp_enqueue_scripts", "portfolio_enqueue_transition_assets", 11);
 
-/** Render-blocking module execution ensures the pagereveal listener is already registered. */
+/** Inline the dependency-free production entry so pagereveal registration needs no network round trip. */
 function portfolio_apply_transition_script_attributes($tag, $handle, $source)
 {
   if ($handle === "portfolio-transition") {
+    if (get_asset_environment() === "manifest" && function_exists("wp_get_inline_script_tag")) {
+      $manifest = read_build_manifest();
+      $entry = $manifest["assets/js/portfolio-transition.js"] ?? null;
+      $file = is_array($entry) ? $entry["file"] ?? null : null;
+      if (is_string($file) && preg_match("~^assets/js/portfolio-transition(?:[.][a-zA-Z0-9_-]+)?[.]js$~", $file) && empty($entry["imports"]) && empty($entry["dynamicImports"]) && empty($entry["css"]) && empty($entry["assets"])) {
+        $path = get_template_directory() . "/" . $file;
+        if (is_file($path) && is_readable($path) && filesize($path) <= 16384) {
+          $script = file_get_contents($path);
+          // Module syntax, asset references, and HTML script delimiters must keep their external module context.
+          if (is_string($script) && trim($script) !== "" && !preg_match("~\\b(?:import|export|await)\\b|</?script|<!--~i", $script)) {
+            $inline_tag = wp_get_inline_script_tag("(function () {\n\"use strict\";\n" . $script . "\n})();", ["id" => "portfolio-transition-js", "type" => "text/javascript"]);
+            if ($inline_tag !== "") {
+              return $inline_tag;
+            }
+          }
+        }
+      }
+    }
+    // Preserve early module execution in development, fallback, or a future build with dependencies.
     return '<script type="module" async blocking="render" src="' . esc_url($source) . '"></script>';
   }
   return $tag;
 }
 add_filter("script_loader_tag", "portfolio_apply_transition_script_attributes", 11, 3);
+
+/** Preload the hero font using the same hashed URL as the production stylesheet. */
+function portfolio_print_hero_font_preload()
+{
+  if (!is_front_page() || get_asset_environment() !== "manifest") {
+    return;
+  }
+
+  $manifest = read_build_manifest();
+  $file = $manifest["assets/fonts/jost-latin-wght-normal.woff2"]["file"] ?? null;
+  if (!is_string($file) || !preg_match("~^assets/jost-latin-wght-normal[.][a-zA-Z0-9_-]+[.]woff2$~", $file) || !is_file(get_template_directory() . "/" . $file)) {
+    return;
+  }
+
+  $url = get_template_directory_uri() . "/" . $file;
+  echo '<link rel="preload" href="' . esc_url($url) . '" as="font" type="font/woff2" crossorigin>' . "\n";
+}
+add_action("wp_head", "portfolio_print_hero_font_preload", 2);
 
 /** Reuse the rendered main image's source contract so responsive preload never requests a second candidate. */
 function portfolio_build_transition_image_preload($post_id)

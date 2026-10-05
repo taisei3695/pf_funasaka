@@ -14,6 +14,7 @@ import { THEME_NAME, paths, projectRoot, convertToPosixPath } from "./utils/path
  * @param {Object} options - プラグインオプション
  * @param {string} options.format - 変換形式 ('webp' | 'avif' | 'both')
  * @param {boolean} options.copyOriginal - 元画像も WordPress ディレクトリにコピーするか（開発環境のみ）
+ * @param {string[]} options.preserveOriginal - PNG/JPEGのまま配信するfavicon・OGP画像の相対パス
  * @param {Object} options.optimize - 最適化設定
  * @param {number} options.optimize.png - PNG品質 (0-100)
  * @param {number} options.optimize.jpeg - JPEG品質 (0-100)
@@ -28,6 +29,7 @@ export default function createViteImageOptimizationPlugin(options = {}) {
   const {
     format: imageFormat = "webp",
     copyOriginal = false,
+    preserveOriginal = [],
     optimize = {
       png: 80,
       jpeg: 80,
@@ -100,6 +102,13 @@ export default function createViteImageOptimizationPlugin(options = {}) {
     const wpOriginalPath = resolve(wpOutputDir, `${base}${ext}`);
 
     try {
+      // Social crawlers and browser icons use the original JPEG/PNG formats.
+      if (preserveOriginal.includes(convertToPosixPath(relativePath))) {
+        await fs.promises.copyFile(sourcePath, wpOriginalPath);
+        console.log(`[image-plugin] Preserved social/icon format: ${relativePath}`);
+        return;
+      }
+
       if (imageFormat === "webp" || imageFormat === "both") {
         // src に出力（最適化付き）
         await optimizeImage(sourcePath, srcWebpPath, "webp");
@@ -180,7 +189,7 @@ export default function createViteImageOptimizationPlugin(options = {}) {
     };
 
     // 既存のSVG/GIF/単体WebP画像をコピー
-    const existingCopyTargets = globSync(`${convertToPosixPath(srcImagesDir)}/**/*.{svg,gif,webp}`);
+    const existingCopyTargets = globSync(`${convertToPosixPath(srcImagesDir)}/**/*.{svg,gif,webp,ico}`);
     console.log(`[image-plugin] Found ${existingCopyTargets.length} existing SVG/GIF/WebP images to copy`);
     existingCopyTargets.forEach(copyImageToWordPress);
 

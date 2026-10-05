@@ -34,6 +34,21 @@ body.portfolio-site {
   }
 }
 
+// A gentle default for public links; component effects keep their own transitions.
+@media (any-hover: hover) {
+  :where(.portfolio-site)
+    :where(.p-portfolio-header, .l-main, .p-portfolio-footer)
+    :where(a[href]):not(:where(.p-portfolio-work__image, .p-archive__link, .p-news-list__item, .p-works-list__link, .p-single__related-link, .c-button, .c-pagination a)) {
+    transition: opacity 0.28s ease;
+  }
+
+  :where(.portfolio-site)
+    :where(.p-portfolio-header, .l-main, .p-portfolio-footer)
+    :where(a[href]:hover):not(:where(.p-portfolio-work__image, .p-archive__link, .p-news-list__item, .p-works-list__link, .p-single__related-link, .c-button, .c-pagination a)) {
+    opacity: 0.85;
+  }
+}
+
 .portfolio-site .l-portfolio-inner {
   width: min(1280px, calc(100% - 40px));
   margin-inline: auto;
@@ -824,11 +839,49 @@ body.portfolio-site:not(.home) .p-portfolio-header {
       align-items: center;
       min-height: 44px;
       border-block-end: 1px solid #7c7c77;
+      text-decoration: none;
     }
   }
 }
 
-.portfolio-site :is(.p-portfolio-work__title a, .p-portfolio-work__link, .p-portfolio-works__more a, a.p-portfolio-contact__link[href], .p-portfolio-header__brand, .p-portfolio-header__nav a, .p-portfolio-detail__navigation a) {
+.portfolio-site :is(.p-portfolio-detail__body, .p-page__content, .p-single__content) a[href]:not(:where(:has(img), .p-portfolio-detail__navigation a, .c-button, .wp-element-button)) {
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+@media (any-hover: hover) {
+  .portfolio-site :is(.p-portfolio-detail__body, .p-page__content, .p-single__content) a[href]:not(:where(:has(img), .p-portfolio-detail__navigation a, .c-button, .wp-element-button)) {
+    transition:
+      color 0.28s ease,
+      text-shadow 0.28s ease,
+      text-decoration-thickness 0.28s ease,
+      text-underline-offset 0.28s ease;
+  }
+
+  .portfolio-site :is(.p-portfolio-detail__body, .p-page__content, .p-single__content) a[href]:not(:where(:has(img), .p-portfolio-detail__navigation a, .c-button, .wp-element-button)):hover {
+    color: var(--portfolio-muted);
+    opacity: 1;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.3em;
+    text-shadow: 0 0 0.55em rgb(36 36 36 / 18%);
+  }
+}
+
+.portfolio-site
+  :is(
+    .p-portfolio-work__title a,
+    .p-portfolio-work__link,
+    .p-portfolio-works__more a,
+    a.p-portfolio-contact__link[href],
+    .p-portfolio-header__brand,
+    .p-portfolio-header__nav a,
+    .p-portfolio-detail__navigation a,
+    .p-portfolio-detail__breadcrumb a,
+    .p-portfolio-detail__meta a,
+    .p-portfolio-gate a,
+    .p-portfolio-footer .privacy-policy-link
+  ) {
   position: relative;
 
   &::before,
@@ -879,7 +932,7 @@ body.portfolio-site:not(.home) .p-portfolio-header {
   }
 }
 
-.portfolio-site :is(.p-portfolio-header__brand, .p-portfolio-header__nav a, a.p-portfolio-contact__link[href]) {
+.portfolio-site :is(.p-portfolio-header__brand, .p-portfolio-header__nav a, a.p-portfolio-contact__link[href], .p-portfolio-footer .privacy-policy-link) {
   --portfolio-link-light: 1;
 }
 
@@ -965,6 +1018,15 @@ body.portfolio-site:not(.home) .p-portfolio-header {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .portfolio-site :is(.p-portfolio-header, .l-main, .p-portfolio-footer) a[href] {
+    transition: none !important;
+  }
+
+  .portfolio-site :is(.p-portfolio-detail__body, .p-page__content, .p-single__content) a[href]:not(:where(:has(img), .p-portfolio-detail__navigation a, .c-button, .wp-element-button)) {
+    text-shadow: none !important;
+    transition: none;
+  }
+
   .portfolio-site {
     .js-hero-line,
     .js-work-reveal,
@@ -987,7 +1049,19 @@ body.portfolio-site:not(.home) .p-portfolio-header {
     }
 
     .p-portfolio-work__image::after,
-    :is(.p-portfolio-work__title a, .p-portfolio-work__link, .p-portfolio-works__more a, a.p-portfolio-contact__link[href], .p-portfolio-header__brand, .p-portfolio-header__nav a, .p-portfolio-detail__navigation a)::after {
+    :is(
+      .p-portfolio-work__title a,
+      .p-portfolio-work__link,
+      .p-portfolio-works__more a,
+      a.p-portfolio-contact__link[href],
+      .p-portfolio-header__brand,
+      .p-portfolio-header__nav a,
+      .p-portfolio-detail__navigation a,
+      .p-portfolio-detail__breadcrumb a,
+      .p-portfolio-detail__meta a,
+      .p-portfolio-gate a,
+      .p-portfolio-footer .privacy-policy-link
+    )::after {
       opacity: 0 !important;
       transform: none !important;
       animation: none !important;
@@ -1002,7 +1076,20 @@ body.portfolio-site:not(.home) .p-portfolio-header {
   }
 
   .portfolio-site .p-portfolio-work__image::after,
-  .portfolio-site :is(.p-portfolio-work__title a, .p-portfolio-work__link, .p-portfolio-works__more a, a.p-portfolio-contact__link[href], .p-portfolio-header__brand, .p-portfolio-header__nav a, .p-portfolio-detail__navigation a)::after {
+  .portfolio-site
+    :is(
+      .p-portfolio-work__title a,
+      .p-portfolio-work__link,
+      .p-portfolio-works__more a,
+      a.p-portfolio-contact__link[href],
+      .p-portfolio-header__brand,
+      .p-portfolio-header__nav a,
+      .p-portfolio-detail__navigation a,
+      .p-portfolio-detail__breadcrumb a,
+      .p-portfolio-detail__meta a,
+      .p-portfolio-gate a,
+      .p-portfolio-footer .privacy-policy-link
+    )::after {
     display: none;
   }
 }

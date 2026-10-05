@@ -1,6 +1,5 @@
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { createWebglLightStage } from "./_portfolio-webgl.js";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -28,26 +27,47 @@ function createLightSequence(stage) {
   const contact = stage.classList.contains("c-light-stage--contact");
   const base = contact ? 0.22 : 0.28;
   const patterns = listLightPatterns(columns);
+  const lightStates = new Map(lights.map(light => [light, { opacity: base, scale: 1 }]));
+  const originalStyles = lights.map(light => ({ light, opacity: light.style.opacity, transform: light.style.transform }));
+  let domFallback = true;
   let activeIndex = -1;
   let playing = false;
 
+  function syncLightDom() {
+    if (!domFallback) return;
+    lightStates.forEach((state, light) => {
+      const opacity = String(Math.round(state.opacity * 10000) / 10000);
+      const transform = `scale(${Math.round(state.scale * 10000) / 10000})`;
+      if (light.style.opacity !== opacity) light.style.opacity = opacity;
+      if (light.style.transform !== transform) light.style.transform = transform;
+    });
+  }
+
+  function setDomFallback(value) {
+    const next = Boolean(value);
+    if (domFallback === next) return;
+    domFallback = next;
+    if (domFallback) syncLightDom();
+  }
+
   // Build a bounded set inside matchMedia's GSAP context. Only one timeline runs at a time.
   const sequences = patterns.map(pattern => {
-    const sequence = gsap.timeline({ paused: true, defaults: { ease: buildLightFadeProgress }, onComplete: playNextLightPattern }).timeScale(1 / (contact ? 0.7 : 0.64));
+    const sequence = gsap.timeline({ paused: true, defaults: { ease: buildLightFadeProgress }, onUpdate: syncLightDom, onComplete: playNextLightPattern }).timeScale(1 / (contact ? 0.7 : 0.64));
     lights.forEach(light => {
       const row = Number(light.dataset.lightRow);
       const column = Number(light.dataset.lightColumn);
       const peak = LIGHT_PEAK_INTENSITY * pattern.strength * (contact ? 0.9 : 1);
       const start = pattern.buildStartTime(row, column);
 
-      sequence.fromTo(light, { opacity: base, scale: 1 }, { opacity: peak, scale: 1.2, duration: pattern.rise, immediateRender: false }, start).to(light, { opacity: base, scale: 1, duration: pattern.fade }, start + pattern.rise);
+      const state = lightStates.get(light);
+      sequence.fromTo(state, { opacity: base, scale: 1 }, { opacity: peak, scale: 1.2, duration: pattern.rise, immediateRender: false }, start).to(state, { opacity: base, scale: 1, duration: pattern.fade }, start + pattern.rise);
     });
     // The quiet gap belongs to the timeline, so pausing also stops the next pattern's countdown.
     sequence.to({}, { duration: 0.9 });
     return sequence;
   });
 
-  gsap.set(lights, { opacity: base, scale: 1 });
+  syncLightDom();
 
   function playNextLightPattern() {
     if (!playing) return;
@@ -59,6 +79,8 @@ function createLightSequence(stage) {
   }
 
   return {
+    lightStates,
+    setDomFallback,
     isComplete: () => false,
     pause: () => {
       playing = false;
@@ -69,6 +91,16 @@ function createLightSequence(stage) {
       playing = true;
       if (activeIndex < 0) playNextLightPattern();
       else sequences[activeIndex].resume();
+    },
+    destroy: () => {
+      playing = false;
+      sequences.forEach(sequence => sequence.kill());
+      originalStyles.forEach(({ light, opacity, transform }) => {
+        if (opacity) light.style.opacity = opacity;
+        else light.style.removeProperty("opacity");
+        if (transform) light.style.transform = transform;
+        else light.style.removeProperty("transform");
+      });
     },
   };
 }
@@ -294,30 +326,81 @@ function createLightEqualizerSequence(stage) {
   };
 }
 
-function initLightPlayback(selector = ".js-light-stage, .js-light-cue", headingReveals = new Map()) {
+function initLightPlayback(selector = ".js-light-stage, .js-light-cue", headingReveals = new Map(), { heroAnimations = [], heroStage = null } = {}) {
   // Keep the CSS light wall static when viewport observation is unavailable.
   if (typeof IntersectionObserver !== "function") return () => {};
   const stages = [...document.querySelectorAll(selector)];
   if (!stages.length) return () => {};
   const stageVisible = new Map(stages.map(stage => [stage, false]));
   const renderSkipped = new Map();
-  const sequences = stages.map(stage => {
-    const loop = stage.classList.contains("js-light-equalizer") ? createLightEqualizerSequence(stage) : stage.classList.contains("js-light-cue") ? createLightCueSequence(stage, headingReveals.get(stage)) : createLightSequence(stage);
-    const renderer = stage.classList.contains("js-light-stage") ? createWebglLightStage(stage) : null;
-    return { stage, loop, renderer };
+  const sequences = stages.map(stage => ({ stage, loop: null, renderer: null, rendererPending: false, rendererFailed: false, context: null }));
+  let destroyed = false;
+  let heroRendererReady = heroAnimations.length === 0;
+  let heroReadyFrame = 0;
+
+  function queueHeroRendererStart() {
+    if (destroyed || heroRendererReady || heroReadyFrame) return;
+    // Let the completed heading frame paint before a cached renderer import can allocate shaders.
+    heroReadyFrame = window.requestAnimationFrame(() => {
+      heroReadyFrame = 0;
+      if (destroyed) return;
+      heroRendererReady = true;
+      syncLightPlayback();
+    });
+  }
+
+  function ensureLightSequence(record) {
+    if (record.loop) return;
+    // A stage first seen later still owns a context that can be reverted on a breakpoint change.
+    record.context = gsap.context(() => {
+      const { stage } = record;
+      record.loop = stage.classList.contains("js-light-equalizer") ? createLightEqualizerSequence(stage) : stage.classList.contains("js-light-cue") ? createLightCueSequence(stage, headingReveals.get(stage)) : createLightSequence(stage);
+    });
+  }
+
+  function ensureLightRenderer(record) {
+    if (!record.stage.classList.contains("js-light-stage") || record.renderer || record.rendererPending || record.rendererFailed) return;
+    // Keep shader allocation outside the heading reveal while the existing DOM lights keep playing.
+    if (record.stage === heroStage && !heroRendererReady) return;
+    record.rendererPending = true;
+    import("./_portfolio-webgl.js")
+      .then(({ createWebglLightStage }) => {
+        record.rendererPending = false;
+        if (destroyed || document.hidden || !stageVisible.get(record.stage) || renderSkipped.get(record.stage)) return;
+        record.renderer = createWebglLightStage(record.stage, record.loop.lightStates, record.loop.setDomFallback);
+        record.rendererFailed = !record.renderer;
+        record.renderer?.setAvailable(true);
+      })
+      .catch(() => {
+        record.rendererPending = false;
+        record.rendererFailed = true;
+      });
+  }
+
+  sequences.forEach(record => {
+    if (!record.stage.classList.contains("c-light-stage--contact")) ensureLightSequence(record);
   });
   const observer = new IntersectionObserver(entries => {
     entries.forEach(entry => stageVisible.set(entry.target, entry.isIntersecting));
     syncLightPlayback();
   });
+  if (heroAnimations.length) Promise.allSettled(heroAnimations.map(animation => animation.finished)).then(queueHeroRendererStart);
 
   function syncLightPlayback() {
-    sequences.forEach(({ stage, loop, renderer }) => {
+    if (destroyed) return;
+    sequences.forEach(record => {
+      const { stage } = record;
+      const shouldPlay = !document.hidden && stageVisible.get(stage) && !renderSkipped.get(stage);
+      if (shouldPlay) {
+        ensureLightSequence(record);
+        ensureLightRenderer(record);
+      }
+      const { loop, renderer } = record;
+      if (!loop) return;
       if (loop.isComplete()) {
         stage.dataset.lightPlayback = "complete";
         return;
       }
-      const shouldPlay = !document.hidden && stageVisible.get(stage) && !renderSkipped.get(stage);
       if (shouldPlay) loop.resume();
       else loop.pause();
       renderer?.setAvailable(shouldPlay);
@@ -339,11 +422,15 @@ function initLightPlayback(selector = ".js-light-stage, .js-light-cue", headingR
   syncLightPlayback();
 
   return () => {
+    destroyed = true;
+    if (heroReadyFrame) window.cancelAnimationFrame(heroReadyFrame);
     observer.disconnect();
     document.removeEventListener("visibilitychange", syncLightPlayback);
-    sequences.forEach(({ loop, renderer }) => {
-      loop.pause();
+    sequences.forEach(({ loop, renderer, context }) => {
+      loop?.pause();
       renderer?.destroy();
+      loop?.destroy?.();
+      context?.revert();
     });
     stages.forEach(stage => {
       stage.removeEventListener("contentvisibilityautostatechange", handleLightRenderState);
@@ -351,6 +438,14 @@ function initLightPlayback(selector = ".js-light-stage, .js-light-cue", headingR
       stage.removeAttribute("data-light-pattern");
     });
   };
+}
+
+function listHeroRevealAnimations(hero) {
+  if (!hero) return [];
+  return [...hero.querySelectorAll(".js-hero-line")].flatMap(line => {
+    if (typeof line.getAnimations !== "function") return [];
+    return line.getAnimations().filter(animation => animation.animationName === "portfolio-hero-reveal" && animation.playState !== "finished" && animation.playState !== "idle");
+  });
 }
 
 function initPortfolioMotion() {
@@ -365,7 +460,6 @@ function initPortfolioMotion() {
     const desktop = context.conditions.desktop;
     const hero = document.querySelector(".p-portfolio-hero");
     if (hero) {
-      gsap.timeline({ defaults: { duration: 1.15, ease: "power3.out" } }).from(".js-hero-line", { yPercent: 105, stagger: 0.17, delay: 0.15 });
       gsap.to(".p-portfolio-hero__type", {
         y: desktop ? -50 : -20,
         ease: "none",
@@ -422,7 +516,7 @@ function initPortfolioMotion() {
         scrollTrigger: { trigger: skills, start: "top 92%", once: true },
       });
 
-    const stopLightPlayback = initLightPlayback(undefined, headingReveals.cues);
+    const stopLightPlayback = initLightPlayback(undefined, headingReveals.cues, { heroAnimations: listHeroRevealAnimations(hero), heroStage: hero?.querySelector(".js-light-stage") });
     return () => {
       stopLightPlayback();
       headingReveals.restore();

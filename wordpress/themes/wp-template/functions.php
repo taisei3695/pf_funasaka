@@ -37,6 +37,7 @@ get_template_part("functions-lib/func-add-posttype-post");
 get_template_part("functions-lib/func-works");
 get_template_part("functions-lib/func-private-works");
 get_template_part("functions-lib/func-portfolio");
+get_template_part("functions-lib/func-brand-assets");
 
 // 構造化データの設定（汎用化済み）
 get_template_part("functions-lib/func-structured-data");
