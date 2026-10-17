@@ -4,10 +4,10 @@
   "fields": [
     {
       "key": "field_portfolio_visibility",
-      "label": "掲載範囲",
+      "label": "公開範囲",
       "name": "works_visibility",
       "type": "select",
-      "instructions": "公開実績に掲載する作品だけ「公開実績」を選択してください。未設定の作品はサイトへ表示しません。「非公開実績」の画像は公開メディアライブラリへ置かず、専用保管領域を利用してください。",
+      "instructions": "公開できる実績・匿名の開発内容は「公開実績」を選択します。守秘情報を含む詳細は「非公開実績」で管理してください。",
       "required": 1,
       "conditional_logic": 0,
       "wrapper": {
@@ -26,23 +26,25 @@
       "return_format": "value"
     },
     {
-      "key": "field_portfolio_subtitle",
-      "label": "サブタイトル",
-      "name": "works_subtitle",
-      "type": "text",
-      "instructions": "",
-      "required": 0,
-      "conditional_logic": 0,
-      "wrapper": {
-        "width": "",
-        "class": "",
-        "id": ""
+      "default_value": "study",
+      "label": "トップページの掲載先",
+      "return_format": "value",
+      "name": "works_section",
+      "key": "field_portfolio_work_section",
+      "instructions": "公開実績だけが選択したセクションに表示されます。非公開実績は認証付き一覧に表示されます。",
+      "choices": {
+        "professional": "Works：Web制作・保守（実務）",
+        "system": "Experience：SE・PGの実務",
+        "academic": "Experience：大学校での開発",
+        "study": "Works：学習・自主制作"
       },
-      "maxlength": 120
+      "allow_null": 0,
+      "type": "select",
+      "required": 1
     },
     {
       "key": "field_portfolio_project_type",
-      "label": "サイト種別",
+      "label": "案件区分",
       "name": "works_project_type",
       "type": "text",
       "instructions": "",
@@ -53,89 +55,14 @@
         "class": "",
         "id": ""
       },
-      "placeholder": "例：Corporate Website"
-    },
-    {
-      "key": "field_portfolio_role",
-      "label": "担当範囲",
-      "name": "works_role",
-      "type": "text",
-      "instructions": "",
-      "required": 1,
-      "conditional_logic": 0,
-      "wrapper": {
-        "width": "",
-        "class": "",
-        "id": ""
-      },
-      "placeholder": "例：Coding / WordPress / JavaScript"
-    },
-    {
-      "key": "field_2ccef63afe357",
-      "label": "使用技術",
-      "name": "works_technologies",
-      "type": "checkbox",
-      "instructions": "",
-      "required": 0,
-      "conditional_logic": 0,
-      "wrapper": {
-        "width": "",
-        "class": "",
-        "id": ""
-      },
-      "choices": {
-        "html": "HTML",
-        "css": "CSS / Sass",
-        "javascript": "JavaScript",
-        "jquery": "jQuery",
-        "php": "PHP",
-        "wordpress": "WordPress",
-        "git": "Git",
-        "figma": "Figma",
-        "adobe_xd": "Adobe XD",
-        "react": "React",
-        "vue": "Vue.js",
-        "node": "Node.js",
-        "python": "Python",
-        "ruby": "Ruby",
-        "java": "Java",
-        "design": "デザイン"
-      },
-      "default_value": [],
-      "return_format": "value",
-      "layout": "horizontal",
-      "toggle": 0,
-      "allow_custom": 0,
-      "save_custom": 0
-    },
-    {
-      "key": "field_portfolio_origin",
-      "label": "制作区分",
-      "name": "works_origin",
-      "type": "select",
-      "instructions": "Next Realty / Kidsland / Valentine Rose は「スクール卒業制作」を選択してください。掲載許可がない案件は登録しないでください。",
-      "required": 0,
-      "conditional_logic": 0,
-      "wrapper": {
-        "width": "",
-        "class": "",
-        "id": ""
-      },
-      "choices": {
-        "school_graduation": "スクール卒業制作",
-        "client": "許可を得たクライアントワーク",
-        "personal": "自主制作"
-      },
-      "default_value": "",
-      "allow_null": 1,
-      "return_format": "value"
+      "placeholder": "例：Web制作 / 実務、業務システム / 実務、大学校での開発"
     },
     {
       "key": "field_173ddf06747ba",
-      "label": "メイン画像（公開実績のみ）",
+      "label": "カード・詳細ページの画像（公開実績）",
       "name": "works_gallery",
       "type": "image",
-      "instructions": "この画像は通常の公開メディアです。非公開実績の画像をここへアップロードしないでください。",
+      "instructions": "公開可能な画像だけを登録します。イメージ画像の場合は下の「画像の種類」で区別してください。",
       "required": 0,
       "conditional_logic": [
         [
@@ -155,6 +82,145 @@
       "library": "all",
       "preview_size": "medium",
       "mime_types": "jpg,jpeg,png,webp,avif"
+    },
+    {
+      "default_value": "screenshot",
+      "choices": {
+        "screenshot": "制作画面・実物写真",
+        "illustration": "イメージ画像（AI生成等）"
+      },
+      "return_format": "value",
+      "name": "works_image_kind",
+      "label": "画像の種類",
+      "key": "field_portfolio_image_kind",
+      "type": "select",
+      "conditional_logic": [
+        [
+          {
+            "operator": "==",
+            "value": "public",
+            "field": "field_portfolio_visibility"
+          }
+        ]
+      ]
+    },
+    {
+      "key": "field_portfolio_role",
+      "label": "担当範囲（要約）",
+      "name": "works_role",
+      "type": "text",
+      "instructions": "",
+      "required": 1,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "placeholder": "例：Coding / WordPress / JavaScript"
+    },
+    {
+      "type": "textarea",
+      "key": "field_portfolio_technology_labels",
+      "name": "works_technology_labels",
+      "label": "使用言語・技術",
+      "rows": 5,
+      "instructions": "1行に1項目を入力します。カード・詳細ページの両方に同じタグを表示します。",
+      "new_lines": "",
+      "required": 0
+    },
+    {
+      "name": "works_period_label",
+      "choices": {
+        "開発期間": "開発期間",
+        "担当期間": "担当期間",
+        "開発時期": "開発時期",
+        "制作期間": "制作期間"
+      },
+      "key": "field_portfolio_period_label",
+      "default_value": "制作期間",
+      "label": "期間の見出し",
+      "type": "select",
+      "return_format": "value"
+    },
+    {
+      "key": "field_ea7c9e720f0cf",
+      "label": "期間・時期",
+      "name": "works_period",
+      "type": "text",
+      "instructions": "",
+      "required": 0,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      }
+    },
+    {
+      "key": "field_portfolio_work_status",
+      "type": "text",
+      "instructions": "詳細ページに表示します。例：納品完了・公開中、継続中。",
+      "name": "works_status",
+      "label": "制作・対応状況"
+    },
+    {
+      "key": "field_portfolio_overview",
+      "label": "案件概要",
+      "name": "works_overview",
+      "type": "textarea",
+      "instructions": "カードにも表示する短い紹介文です。詳細な担当業務や取り組みは下の専用欄に入力してください。",
+      "required": 0,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "rows": 4,
+      "new_lines": ""
+    },
+    {
+      "name": "works_tasks",
+      "new_lines": "",
+      "key": "field_portfolio_work_tasks",
+      "label": "担当業務（詳細）",
+      "type": "textarea",
+      "instructions": "1行に1項目を入力します。詳細ページに箇条書きで表示します。",
+      "rows": 6
+    },
+    {
+      "name": "works_implementation_title",
+      "key": "field_portfolio_implementation_title",
+      "default_value": "実装内容",
+      "label": "実装・取り組み内容の見出し",
+      "type": "text",
+      "instructions": "例：工夫した点、取り組んだこと、実装内容。"
+    },
+    {
+      "key": "field_portfolio_implementation",
+      "label": "実装・取り組み内容（詳細）",
+      "name": "works_implementation",
+      "type": "wysiwyg",
+      "instructions": "",
+      "required": 0,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "tabs": "all",
+      "toolbar": "basic",
+      "media_upload": 0,
+      "delay": 0
+    },
+    {
+      "key": "field_portfolio_work_award",
+      "type": "text",
+      "instructions": "個人・チームの別を含めて記入します。詳細ページに表示します。",
+      "name": "works_award",
+      "label": "受賞実績"
     },
     {
       "key": "field_portfolio_private_image",
@@ -180,10 +246,10 @@
       "placeholder": "project-main.webp"
     },
     {
-      "key": "field_portfolio_overview",
-      "label": "概要",
-      "name": "works_overview",
-      "type": "textarea",
+      "key": "field_portfolio_subtitle",
+      "label": "サブタイトル",
+      "name": "works_subtitle",
+      "type": "text",
       "instructions": "",
       "required": 0,
       "conditional_logic": 0,
@@ -192,15 +258,14 @@
         "class": "",
         "id": ""
       },
-      "rows": 4,
-      "new_lines": ""
+      "maxlength": 120
     },
     {
-      "key": "field_portfolio_implementation",
-      "label": "実装内容",
-      "name": "works_implementation",
-      "type": "wysiwyg",
-      "instructions": "",
+      "key": "field_portfolio_origin",
+      "label": "制作区分",
+      "name": "works_origin",
+      "type": "select",
+      "instructions": "Next Realty / Kidsland / Valentine Rose は「スクール卒業制作」を選択してください。掲載許可がない案件は登録しないでください。",
       "required": 0,
       "conditional_logic": 0,
       "wrapper": {
@@ -208,10 +273,14 @@
         "class": "",
         "id": ""
       },
-      "tabs": "all",
-      "toolbar": "basic",
-      "media_upload": 0,
-      "delay": 0
+      "choices": {
+        "school_graduation": "スクール卒業制作",
+        "client": "許可を得たクライアントワーク",
+        "personal": "自主制作"
+      },
+      "default_value": "",
+      "allow_null": 1,
+      "return_format": "value"
     },
     {
       "key": "field_6ca866c6fca79",
@@ -251,52 +320,6 @@
       },
       "rows": 3,
       "new_lines": ""
-    },
-    {
-      "key": "field_32de524203bd8",
-      "label": "クライアント名（任意）",
-      "name": "works_client",
-      "type": "text",
-      "instructions": "",
-      "required": 0,
-      "conditional_logic": 0,
-      "wrapper": {
-        "width": "",
-        "class": "",
-        "id": ""
-      }
-    },
-    {
-      "key": "field_ea7c9e720f0cf",
-      "label": "制作期間（任意）",
-      "name": "works_period",
-      "type": "text",
-      "instructions": "",
-      "required": 0,
-      "conditional_logic": 0,
-      "wrapper": {
-        "width": "",
-        "class": "",
-        "id": ""
-      }
-    },
-    {
-      "key": "field_17b8c702bbece",
-      "label": "旧制作内容（既存データ用）",
-      "name": "works_description",
-      "type": "wysiwyg",
-      "instructions": "テンプレートの既存データを維持するための項目です。新しい実績では概要・実装内容を使用してください。",
-      "required": 0,
-      "conditional_logic": 0,
-      "wrapper": {
-        "width": "",
-        "class": "",
-        "id": ""
-      },
-      "tabs": "all",
-      "toolbar": "basic",
-      "media_upload": 0,
-      "delay": 0
     }
   ],
   "location": [
@@ -315,7 +338,6 @@
   "instruction_placement": "label",
   "hide_on_screen": ["the_content", "excerpt", "featured_image"],
   "active": true,
-  "description": "ポートフォリオの実績・掲載範囲を管理します。非公開実績にはWebサーバーの認証と専用画像保管が必要です。",
-  "show_in_rest": 0,
-  "modified": 1791026752
+  "description": "Works・Experience・制作実績一覧・詳細ページの共通データです。公開範囲に応じて画像と閲覧権限を分けて管理します。",
+  "show_in_rest": 0
 }

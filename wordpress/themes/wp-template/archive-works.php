@@ -2,8 +2,11 @@
 <main id="main" class="l-main">
   <section class="p-portfolio-section p-portfolio-works" aria-labelledby="works-title">
     <div class="l-portfolio-inner">
-      <h1 id="works-title" class="p-portfolio-section__title">WORKS</h1>
-      <div class="p-portfolio-works__list">
+      <h1 id="works-title" class="p-portfolio-section__title">PROJECTS</h1>
+      <p class="p-portfolio-section__intro">制作実績・開発経験</p>
+      <p class="p-portfolio-section__note">Web制作・保守、業務システム、大学校での開発、学習制作をご紹介します。担当業務や実装内容は各詳細ページをご覧ください。</p>
+      <p><a class="p-portfolio-text-link" href="<?php echo esc_url(portfolio_build_section_url("works")); ?>">実務案件を見る <span aria-hidden="true">→</span></a></p>
+      <div class="p-portfolio-project-grid">
         <?php if (have_posts()):
           while (have_posts()):
             the_post();

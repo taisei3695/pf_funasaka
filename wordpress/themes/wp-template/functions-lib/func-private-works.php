@@ -58,7 +58,7 @@ function portfolio_list_private_works($limit = 12)
     "post_type" => "works",
     "post_status" => "private",
     "posts_per_page" => max(1, (int) $limit),
-    "orderby" => ["date" => "DESC", "ID" => "DESC"],
+    "orderby" => ["menu_order" => "ASC", "title" => "ASC", "ID" => "ASC"],
     "meta_query" => [["key" => "works_visibility", "value" => "private", "compare" => "="]],
     "portfolio_private_query" => true,
     "suppress_filters" => false,

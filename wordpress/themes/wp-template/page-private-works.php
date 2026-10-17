@@ -11,7 +11,7 @@ get_header();
   <section class="p-portfolio-section p-portfolio-works">
     <div class="l-portfolio-inner">
       <h1 class="p-portfolio-section__title">PRIVATE WORKS</h1>
-      <div class="p-portfolio-works__list">
+      <div class="p-portfolio-project-grid">
       <?php
       $private_works = portfolio_list_private_works(100);
       if (!$private_works): ?><p>掲載許可のある非公開実績は準備中です。</p><?php endif;

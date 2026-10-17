@@ -3,53 +3,32 @@ if (!defined("ABSPATH")) {
   exit();
 }
 
-/**
- * 投稿タイプのラベルを「ニュース」に変更
- */
-
-// 投稿タイプのラベル変更
-function set_post_labels()
+/** The portfolio uses Works and pages; keep ordinary post data without exposing news. */
+function portfolio_disable_news_post_type($args, $post_type)
 {
-  global $wp_post_types;
-
-  $labels = &$wp_post_types["post"]->labels;
-  $labels->name = "ニュース";
-  $labels->singular_name = "ニュース";
-  $labels->add_new_item = "ニュースの新規追加";
-  $labels->edit_item = "ニュースの編集";
-  $labels->new_item = "新規ニュース";
-  $labels->view_item = "ニュースを表示";
-  $labels->search_items = "ニュースを検索";
-  $labels->not_found = "ニュースが見つかりませんでした";
-  $labels->not_found_in_trash = "ゴミ箱にニュースは見つかりませんでした";
-}
-
-// 管理画面メニューのラベル変更
-function set_post_menu_labels()
-{
-  global $menu, $submenu;
-
-  $menu[5][0] = "ニュース";
-  $submenu["edit.php"][5][0] = "ニュース一覧";
-  $submenu["edit.php"][10][0] = "新しいニュース";
-}
-
-add_action("init", "set_post_labels");
-add_action("admin_menu", "set_post_menu_labels");
-
-/**
- * 通常投稿（post）のアーカイブを有効化し、スラッグを「news」に設定
- * これにより /news/ で archive-news.php が使用される
- */
-function apply_post_archive_slug($args, $post_type)
-{
-  if ($post_type === "post") {
-    $args["has_archive"] = true;
-    $args["rewrite"] = [
-      "slug" => "news",
-      "with_front" => false,
-    ];
+  if ($post_type !== "post") {
+    return $args;
   }
-  return $args;
+  return array_merge($args, [
+    "public" => false,
+    "publicly_queryable" => false,
+    "exclude_from_search" => true,
+    "show_ui" => false,
+    "show_in_menu" => false,
+    "show_in_admin_bar" => false,
+    "show_in_nav_menus" => false,
+    "show_in_rest" => false,
+    "has_archive" => false,
+    "rewrite" => false,
+    "query_var" => false,
+  ]);
 }
-add_filter("register_post_type_args", "apply_post_archive_slug", 10, 2);
+add_filter("register_post_type_args", "portfolio_disable_news_post_type", 10, 2);
+
+function portfolio_remove_news_dashboard_widgets()
+{
+  remove_meta_box("dashboard_quick_press", "dashboard", "side");
+  remove_meta_box("dashboard_activity", "dashboard", "normal");
+  remove_meta_box("dashboard_primary", "dashboard", "side");
+}
+add_action("wp_dashboard_setup", "portfolio_remove_news_dashboard_widgets");

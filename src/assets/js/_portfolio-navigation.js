@@ -1,4 +1,4 @@
-const PORTFOLIO_SECTION_IDS = new Set(["works", "skills", "about", "contact"]);
+const PORTFOLIO_SECTION_IDS = new Set(["about", "works", "experience", "skills", "contact"]);
 
 function findPortfolioNavigationSection(url) {
   const id = url.hash.slice(1);

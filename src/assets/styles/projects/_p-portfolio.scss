@@ -123,7 +123,7 @@ body.portfolio-site {
 
   &__nav {
     display: flex;
-    gap: 0 24px;
+    gap: 0 4px;
     justify-content: space-between;
     align-items: center;
     width: 100%;
@@ -483,43 +483,6 @@ body.portfolio-site:not(.home) .p-portfolio-header {
   }
 }
 
-.portfolio-site .p-portfolio-skills {
-  &__list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px 24px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-
-    @include mq(md) {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 24px 72px;
-    }
-
-    li {
-      padding-block: 14px;
-      border-block-end: 1px solid #deded7;
-      font-size: fluid(22px, 34px);
-      font-weight: 300;
-      line-height: 1.5;
-      letter-spacing: 0.025em;
-    }
-
-    small,
-    span {
-      display: block;
-      margin-block-start: 8px;
-      color: var(--portfolio-muted);
-      font-family: var(--portfolio-japanese);
-      font-size: fluid(12px, 13px);
-      font-weight: 400;
-      line-height: 1.8;
-      letter-spacing: 0.04em;
-    }
-  }
-}
-
 .portfolio-site .p-portfolio-about {
   .l-portfolio-inner {
     position: relative;
@@ -764,6 +727,7 @@ body.portfolio-site:not(.home) .p-portfolio-header {
   }
 
   &__image {
+    overflow: hidden;
     margin-block: 40px 56px;
     background-color: #e9e9e4;
 

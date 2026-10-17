@@ -10,7 +10,8 @@
     "https://downloads.wordpress.org/plugin/wp-multibyte-patch.zip",
     "https://downloads.wordpress.org/plugin/seo-simple-pack.zip",
     "https://downloads.wordpress.org/plugin/advanced-custom-fields.zip",
-    "https://downloads.wordpress.org/plugin/wpvivid-backuprestore.zip"
+    "https://downloads.wordpress.org/plugin/wpvivid-backuprestore.zip",
+    "https://downloads.wordpress.org/plugin/simple-page-ordering.zip"
   ],
   "mappings": {
     "wp-content/uploads": "./wordpress/uploads",

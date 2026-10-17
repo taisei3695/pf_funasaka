@@ -24,7 +24,7 @@ function portfolio_register_works()
     "has_archive" => "works",
     "rewrite" => ["slug" => "works", "with_front" => false],
     // Works content is edited through ACF overview/implementation fields.
-    "supports" => ["title", "thumbnail", "excerpt", "revisions"],
+    "supports" => ["title", "thumbnail", "excerpt", "revisions", "page-attributes"],
     "show_in_rest" => true,
     "menu_icon" => "dashicons-portfolio",
     "menu_position" => 5,
@@ -51,12 +51,12 @@ add_action("init", "portfolio_register_works", 30);
 function portfolio_get_work_visibility($post_id)
 {
   $visibility = get_post_meta((int) $post_id, "works_visibility", true);
-  return in_array($visibility, ["public", "private"], true) ? $visibility : "unassigned";
+  return in_array($visibility, ["public", "private", "summary"], true) ? $visibility : "unassigned";
 }
 
 function portfolio_is_public_work($post_id)
 {
-  return get_post_type($post_id) === "works" && get_post_status($post_id) === "publish" && portfolio_get_work_visibility($post_id) === "public";
+  return get_post_type($post_id) === "works" && get_post_status($post_id) === "publish" && get_post_field("post_password", $post_id) === "" && portfolio_get_work_visibility($post_id) === "public";
 }
 
 function portfolio_can_view_work($post_id)
@@ -71,21 +71,36 @@ function portfolio_can_view_work($post_id)
     portfolio_is_private_request_authenticated();
 }
 
-/** Public helpers return WP_Post objects, ordered by publication, newest first. */
+function portfolio_get_work_section($post_id)
+{
+  $section = get_post_meta($post_id, "works_section", true);
+  return array_key_exists($section, portfolio_list_project_sections()) ? $section : "study";
+}
+
+/** Study projects follow the same records and order as the other sections. */
 function portfolio_list_public_works($limit = 3)
 {
   $query = new WP_Query([
     "post_type" => "works",
     "post_status" => "publish",
+    "has_password" => false,
     "posts_per_page" => max(1, (int) $limit),
-    "orderby" => ["date" => "DESC", "ID" => "DESC"],
-    "meta_query" => [["key" => "works_visibility", "value" => "public", "compare" => "="]],
+    "orderby" => ["menu_order" => "ASC", "title" => "ASC", "ID" => "ASC"],
+    "meta_query" => [["key" => "works_visibility", "value" => "public", "compare" => "="], ["relation" => "OR", ["key" => "works_section", "value" => "study"], ["key" => "works_section", "compare" => "NOT EXISTS"]]],
     "no_found_rows" => true,
     "ignore_sticky_posts" => true,
     "suppress_filters" => false,
   ]);
   return $query->posts;
 }
+
+function portfolio_apply_work_archive_order($query)
+{
+  if (!is_admin() && $query->is_main_query() && $query->is_post_type_archive("works")) {
+    $query->set("orderby", ["menu_order" => "ASC", "title" => "ASC", "ID" => "ASC"]);
+  }
+}
+add_action("pre_get_posts", "portfolio_apply_work_archive_order");
 
 function portfolio_find_work_data($post_id = 0)
 {
@@ -120,6 +135,10 @@ function portfolio_find_work_data($post_id = 0)
       }, $technologies),
     ),
   );
+  $technology_text = get_post_meta($post_id, "works_technology_labels", true);
+  if (is_string($technology_text) && trim($technology_text) !== "") {
+    $technologies = portfolio_parse_project_lines($technology_text);
+  }
   $origin = (string) get_post_meta($post_id, "works_origin", true);
   return [
     "id" => $post_id,
@@ -127,6 +146,16 @@ function portfolio_find_work_data($post_id = 0)
     "subtitle" => (string) get_post_meta($post_id, "works_subtitle", true),
     "project_type" => (string) get_post_meta($post_id, "works_project_type", true),
     "role" => (string) get_post_meta($post_id, "works_role", true),
+    "section" => portfolio_get_work_section($post_id),
+    "category" => (string) get_post_meta($post_id, "works_project_type", true),
+    "summary" => wp_strip_all_tags((string) get_post_meta($post_id, "works_overview", true)),
+    "period_label" => (string) get_post_meta($post_id, "works_period_label", true) ?: "制作期間",
+    "period" => (string) get_post_meta($post_id, "works_period", true),
+    "status" => (string) get_post_meta($post_id, "works_status", true),
+    "tasks" => portfolio_parse_project_lines((string) get_post_meta($post_id, "works_tasks", true)),
+    "implementation_title" => (string) get_post_meta($post_id, "works_implementation_title", true) ?: "実装内容",
+    "award" => (string) get_post_meta($post_id, "works_award", true),
+    "image_kind" => (string) get_post_meta($post_id, "works_image_kind", true),
     "technologies" => $technologies,
     "overview" => (string) get_post_meta($post_id, "works_overview", true),
     "implementation" => (string) get_post_meta($post_id, "works_implementation", true),
@@ -183,6 +212,9 @@ function portfolio_apply_work_insert_status($data, $postarr)
   }
   $post_id = (int) ($postarr["ID"] ?? 0);
   $visibility = isset($_POST["acf"]["field_portfolio_visibility"]) ? sanitize_key(wp_unslash($_POST["acf"]["field_portfolio_visibility"])) : portfolio_get_work_visibility($post_id);
+  if ($visibility === "summary") {
+    return $data;
+  }
   $data["post_status"] = $visibility === "public" ? "publish" : "private";
   return $data;
 }
@@ -196,7 +228,11 @@ function portfolio_sync_work_status($post_id)
   if ($syncing || !$post || $post->post_type !== "works" || wp_is_post_revision($post_id) || !in_array($post->post_status, ["publish", "private"], true)) {
     return;
   }
-  $target = portfolio_get_work_visibility($post_id) === "public" ? "publish" : "private";
+  $visibility = portfolio_get_work_visibility($post_id);
+  if ($visibility === "summary") {
+    return;
+  }
+  $target = $visibility === "public" ? "publish" : "private";
   if ($post->post_status !== $target) {
     $syncing = true;
     wp_update_post(["ID" => $post_id, "post_status" => $target]);

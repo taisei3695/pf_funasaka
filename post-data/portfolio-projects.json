@@ -1,0 +1,187 @@
+[
+  {
+    "source_id": "construction-website",
+    "section": "professional",
+    "order": 10,
+    "project": {
+      "title": "建設・建築会社 Webサイト制作",
+      "category": "Web制作 / 実務",
+      "technologies": ["WordPress", "HTML", "CSS", "JavaScript", "PHP"],
+      "period_label": "制作期間",
+      "period": "1か月未満",
+      "role": "コーディング・WordPressオリジナルテーマ構築",
+      "summary": "お知らせ・施工実績・ブログの投稿機能を備えたWebサイトを、支給デザインから実装しました。",
+      "tasks": ["デザインカンプからのコーディング", "WordPressオリジナルテーマ構築", "お知らせ・施工実績・ブログの投稿機能実装", "カスタム投稿タイプ・カスタムタクソノミーの実装", "ブロックエディターのカスタマイズ"],
+      "implementation_title": "工夫した点",
+      "implementation": ["ACFなどの追加プラグインに依存せず、WordPress標準ブロックを組み合わせた再利用可能なブロックパターンを作成しました。", "投稿内容に応じてレイアウトパーツを利用できる構成を実装しました。"],
+      "status": "納品完了"
+    }
+  },
+  {
+    "source_id": "auction-website",
+    "section": "professional",
+    "order": 20,
+    "project": {
+      "title": "オークション・商品販売サイト制作",
+      "category": "Web制作 / 実務",
+      "technologies": ["WordPress", "HTML", "CSS", "JavaScript", "PHP", "ACF", "Contact Form 7"],
+      "period_label": "制作期間",
+      "period": "1か月未満",
+      "role": "テーマ構築・商品管理・カート・注文フォーム実装",
+      "summary": "商品情報の管理、カテゴリー別表示・絞り込み、カート、入札問い合わせ・注文フォームを実装しました。",
+      "tasks": [
+        "デザインカンプからのコーディング",
+        "WordPressオリジナルテーマ構築",
+        "商品一覧・商品詳細ページの実装",
+        "カスタム投稿タイプ・ACFによる商品情報管理",
+        "商品カテゴリー別表示・絞り込み",
+        "JavaScriptによるカート機能",
+        "入札問い合わせ・商品注文フォームの実装"
+      ],
+      "implementation_title": "工夫した点",
+      "implementation": ["JavaScriptのlocalStorageを使用し、ページを移動してもカート内の商品情報を保持できる仕組みを実装しました。", "入札や注文はContact Form 7によるフォーム送信方式で構築しました。"],
+      "status": "納品完了・公開中"
+    }
+  },
+  {
+    "source_id": "pest-control-lp",
+    "section": "professional",
+    "order": 30,
+    "project": {
+      "title": "害虫駆除サービス LP制作",
+      "category": "LP制作 / 実務",
+      "technologies": ["WordPress", "HTML", "CSS", "JavaScript", "PHP", "Contact Form 7"],
+      "period_label": "制作期間",
+      "period": "1週間未満",
+      "role": "コーディング・WordPress組み込み・フォーム実装",
+      "summary": "支給デザインをもとに、レスポンシブ対応のLPとお問い合わせフォームを実装しました。",
+      "tasks": ["デザインカンプからのコーディング", "レスポンシブ対応", "WordPressへの組み込み", "JavaScriptによるアコーディオン実装", "お問い合わせフォームの実装・カスタマイズ"],
+      "implementation_title": "工夫した点",
+      "implementation": ["Contact Form 7には標準搭載されていない確認画面をJavaScriptで独自実装しました。", "お問い合わせ内容の確認から送信完了までの画面遷移に対応しました。"],
+      "status": "納品完了・公開中"
+    }
+  },
+  {
+    "source_id": "wagashi-maintenance",
+    "section": "professional",
+    "order": 40,
+    "project": {
+      "title": "和菓子店 Webサイト保守・運用",
+      "category": "保守・運用 / 実務",
+      "technologies": ["WordPress"],
+      "period_label": "担当期間",
+      "period": "2026年7月〜現在",
+      "role": "アップデート・バックアップ・掲載情報の更新",
+      "summary": "WordPressサイトの継続的な保守・運用を担当しています。",
+      "tasks": ["WordPress本体のアップデート", "WordPressプラグインのアップデート", "サイトデータのバックアップ", "文章・画像・商品情報の更新"],
+      "implementation_title": "対応内容",
+      "implementation": ["WordPress本体・プラグインの更新とバックアップ、文章・画像・商品情報の更新を継続して担当しています。"],
+      "status": "継続中"
+    }
+  },
+  {
+    "source_id": "online-tutoring-shopify",
+    "section": "professional",
+    "order": 50,
+    "project": {
+      "title": "オンライン学習塾 Webサイト制作",
+      "category": "テーマカスタマイズ / 実務",
+      "technologies": ["Shopify", "Liquid", "HTML", "CSS", "JavaScript"],
+      "period_label": "制作期間",
+      "period": "1〜2か月程度",
+      "role": "支給デザインの実装・Shopifyテーマカスタマイズ",
+      "summary": "案件に合わせてLiquidとShopifyのテーマ構造を学習し、既存テーマをカスタマイズしました。",
+      "tasks": ["支給デザインカンプからのコーディング", "Shopifyテーマのカスタマイズ", "Liquidによる実装", "レスポンシブ対応"],
+      "implementation_title": "実装内容",
+      "implementation": ["Liquidの構文やShopifyのテーマ構造を学習し、支給デザインに基づく既存テーマのカスタマイズとレスポンシブ対応を行いました。"],
+      "status": "納品完了・公開中"
+    }
+  },
+  {
+    "source_id": "illustrator-studio",
+    "section": "professional",
+    "order": 60,
+    "project": {
+      "title": "イラストレーター ポートフォリオサイト制作",
+      "category": "ノーコード制作 / 実務",
+      "technologies": ["STUDIO"],
+      "period_label": "制作期間",
+      "period": "1〜2週間程度",
+      "role": "支給デザインの実装・レスポンシブ対応",
+      "summary": "案件に合わせてSTUDIOを学習し、支給デザインに基づくサイト実装と各デバイスへの対応を行いました。",
+      "tasks": ["支給デザインカンプをもとにSTUDIOで実装", "PC・タブレット・スマートフォンへのレスポンシブ対応"],
+      "implementation_title": "実装内容",
+      "implementation": ["デバイスごとの表示幅に応じてレイアウトを調整し、各画面サイズでデザインが崩れないように実装しました。"],
+      "status": "納品完了・公開中"
+    }
+  },
+  {
+    "source_id": "agricultural-system",
+    "section": "system",
+    "order": 10,
+    "project": {
+      "title": "農業向け業務管理システム",
+      "category": "システム開発 / 実務",
+      "technologies": ["Java", "JSP", "HTML", "CSS", "JavaScript", "SQL", "Oracle", "Eclipse"],
+      "period_label": "開発期間",
+      "period": "約1年〜1年半",
+      "role": "画面・サーバーサイド開発、DB操作、不具合調査・修正",
+      "summary": "農作物の生産・栽培管理や、農業資材・在庫管理を行うWebベースの業務管理システムの開発に携わりました。",
+      "tasks": ["新規画面・機能の開発", "既存画面の修正・改修", "Java・JSPによるサーバーサイド処理の実装", "HTML・CSS・JavaScriptによる画面実装", "SQLの作成・修正、データベース操作", "不具合調査・修正", "テスト・動作確認"],
+      "implementation_title": "取り組んだこと",
+      "implementation": ["複雑な既存プログラムの構造や処理内容を解析し、必要な修正を行いました。", "既存コードを読み解き、システムの動作を理解したうえで改修する経験を積みました。"]
+    }
+  },
+  {
+    "source_id": "manufacturing-system",
+    "section": "system",
+    "order": 20,
+    "project": {
+      "title": "製造業向け業務管理システム",
+      "category": "システム開発 / 実務",
+      "technologies": ["HTML", "CSS", "JavaScript", "SQL", "PL/pgSQL"],
+      "period_label": "開発期間",
+      "period": "約半年〜1年間",
+      "role": "画面・データベース処理の開発・改修、テスト",
+      "summary": "製造業における生産管理・工程管理・在庫管理・品質管理を行う業務システムの開発に携わりました。",
+      "tasks": ["新規画面・機能の開発", "既存画面の修正・改修", "HTML・CSS・JavaScriptによる画面実装", "PL/pgSQLによるデータベース処理の実装・修正", "SQLの作成・修正", "不具合調査・修正", "テスト・動作確認"],
+      "implementation_title": "取り組んだこと",
+      "implementation": ["システムの不具合について原因を調査し、修正対応を行いました。", "画面側の処理からデータベース処理まで、複数の領域にまたがる開発・改修を経験しました。"]
+    }
+  },
+  {
+    "source_id": "table-tennis-machine",
+    "section": "academic",
+    "order": 10,
+    "project": {
+      "title": "卓球練習用ラリーマシンの開発",
+      "category": "チーム開発 / 大学校",
+      "technologies": ["C", "C#", "カメラ"],
+      "period_label": "開発期間",
+      "period": "1年間 / 応用課程2年次",
+      "role": "プログラム実装・統合、到達時間の算出・発射制御指示",
+      "summary": "卓球の練習を支援するため、ピンポン玉を自動発射し、打ち返されたボールを検知して再び発射するラリーマシンをチームで開発しました。",
+      "tasks": ["C言語・C#によるプログラム実装", "複数のプログラムの統合", "カメラから取得したボールの位置情報をもとにした到達時間の算出", "算出した到達時間に応じた発射タイミングの制御指示"],
+      "implementation_title": "工夫・成果",
+      "implementation": ["複数のプログラムを統合し、システム全体を正常に動作させることに取り組みました。", "最終的には予定していた機能をすべて実装し、正常動作を確認。学内で成果発表を行いました。"]
+    }
+  },
+  {
+    "source_id": "astronomy-app",
+    "section": "academic",
+    "order": 20,
+    "project": {
+      "title": "星空・星座表示アプリの開発",
+      "category": "チーム開発 / 大学校",
+      "technologies": ["Java", "Eclipse", "方位センサー"],
+      "period_label": "開発時期",
+      "period": "応用課程1年次",
+      "role": "Javaによる開発・センサー情報取得・表示切り替え",
+      "summary": "スマートフォンやタブレットを向けた方向に応じて、画面に表示される星空や星座が変化する天体アプリを開発しました。",
+      "tasks": ["Javaによるアプリケーション開発", "方位センサーからの情報取得処理", "端末の向きに応じた星空・星座の表示切り替え処理"],
+      "implementation_title": "工夫・成果",
+      "implementation": ["方位センサーから取得した情報をもとに、端末の向きに合わせて星空や星座を正しく表示する処理を実装しました。", "本アプリは「NEXT COMMUNICATION AWARD 2015」の協賛部門に応募し、チームとして入賞しました。"],
+      "award": "NEXT COMMUNICATION AWARD 2015 協賛部門 入賞（チーム受賞）"
+    }
+  }
+]
