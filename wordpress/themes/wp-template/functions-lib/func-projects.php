@@ -9,7 +9,7 @@ function portfolio_list_project_sections()
     "professional" => "Works：Web制作・保守（実務）",
     "system" => "Experience：SE・PGの実務",
     "academic" => "Experience：大学校での開発",
-    "study" => "Works：学習・自主制作",
+    "study" => "Personal Projects",
   ];
 }
 

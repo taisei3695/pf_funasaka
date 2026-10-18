@@ -18,8 +18,11 @@ $heading_tag = ($args["heading_level"] ?? 3) === 4 ? "h4" : "h3";
     <dl class="p-portfolio-project__meta">
       <?php if ($work["role"]): ?><div><dt>担当</dt><dd><?php echo esc_html($work["role"]); ?></dd></div><?php endif; ?>
       <?php if ($work["period"]): ?><div><dt><?php echo esc_html($work["period_label"]); ?></dt><dd><?php echo esc_html($work["period"]); ?></dd></div><?php endif; ?>
+      <?php if ($work["status"]): ?><div><dt>状況</dt><dd class="p-portfolio-project__status"><?php echo esc_html($work["status"]); ?></dd></div><?php endif; ?>
     </dl>
     <?php if ($work["technologies"]): ?><ul class="p-portfolio-tags" aria-label="使用技術"><?php foreach ($work["technologies"] as $technology): ?><li><?php echo esc_html($technology); ?></li><?php endforeach; ?></ul><?php endif; ?>
-    <a class="p-portfolio-project__link" href="<?php echo esc_url($work["permalink"]); ?>" aria-label="<?php echo esc_attr($work["title"] . " の詳細を見る"); ?>">詳細を見る <span aria-hidden="true">→</span></a>
+    <a class="p-portfolio-project__link" href="<?php echo esc_url($work["permalink"]); ?>" aria-label="<?php echo esc_attr(
+  $work["title"] . " の詳細を見る",
+); ?>"><span class="p-portfolio-project__link-label">詳細を見る</span> <span aria-hidden="true">→</span></a>
   </div>
 </article>

@@ -1,0 +1,115 @@
+.portfolio-site :is(.p-portfolio-section__title, .p-portfolio-detail__title, .p-portfolio-detail__body h2)[data-portfolio-heading-motion] {
+  position: relative;
+}
+
+.portfolio-site .p-portfolio-heading-motion__layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  user-select: none;
+  pointer-events: none;
+}
+
+.portfolio-site .p-portfolio-heading-motion__layer--blue {
+  clip-path: inset(12% 0 46%);
+  color: #8dccff;
+}
+
+.portfolio-site .p-portfolio-heading-motion__layer--rose {
+  clip-path: inset(55% 0 12%);
+  color: #ffb8dd;
+}
+
+@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .portfolio-site [data-portfolio-heading-motion="playing"] > .p-portfolio-heading-motion__layer--blue {
+    animation: portfolio-heading-glitch-blue 1.2s linear both;
+  }
+
+  .portfolio-site [data-portfolio-heading-motion="playing"] > .p-portfolio-heading-motion__layer--rose {
+    animation: portfolio-heading-glitch-rose 1.2s linear both;
+  }
+
+  .portfolio-site .p-portfolio-skill:is([data-portfolio-skill-motion="pending"], [data-portfolio-skill-motion="queued"]) {
+    opacity: 0;
+    translate: 0 2rem;
+  }
+
+  .portfolio-site .p-portfolio-skill[data-portfolio-skill-motion="playing"] {
+    animation: portfolio-skill-category-entry 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+@keyframes portfolio-heading-glitch-blue {
+  0%,
+  14% {
+    opacity: 0.95;
+    translate: -0.16em 0.02em;
+  }
+
+  15%,
+  32% {
+    opacity: 0.8;
+    translate: 0.1em -0.015em;
+  }
+
+  33%,
+  54% {
+    opacity: 0.6;
+    translate: -0.075em 0.015em;
+  }
+
+  55% {
+    opacity: 0.4;
+    translate: 0.04em 0;
+  }
+
+  100% {
+    opacity: 0;
+    translate: 0;
+  }
+}
+
+@keyframes portfolio-heading-glitch-rose {
+  0%,
+  14% {
+    opacity: 0.85;
+    translate: 0.14em -0.02em;
+  }
+
+  15%,
+  32% {
+    opacity: 0.7;
+    translate: -0.09em 0.015em;
+  }
+
+  33%,
+  54% {
+    opacity: 0.5;
+    translate: 0.065em -0.015em;
+  }
+
+  55% {
+    opacity: 0.3;
+    translate: -0.035em 0;
+  }
+
+  100% {
+    opacity: 0;
+    translate: 0;
+  }
+}
+
+@keyframes portfolio-skill-category-entry {
+  from {
+    opacity: 0;
+    translate: 0 2rem;
+  }
+
+  to {
+    opacity: 1;
+    translate: 0;
+  }
+}

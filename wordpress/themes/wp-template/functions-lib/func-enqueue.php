@@ -242,6 +242,21 @@ function portfolio_print_hero_font_preload()
 }
 add_action("wp_head", "portfolio_print_hero_font_preload", 2);
 
+/** Discover the first-view scene before the footer entry's dynamic import. */
+function portfolio_print_intro_preload()
+{
+  if (!is_front_page()) {
+    return;
+  }
+  wp_print_inline_script_tag('document.documentElement.classList.add("has-portfolio-intro");', ["id" => "portfolio-intro-layout"]);
+  $manifest = read_build_manifest();
+  $file = $manifest["assets/js/_portfolio-intro-scene.js"]["file"] ?? null;
+  if (get_asset_environment() === "manifest" && is_string($file) && preg_match("~^assets/js/_portfolio-intro-scene[.][a-zA-Z0-9_-]+[.]js$~", $file)) {
+    echo '<link rel="modulepreload" href="' . esc_url(get_template_directory_uri() . "/" . $file) . '" crossorigin>' . "\n";
+  }
+}
+add_action("wp_head", "portfolio_print_intro_preload", 2);
+
 /** Reuse the rendered main image's source contract so responsive preload never requests a second candidate. */
 function portfolio_build_transition_image_preload($post_id)
 {
@@ -277,20 +292,33 @@ function portfolio_print_transition_render_expectation()
   if (is_front_page()) {
     $target = "portfolio-hero";
   } elseif (is_singular("works") && portfolio_find_work_data(get_queried_object_id())) {
-    $target = "portfolio-work-image-" . get_queried_object_id();
+    $target = "portfolio-work-title";
     echo portfolio_build_transition_image_preload(get_queried_object_id());
   } elseif (is_post_type_archive("works")) {
-    global $wp_query;
-    $first_post = $wp_query->posts[0] ?? null;
-    if ($first_post && portfolio_find_work_data($first_post->ID)) {
-      $target = "portfolio-work-image-" . $first_post->ID;
-    }
+    $target = "works-title";
   }
   if ($target) {
     echo '<link rel="expect" blocking="render" href="#' . esc_attr($target) . '" media="(prefers-reduced-motion: no-preference)">' . "\n";
   }
 }
 add_action("wp_head", "portfolio_print_transition_render_expectation", 2);
+
+/** Begin WordPress's HTML-only prefetch on hover intent, before the click. */
+function portfolio_update_navigation_prefetch_configuration($config)
+{
+  if ($config === null || portfolio_is_private_request()) {
+    return null;
+  }
+  return ["mode" => "prefetch", "eagerness" => "moderate"];
+}
+add_filter("wp_speculation_rules_configuration", "portfolio_update_navigation_prefetch_configuration");
+
+/** Preserve core exclusions and keep authenticated portfolio routes out of speculation. */
+function portfolio_list_prefetch_excluded_paths($paths)
+{
+  return array_merge($paths, ["/private-works", "/private-works/*"]);
+}
+add_filter("wp_speculation_rules_href_exclude_paths", "portfolio_list_prefetch_excluded_paths");
 
 /**
  * Google Fonts最適化（プリコネクト）

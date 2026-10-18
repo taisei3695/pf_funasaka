@@ -1,3 +1,6 @@
+import { initPortfolioLinkEqualizers } from "./_portfolio-link-equalizer.js";
+import { initPortfolioScrollWaveform } from "./_portfolio-scroll-waveform.js";
+
 function buildScrollProgress(scroll, documentHeight, viewportHeight) {
   const distance = documentHeight - viewportHeight;
   return distance > 0 ? Math.min(1, Math.max(0, scroll / distance)) : 0;
@@ -23,7 +26,7 @@ function initScrollProgress() {
     const adminBar = document.querySelector("#wpadminbar");
     const top = adminBar ? Math.max(0, adminBar.getBoundingClientRect().bottom) : 0;
     const sample = document.elementFromPoint(Math.max(0, window.innerWidth / 2), Math.min(window.innerHeight - 1, top + 12));
-    const dark = sample?.closest(".p-portfolio-hero, .p-portfolio-contact") || (sample?.closest(".p-portfolio-header") && sample.closest(".p-portfolio-header").dataset.portfolioDark !== "false");
+    const dark = sample?.closest(".p-portfolio-intro, .p-portfolio-hero, .p-portfolio-contact") || (sample?.closest(".p-portfolio-header") && sample.closest(".p-portfolio-header").dataset.portfolioDark !== "false");
     progress.dataset.portfolioDark = String(Boolean(dark));
     progress.dataset.portfolioScrollable = String(documentHeight > viewportHeight);
     progress.style.setProperty("--portfolio-progress-top", `${top}px`);
@@ -75,16 +78,24 @@ function initPortfolioInteractions() {
   if (!document.body.classList.contains("portfolio-site")) return;
   const motion = window.matchMedia("(prefers-reduced-motion: no-preference) and (forced-colors: none)");
   let stopProgress = () => {};
+  let stopLinkEqualizers = () => {};
+  let stopWaveform = () => {};
 
   function stopPortfolioInteractions() {
     stopProgress();
+    stopLinkEqualizers();
+    stopWaveform();
     stopProgress = () => {};
+    stopLinkEqualizers = () => {};
+    stopWaveform = () => {};
   }
 
   function syncPortfolioInteractions() {
     stopPortfolioInteractions();
     if (!motion.matches) return;
     stopProgress = initScrollProgress();
+    stopLinkEqualizers = initPortfolioLinkEqualizers();
+    stopWaveform = initPortfolioScrollWaveform();
   }
 
   function handlePortfolioPageShow(event) {

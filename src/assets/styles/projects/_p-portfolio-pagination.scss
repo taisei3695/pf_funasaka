@@ -1,0 +1,90 @@
+.portfolio-site.post-type-archive-works .p-portfolio-detail__navigation {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.portfolio-site.post-type-archive-works .pagination {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+.portfolio-site.post-type-archive-works .pagination .nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.portfolio-site.post-type-archive-works .pagination .page-numbers {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-inline-size: 2.75rem;
+  min-block-size: 2.75rem;
+  padding-block: 0.375rem;
+  padding-inline: 0.75rem;
+  border: 0;
+  background-color: transparent;
+  color: var(--portfolio-ink);
+  font-size: 0.9375rem;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.portfolio-site.post-type-archive-works .pagination .page-numbers.current {
+  color: var(--portfolio-accent);
+  font-weight: 500;
+}
+
+.portfolio-site.post-type-archive-works .pagination .page-numbers.dots {
+  min-inline-size: 1.5rem;
+  padding-inline: 0;
+  color: var(--portfolio-muted);
+}
+
+.portfolio-site.post-type-archive-works .pagination .prev {
+  margin-inline-end: 0.5rem;
+}
+
+.portfolio-site.post-type-archive-works .pagination .next {
+  margin-inline-start: 0.5rem;
+}
+
+.portfolio-site.post-type-archive-works .pagination a.page-numbers:focus-visible {
+  color: var(--portfolio-accent);
+  outline: 2px solid var(--portfolio-accent);
+  outline-offset: 3px;
+}
+
+@media (any-hover: hover) {
+  .portfolio-site.post-type-archive-works .pagination a.page-numbers:hover {
+    color: var(--portfolio-accent);
+  }
+}
+
+@media (width >= 48rem) {
+  .portfolio-site.post-type-archive-works .p-portfolio-detail__navigation {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .portfolio-site.post-type-archive-works .pagination .nav-links {
+    gap: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-site.post-type-archive-works .pagination .page-numbers {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .portfolio-site.post-type-archive-works .pagination .page-numbers.current {
+    color: CanvasText;
+    text-decoration-line: underline;
+  }
+}

@@ -1,0 +1,47 @@
+.portfolio-site .p-portfolio-scroll-waveform {
+  position: fixed;
+  inset-block-start: 50%;
+  inset-inline-end: 3px;
+  z-index: 6;
+  display: none;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+  inline-size: 16px;
+  user-select: none;
+  pointer-events: none;
+  translate: 0 -50%;
+}
+
+.portfolio-site .p-portfolio-scroll-waveform__bar {
+  display: block;
+  flex-shrink: 0;
+  inline-size: 100%;
+  block-size: 2px;
+  border-radius: 2px;
+  box-shadow: 0 0 6px rgb(125 188 255 / 35%);
+  background: linear-gradient(90deg, #80b9ff, #fff 48%, #bcddff);
+  opacity: 0.32;
+  transform: scaleX(0.14);
+}
+
+@media (width >= 768px) {
+  .portfolio-site .p-portfolio-scroll-waveform {
+    inset-inline-end: 8px;
+    inline-size: 36px;
+  }
+
+  .portfolio-site .p-portfolio-scroll-waveform__bar {
+    block-size: 3px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .portfolio-site .p-portfolio-scroll-waveform {
+    display: flex;
+  }
+
+  .portfolio-site .p-portfolio-scroll-waveform:is([data-portfolio-waveform-state="active"], [data-portfolio-waveform-state="settling"]) > .p-portfolio-scroll-waveform__bar {
+    will-change: transform, opacity;
+  }
+}

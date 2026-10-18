@@ -1,5 +1,9 @@
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { initPortfolioScrollReveals } from "./_portfolio-scroll-reveal.js";
+import { initPortfolioTimelineMotion } from "./_portfolio-timeline-motion.js";
+import { initPortfolioProjectEntrances } from "./_portfolio-project-motion.js";
+import { initPortfolioSectionAccents } from "./_portfolio-section-motion.js";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -176,12 +180,31 @@ function initHeadingReveals(revealedHeadings) {
 
 function createLightCueSequence(stage, headingReveal) {
   const lights = [...stage.querySelectorAll(".c-light")];
+  const line = stage.querySelector(".c-light-cue__line");
+  const sweep = stage.querySelector(".c-light-cue__sweep");
+  const sweepDuration = 2;
+  // The white core sits at 75% of the 25%-wide sweep; track its full-width travel.
+  const coreStart = sweepDuration * 0.05;
+  const coreDuration = sweepDuration * 0.8;
+  const pointInset = 0.5 / Math.max(1, lights.length);
+  // The connecting line spans only the first and last point centers.
+  const lineStart = coreStart + coreDuration * pointInset;
+  const lineDuration = coreDuration * (1 - 2 * pointInset);
+  const lightRiseDuration = 0.12;
   const sequence = gsap.timeline({ paused: true, onComplete: () => (stage.dataset.lightPlayback = "complete") });
-  const patterns = ["sweep", "ripple", "sparkle"];
-  const pattern = patterns[Math.floor(Math.random() * patterns.length)];
-  const reverse = Math.random() < 0.5;
-  stage.dataset.lightPattern = pattern;
-  gsap.set(lights, { opacity: 0.2, scale: 1 });
+  stage.dataset.lightPattern = "sweep";
+  gsap.set(lights, { opacity: 0, scale: 0.65 });
+  if (line) {
+    gsap.set(line, { scaleX: 0 });
+    sequence.to(line, { scaleX: 1, duration: lineDuration, ease: "none" }, lineStart);
+  }
+  if (sweep) {
+    gsap.set(sweep, { x: 0, xPercent: -100, opacity: 0 });
+    sequence
+      .to(sweep, { xPercent: 400, duration: sweepDuration, ease: "none" }, 0)
+      .to(sweep, { opacity: 1, duration: 0.1, ease: "sine.out" }, 0)
+      .to(sweep, { opacity: 0, duration: 0.2, ease: "sine.in" }, sweepDuration - 0.2);
+  }
   if (headingReveal)
     sequence.from(
       headingReveal.glyphs,
@@ -196,9 +219,9 @@ function createLightCueSequence(stage, headingReveal) {
       0,
     );
   lights.forEach((light, index) => {
-    const start = pattern === "ripple" ? Math.abs(index - 3) * 0.16 : pattern === "sparkle" ? Math.random() * 0.9 : (reverse ? lights.length - 1 - index : index) * 0.14;
-    sequence.to(light, { opacity: 1, scale: 1.15, duration: 0.7, ease: "sine.inOut" }, start);
-    sequence.to(light, { opacity: 0.5, scale: 1, duration: 1.6, ease: "sine.inOut" }, start + 0.7);
+    const start = coreStart + (coreDuration * (index + 0.5)) / lights.length;
+    sequence.to(light, { opacity: 1, scale: 1.25, duration: lightRiseDuration, ease: "sine.out" }, start);
+    sequence.to(light, { opacity: 0.86, scale: 1, duration: 0.5, ease: "sine.inOut" }, start + lightRiseDuration);
   });
   return { isComplete: () => sequence.progress() === 1, pause: () => sequence.pause(), resume: () => sequence.resume() };
 }
@@ -448,18 +471,52 @@ function listHeroRevealAnimations(hero) {
   });
 }
 
+function createPortfolioDetailHeadingCues() {
+  const source = document.querySelector(".p-portfolio-detail .p-portfolio-detail__title + .js-light-cue");
+  if (!source) return;
+  document.querySelectorAll(".p-portfolio-detail__body h2").forEach(heading => {
+    if (heading.nextElementSibling?.classList.contains("js-light-cue")) return;
+    heading.after(source.cloneNode(true));
+  });
+}
+
 function initPortfolioMotion() {
   if (!document.body.classList.contains("portfolio-site")) return;
+  if (document.documentElement.dataset.portfolioEntrancePending === "true") {
+    document.addEventListener("portfolio:entrance-ready", initPortfolioMotion, { once: true });
+    return;
+  }
+  // Clone the pristine shared markup before GSAP adds any playback state.
+  createPortfolioDetailHeadingCues();
   const media = gsap.matchMedia();
   const revealedHeadings = new WeakSet();
+  const revealedContent = new WeakSet();
+  const isHome = document.body.classList.contains("home");
 
   // Progressive enhancement: all content stays visible without JS or with reduced motion.
   media.add({ desktop: "(min-width: 1024px)", mobile: "(max-width: 767px)", motion: "(prefers-reduced-motion: no-preference) and (forced-colors: none)" }, context => {
     if (!context.conditions.motion) return;
-    const headingReveals = initHeadingReveals(revealedHeadings);
+    const headingReveals = isHome ? { cues: new Map(), restore: () => {} } : initHeadingReveals(revealedHeadings);
+    const stopContentReveals = isHome ? initPortfolioScrollReveals(revealedContent, createHeadingLetters) : () => {};
+    const stopProjectEntrances = initPortfolioProjectEntrances(revealedContent);
+    const stopTimelineMotion = isHome ? initPortfolioTimelineMotion() : () => {};
+    const stopSectionAccents = initPortfolioSectionAccents(revealedHeadings, revealedContent);
+    let refreshFrame = 0;
+    let active = true;
+    function queuePortfolioMotionRefresh() {
+      if (!active || refreshFrame) return;
+      refreshFrame = window.requestAnimationFrame(() => {
+        refreshFrame = 0;
+        if (active) ScrollTrigger.refresh();
+      });
+    }
+    // The asynchronously loaded sphere expands the intro's scroll journey after DOM ready.
+    const layoutTarget = document.querySelector(".js-portfolio-intro") ?? document.querySelector(".l-main");
+    const layoutObserver = typeof ResizeObserver === "function" ? new ResizeObserver(queuePortfolioMotionRefresh) : null;
+    if (layoutTarget) layoutObserver?.observe(layoutTarget);
     const desktop = context.conditions.desktop;
     const hero = document.querySelector(".p-portfolio-hero");
-    if (hero) {
+    if (hero && !hero.closest(".js-portfolio-intro")) {
       gsap.to(".p-portfolio-hero__type", {
         y: desktop ? -50 : -20,
         ease: "none",
@@ -494,7 +551,7 @@ function initPortfolioMotion() {
       }
     });
     document.querySelectorAll(".js-fade-up").forEach(element => {
-      if (element.classList.contains("p-portfolio-section__title")) return;
+      if (isHome || element.classList.contains("p-portfolio-section__title")) return;
       gsap.from(element, {
         y: 22,
         opacity: 0,
@@ -505,7 +562,7 @@ function initPortfolioMotion() {
       });
     });
     const skills = document.querySelector(".p-portfolio-skills__list");
-    if (skills)
+    if (skills && !isHome)
       gsap.from(skills.children, {
         y: 22,
         opacity: 0,
@@ -518,7 +575,14 @@ function initPortfolioMotion() {
 
     const stopLightPlayback = initLightPlayback(undefined, headingReveals.cues, { heroAnimations: listHeroRevealAnimations(hero), heroStage: hero?.querySelector(".js-light-stage") });
     return () => {
+      active = false;
+      layoutObserver?.disconnect();
+      if (refreshFrame) window.cancelAnimationFrame(refreshFrame);
       stopLightPlayback();
+      stopSectionAccents();
+      stopTimelineMotion();
+      stopProjectEntrances();
+      stopContentReveals();
       headingReveals.restore();
     };
   });

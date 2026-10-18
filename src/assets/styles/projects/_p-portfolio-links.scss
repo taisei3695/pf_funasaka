@@ -1,0 +1,168 @@
+// One link treatment for the public site; WordPress admin links stay outside this scope.
+.portfolio-site {
+  --portfolio-link-line: linear-gradient(90deg, transparent, var(--portfolio-accent), transparent);
+  --portfolio-link-glow: radial-gradient(ellipse at center, rgb(155 200 255 / 35%), transparent 72%);
+}
+
+.portfolio-site :is(.p-portfolio-header, .l-main, .p-portfolio-footer) a[href] {
+  position: relative;
+  transition: color 0.22s ease;
+}
+
+.portfolio-site :is(.p-portfolio-header, .l-main, .p-portfolio-footer) a[href]:not(:where(:has(img, picture)))::after,
+.portfolio-site .p-portfolio-project__link-label::after {
+  content: "";
+  position: absolute;
+  inset-block: auto 0.125rem;
+  inset-inline: 0;
+  z-index: 2;
+  block-size: 2px;
+  background: var(--portfolio-link-line);
+  opacity: 0;
+  filter: drop-shadow(0 0 4px rgb(155 200 255 / 65%));
+  pointer-events: none;
+  transform: scaleX(0.45);
+  transform-origin: center;
+  transition:
+    opacity 0.35s ease-out,
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+// Keep the underline on the text label, leaving the arrow clear.
+.portfolio-site .p-portfolio-project__link-label {
+  position: relative;
+}
+
+.portfolio-site .l-main .p-portfolio-project__link[href]::after {
+  content: none;
+}
+
+// Inline text keeps its natural wrapping. Each line fragment receives the same light.
+.portfolio-site
+  :is(.p-portfolio-project__title, .p-portfolio-detail__body, .p-portfolio-detail__breadcrumb, .p-portfolio-detail__meta, .p-page__content, .p-single__content)
+  a[href]:not(:where(:has(img, picture), .p-portfolio-detail__navigation a, .c-button, .wp-element-button)) {
+  background-image: var(--portfolio-link-line), var(--portfolio-link-glow);
+  background-position: center bottom;
+  background-size:
+    0% 2px,
+    0% 8px;
+  background-repeat: no-repeat;
+  box-decoration-break: clone;
+  transition:
+    color 0.22s ease,
+    background-size 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    text-decoration-color 0.22s ease;
+}
+
+.portfolio-site
+  :is(.p-portfolio-project__title, .p-portfolio-detail__body, .p-portfolio-detail__breadcrumb, .p-portfolio-detail__meta, .p-page__content, .p-single__content)
+  a[href]:not(:where(:has(img, picture), .p-portfolio-detail__navigation a, .c-button, .wp-element-button))::after {
+  content: none;
+}
+
+.portfolio-site :is(.p-portfolio-detail__body, .p-page__content, .p-single__content) a[href]:not(:where(:has(img, picture), .p-portfolio-detail__navigation a, .c-button, .wp-element-button)) {
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.portfolio-site .l-main a[href]:has(img, picture):focus-visible {
+  outline-offset: -3px;
+}
+
+@media (any-hover: hover) {
+  .portfolio-site :is(.p-portfolio-header, .l-main, .p-portfolio-footer) a[href]:hover {
+    color: var(--portfolio-muted);
+    opacity: 1;
+    text-decoration-color: transparent;
+    text-shadow: none;
+  }
+
+  .portfolio-site :is(.p-portfolio-header, .l-main, .p-portfolio-footer) a[href]:not(:where(:has(img, picture))):hover::after,
+  .portfolio-site .p-portfolio-project__link:hover .p-portfolio-project__link-label::after {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+
+  .portfolio-site
+    :is(.p-portfolio-project__title, .p-portfolio-detail__body, .p-portfolio-detail__breadcrumb, .p-portfolio-detail__meta, .p-page__content, .p-single__content)
+    a[href]:not(:where(:has(img, picture), .p-portfolio-detail__navigation a, .c-button, .wp-element-button)):hover {
+    background-size:
+      100% 2px,
+      100% 8px;
+  }
+
+  // Legacy template cards share the light treatment without their previous motion.
+  .portfolio-site .p-archive__link:hover {
+    box-shadow: none;
+    translate: none;
+  }
+
+  .portfolio-site .p-archive--works .p-archive__link:hover {
+    box-shadow: 0 calc(2 * var(--to-rem)) calc(8 * var(--to-rem)) oklch(from var(--color-black) l c h / 8%);
+  }
+
+  .portfolio-site .p-news-list__item:hover {
+    background-color: transparent;
+  }
+
+  .portfolio-site .p-news-list__item:hover .p-news-list__arrow {
+    color: var(--color-border-gray);
+    transform: none;
+  }
+
+  .portfolio-site .c-button:hover::before {
+    translate: 0 -50%;
+  }
+}
+
+.portfolio-site :is(.p-portfolio-header, .l-main, .p-portfolio-footer) a[href]:focus-visible {
+  color: var(--portfolio-accent);
+  opacity: 1;
+  text-decoration-color: transparent;
+}
+
+.portfolio-site :is(.p-portfolio-header, .l-main, .p-portfolio-footer) a[href]:not(:where(:has(img, picture))):focus-visible::after,
+.portfolio-site .p-portfolio-project__link:focus-visible .p-portfolio-project__link-label::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.portfolio-site
+  :is(.p-portfolio-project__title, .p-portfolio-detail__body, .p-portfolio-detail__breadcrumb, .p-portfolio-detail__meta, .p-page__content, .p-single__content)
+  a[href]:not(:where(:has(img, picture), .p-portfolio-detail__navigation a, .c-button, .wp-element-button)):focus-visible {
+  background-size:
+    100% 2px,
+    100% 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-site :is(.p-portfolio-header, .l-main, .p-portfolio-footer) a[href],
+  .portfolio-site :is(.p-portfolio-header, .l-main, .p-portfolio-footer) a[href]::before,
+  .portfolio-site :is(.p-portfolio-header, .l-main, .p-portfolio-footer) a[href]:not(:where(:has(img, picture)))::after,
+  .portfolio-site .p-portfolio-project__link-label::after {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .portfolio-site :is(.p-portfolio-header, .l-main, .p-portfolio-footer) a[href]:not(:where(:has(img, picture)))::after,
+  .portfolio-site .p-portfolio-project__link-label::after {
+    filter: none;
+    transform: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .portfolio-site :is(.p-portfolio-header, .l-main, .p-portfolio-footer) a[href]:not(:where(:has(img, picture)))::after,
+  .portfolio-site .p-portfolio-project__link-label::after {
+    background: CanvasText;
+    filter: none;
+    transition: none;
+  }
+
+  .portfolio-site :is(.p-portfolio-header, .l-main, .p-portfolio-footer) a[href]:is(:hover, :focus-visible) {
+    color: LinkText;
+    text-decoration-line: underline;
+    text-decoration-color: LinkText;
+  }
+}

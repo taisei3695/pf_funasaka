@@ -1,0 +1,124 @@
+@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .portfolio-site .p-portfolio-about__timeline[data-timeline-motion] {
+    position: relative;
+
+    --portfolio-timeline-progress: 0;
+  }
+
+  .portfolio-site .p-portfolio-about__timeline[data-timeline-motion]::before,
+  .portfolio-site .p-portfolio-about__timeline[data-timeline-motion]::after {
+    content: "";
+    position: absolute;
+    inset-block-start: var(--portfolio-timeline-start);
+    pointer-events: none;
+  }
+
+  .portfolio-site .p-portfolio-about__timeline[data-timeline-motion]::before {
+    inset-inline-start: -1.5px;
+    clip-path: inset(0 -2rem -2rem);
+    inline-size: 3px;
+    block-size: calc(100% - var(--portfolio-timeline-start));
+    box-shadow:
+      0 0 0.375rem rgb(178 229 255 / 85%),
+      0 0 1.125rem rgb(83 168 255 / 65%);
+    background: linear-gradient(180deg, rgb(119 190 255 / 70%), #b5e5ff 78%, #fff);
+    transform: scaleY(var(--portfolio-timeline-progress));
+    transform-origin: 50% 0;
+  }
+
+  .portfolio-site .p-portfolio-about__timeline[data-timeline-motion]::after {
+    inset-block-start: calc(var(--portfolio-timeline-start) + 1.125rem);
+    inset-inline-start: -0.875rem;
+    inline-size: 1.75rem;
+    block-size: calc(100% - var(--portfolio-timeline-start));
+    background:
+      radial-gradient(ellipse 0.1875rem 0.5rem at 50% calc(100% - 1.125rem), #fff 0, #ecfaff 55%, transparent 100%),
+      radial-gradient(ellipse 0.625rem 1.125rem at 50% calc(100% - 1.125rem), rgb(197 238 255 / 95%) 0, rgb(129 207 255 / 70%) 30%, rgb(81 163 255 / 20%) 70%, transparent 100%),
+      radial-gradient(ellipse 0.875rem 2.25rem at 50% calc(100% - 1.125rem), rgb(97 183 255 / 65%) 0, rgb(68 145 255 / 25%) 45%, transparent 100%);
+    opacity: clamp(0, calc(var(--portfolio-timeline-progress) * 20), 1);
+    transform: translateY(calc((var(--portfolio-timeline-progress) - 1) * 100%));
+  }
+
+  .portfolio-site .p-portfolio-about__timeline[data-timeline-motion] > li::before {
+    transition:
+      background-color 180ms ease,
+      box-shadow 180ms ease;
+  }
+
+  .portfolio-site .p-portfolio-about__timeline[data-timeline-motion] > li h4,
+  .portfolio-site .p-portfolio-about__timeline[data-timeline-motion] > li .p-portfolio-about__period {
+    transition:
+      color 180ms ease,
+      text-shadow 180ms ease;
+  }
+
+  .portfolio-site .p-portfolio-about__timeline > li[data-timeline-state="active"]::before {
+    box-shadow:
+      0 0 0.25rem 0.0625rem #effaff,
+      0 0 0.875rem 0.125rem rgb(118 201 255 / 95%),
+      0 0 1.75rem rgb(72 156 255 / 55%);
+    background-color: #fff;
+  }
+
+  .portfolio-site .p-portfolio-about__timeline > li[data-timeline-state="active"] h4 {
+    color: #e8f7ff;
+    text-shadow: 0 0 1rem rgb(115 195 255 / 35%);
+  }
+
+  .portfolio-site .p-portfolio-about__timeline > li[data-timeline-state="active"] .p-portfolio-about__period {
+    color: #bcdfff;
+  }
+
+  .portfolio-site .p-portfolio-about__timeline > li[data-timeline-state="passed"]::before {
+    box-shadow: 0 0 0.625rem rgb(122 198 255 / 55%);
+    background-color: #b7e0ff;
+  }
+}
+
+@supports (animation-timeline: view()) and (animation-range: cover 1px cover 100%) {
+  @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+    .portfolio-site .p-portfolio-about__timeline[data-timeline-motion="native"] {
+      view-timeline-name: --portfolio-about-progress;
+      view-timeline-axis: block;
+      view-timeline-inset: 58% 42%;
+    }
+
+    .portfolio-site .p-portfolio-about__timeline[data-timeline-motion="native"]::before {
+      animation: portfolio-timeline-line auto linear both;
+      animation-timeline: --portfolio-about-progress;
+      animation-range: cover var(--portfolio-timeline-start) cover 100%;
+    }
+
+    .portfolio-site .p-portfolio-about__timeline[data-timeline-motion="native"]::after {
+      animation: portfolio-timeline-head auto linear both;
+      animation-timeline: --portfolio-about-progress;
+      animation-range: cover var(--portfolio-timeline-start) cover 100%;
+    }
+  }
+}
+
+@keyframes portfolio-timeline-line {
+  from {
+    transform: scaleY(0);
+  }
+
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes portfolio-timeline-head {
+  0% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+
+  5% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

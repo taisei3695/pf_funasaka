@@ -1,0 +1,11 @@
+.portfolio-site .p-portfolio-detail :is(.p-portfolio-detail__title, .p-portfolio-detail__body h2):has(+ .c-light-cue) {
+  margin-block-end: var(--portfolio-heading-gap);
+}
+
+.portfolio-site .p-portfolio-detail .c-light-cue + .p-portfolio-detail__subtitle {
+  margin-block-start: 0;
+}
+
+.portfolio-site .p-portfolio-detail--work .c-light-cue + .p-portfolio-detail__meta {
+  margin-block-start: 0;
+}

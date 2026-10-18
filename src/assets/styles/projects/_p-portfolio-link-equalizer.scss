@@ -1,0 +1,108 @@
+.portfolio-site .p-portfolio-link-equalizer-host {
+  position: relative;
+}
+
+.portfolio-site .p-portfolio-link-equalizer {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-end: -24px;
+  display: none;
+  gap: 2px;
+  align-items: end;
+  inline-size: 20px;
+  block-size: 18px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.portfolio-site .p-portfolio-link-equalizer__bar {
+  display: block;
+  flex-shrink: 0;
+  inline-size: 3.5px;
+  block-size: 100%;
+  border-radius: 2px;
+  box-shadow:
+    0 0 4px rgb(153 211 255 / 85%),
+    0 0 8px rgb(98 166 255 / 40%);
+  background: linear-gradient(0deg, #70b5ff, #fff 88%);
+  transform: scaleY(0.16);
+  transform-origin: center bottom;
+  animation-duration: 0.84s;
+}
+
+.portfolio-site .p-portfolio-link-equalizer__bar:nth-child(2) {
+  animation-duration: 1.02s;
+  animation-delay: -0.28s;
+}
+
+.portfolio-site .p-portfolio-link-equalizer__bar:nth-child(3) {
+  animation-duration: 0.8s;
+  animation-delay: -0.54s;
+}
+
+.portfolio-site .p-portfolio-link-equalizer__bar:nth-child(4) {
+  animation-duration: 0.92s;
+  animation-delay: -0.14s;
+}
+
+@media (width < 48rem) {
+  .portfolio-site .p-portfolio-header__nav .p-portfolio-link-equalizer {
+    inset-block: auto 2px;
+    inset-inline: 50% auto;
+    block-size: 10px;
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .portfolio-site .p-portfolio-link-equalizer {
+    display: flex;
+    transition: opacity 0.16s ease-out;
+  }
+
+  .portfolio-site .p-portfolio-link-equalizer-host:focus-visible > .p-portfolio-link-equalizer {
+    opacity: 1;
+  }
+
+  .portfolio-site .p-portfolio-link-equalizer-host:focus-visible > .p-portfolio-link-equalizer > .p-portfolio-link-equalizer__bar {
+    animation-name: portfolio-link-equalizer-beat;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+}
+
+@media (any-hover: hover) and (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .portfolio-site .p-portfolio-link-equalizer-host:hover > .p-portfolio-link-equalizer {
+    opacity: 1;
+  }
+
+  .portfolio-site .p-portfolio-link-equalizer-host:hover > .p-portfolio-link-equalizer > .p-portfolio-link-equalizer__bar {
+    animation-name: portfolio-link-equalizer-beat;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+}
+
+@keyframes portfolio-link-equalizer-beat {
+  0%,
+  100% {
+    transform: scaleY(0.16);
+  }
+
+  18% {
+    transform: scaleY(0.94);
+  }
+
+  36% {
+    transform: scaleY(0.3);
+  }
+
+  58% {
+    transform: scaleY(1);
+  }
+
+  80% {
+    transform: scaleY(0.48);
+  }
+}

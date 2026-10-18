@@ -36,7 +36,7 @@
         "professional": "Works：Web制作・保守（実務）",
         "system": "Experience：SE・PGの実務",
         "academic": "Experience：大学校での開発",
-        "study": "Works：学習・自主制作"
+        "study": "Personal Projects"
       },
       "allow_null": 0,
       "type": "select",
@@ -160,7 +160,7 @@
     {
       "key": "field_portfolio_work_status",
       "type": "text",
-      "instructions": "詳細ページに表示します。例：納品完了・公開中、継続中。",
+      "instructions": "カード・詳細ページの両方に表示します。確認できた状況を入力してください。例：納品完了・公開中、継続中。",
       "name": "works_status",
       "label": "制作・対応状況"
     },
@@ -276,7 +276,7 @@
       "choices": {
         "school_graduation": "スクール卒業制作",
         "client": "許可を得たクライアントワーク",
-        "personal": "自主制作"
+        "personal": "Personal Projects"
       },
       "default_value": "",
       "allow_null": 1,

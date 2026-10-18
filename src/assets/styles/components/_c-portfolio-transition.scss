@@ -3,6 +3,30 @@
     navigation: auto;
   }
 
+  .is-portfolio-curtain-transition::view-transition {
+    background: #000;
+  }
+
+  .is-portfolio-curtain-transition::view-transition-group(root) {
+    animation: none;
+  }
+
+  .is-portfolio-curtain-transition::view-transition-image-pair(root) {
+    isolation: isolate;
+  }
+
+  .is-portfolio-curtain-transition::view-transition-old(root) {
+    z-index: 1;
+    mix-blend-mode: normal;
+    animation: portfolio-curtain-cover 0.55s cubic-bezier(0.65, 0, 0.35, 1) both;
+  }
+
+  .is-portfolio-curtain-transition::view-transition-new(root) {
+    z-index: 2;
+    mix-blend-mode: normal;
+    animation: portfolio-curtain-reveal 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.6s both;
+  }
+
   ::view-transition-group(root),
   ::view-transition-group(portfolio-work-image) {
     animation-duration: 0.38s;
@@ -16,6 +40,33 @@
     object-position: top center;
     mix-blend-mode: normal;
     animation-duration: 0.38s;
+  }
+}
+
+// Keep the cue space reserved, but do not show a finished line behind the opening curtain.
+@media (prefers-reduced-motion: no-preference) {
+  [data-portfolio-entrance-pending="true"] .js-light-cue {
+    visibility: hidden;
+  }
+}
+
+@keyframes portfolio-curtain-cover {
+  from {
+    clip-path: inset(0);
+  }
+
+  to {
+    clip-path: inset(0 0 0 100%);
+  }
+}
+
+@keyframes portfolio-curtain-reveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  to {
+    clip-path: inset(0);
   }
 }
 

@@ -1,0 +1,199 @@
+// Image motion stays on the image, independently of the link's scroll reveal.
+.portfolio-site :is(.p-portfolio-header, .l-main, .p-portfolio-footer) a[href]:has(img, picture) {
+  --portfolio-image-scale: 1;
+  --portfolio-image-edge-opacity: 0;
+  --portfolio-image-sweep: none;
+}
+
+// Only media surfaces clip. Links containing card text keep their full layout.
+.portfolio-site
+  :is(.p-portfolio-header, .l-main, .p-portfolio-footer)
+  :is(
+    a[href].p-portfolio-project__image,
+    a[href].p-portfolio-work__image,
+    a[href]:has(> img, > picture):not(:where(.p-archive__link, .p-works-list__link, .p-single__related-link)),
+    .p-archive__link .p-archive__thumbnail,
+    .p-works-list__link .p-works-list__thumbnail,
+    .p-single__related-link .p-single__related-thumbnail
+  ) {
+  position: relative;
+  overflow: clip;
+  isolation: isolate;
+}
+
+.portfolio-site :is(.p-portfolio-header, .l-main, .p-portfolio-footer) a[href]:has(> img, > picture):not(:where(.p-portfolio-project__image, .p-portfolio-work__image, .p-archive__link, .p-works-list__link, .p-single__related-link)) {
+  display: inline-block;
+  max-inline-size: 100%;
+  vertical-align: middle;
+}
+
+.portfolio-site
+  :is(.p-portfolio-header, .l-main, .p-portfolio-footer)
+  :is(
+    a[href].p-portfolio-project__image,
+    a[href].p-portfolio-work__image,
+    a[href]:has(> img, > picture):not(:where(.p-archive__link, .p-works-list__link, .p-single__related-link)),
+    .p-archive__link .p-archive__thumbnail,
+    .p-works-list__link .p-works-list__thumbnail,
+    .p-single__related-link .p-single__related-thumbnail
+  )
+  img {
+  display: block;
+  transform-origin: center;
+  scale: var(--portfolio-image-scale, 1);
+}
+
+.portfolio-site :is(.p-portfolio-header, .l-main, .p-portfolio-footer) a[href] > picture {
+  display: block;
+}
+
+// This selector also wins over the original archive's more specific zoom rule.
+.portfolio-site .p-archive--works .p-archive__link:has(.p-archive__thumbnail):hover .p-archive__thumbnail img {
+  scale: var(--portfolio-image-scale, 1);
+}
+
+.portfolio-site
+  :is(.p-portfolio-header, .l-main, .p-portfolio-footer)
+  :is(
+    a[href].p-portfolio-project__image,
+    a[href].p-portfolio-work__image,
+    a[href]:has(> img, > picture):not(:where(.p-archive__link, .p-works-list__link, .p-single__related-link)),
+    .p-archive__link .p-archive__thumbnail,
+    .p-works-list__link .p-works-list__thumbnail,
+    .p-single__related-link .p-single__related-thumbnail
+  )::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border: 1px solid rgb(155 200 255 / 78%);
+  border-radius: inherit;
+  box-shadow: inset 0 0 1.25rem rgb(155 200 255 / 12%);
+  opacity: var(--portfolio-image-edge-opacity, 0);
+  pointer-events: none;
+  transition: opacity 0.3s ease-out;
+}
+
+.portfolio-site
+  :is(.p-portfolio-header, .l-main, .p-portfolio-footer)
+  :is(
+    a[href].p-portfolio-project__image,
+    a[href].p-portfolio-work__image,
+    a[href]:has(> img, > picture):not(:where(.p-archive__link, .p-works-list__link, .p-single__related-link)),
+    .p-archive__link .p-archive__thumbnail,
+    .p-works-list__link .p-works-list__thumbnail,
+    .p-single__related-link .p-single__related-thumbnail
+  )::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(112deg, transparent 36%, rgb(155 200 255 / 4%) 44%, rgb(237 246 255 / 26%) 50%, rgb(155 200 255 / 6%) 56%, transparent 64%);
+  opacity: 0;
+  pointer-events: none;
+  translate: -110% 0;
+  animation: var(--portfolio-image-sweep, none);
+}
+
+// Labels describe the image's provenance and stay above the decorative light.
+.portfolio-site :is(.p-portfolio-project__image-note, .p-works-list__badge) {
+  z-index: 3;
+}
+
+.portfolio-site :is(.p-portfolio-header, .l-main, .p-portfolio-footer) a[href]:has(img, picture):focus-visible {
+  --portfolio-image-edge-opacity: 1;
+}
+
+@media (any-hover: hover) {
+  .portfolio-site :is(.p-portfolio-header, .l-main, .p-portfolio-footer) a[href]:has(img, picture):hover {
+    --portfolio-image-edge-opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .portfolio-site
+    :is(.p-portfolio-header, .l-main, .p-portfolio-footer)
+    :is(
+      a[href].p-portfolio-project__image,
+      a[href].p-portfolio-work__image,
+      a[href]:has(> img, > picture):not(:where(.p-archive__link, .p-works-list__link, .p-single__related-link)),
+      .p-archive__link .p-archive__thumbnail,
+      .p-works-list__link .p-works-list__thumbnail,
+      .p-single__related-link .p-single__related-thumbnail
+    )
+    img {
+    transition: scale 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .portfolio-site :is(.p-portfolio-header, .l-main, .p-portfolio-footer) a[href]:has(img, picture):focus-visible {
+    --portfolio-image-scale: 1.06;
+    --portfolio-image-sweep: portfolio-image-light-sweep 0.85s ease-out both;
+  }
+}
+
+@media (any-hover: hover) and (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .portfolio-site :is(.p-portfolio-header, .l-main, .p-portfolio-footer) a[href]:has(img, picture):hover {
+    --portfolio-image-scale: 1.06;
+    --portfolio-image-sweep: portfolio-image-light-sweep 0.85s ease-out both;
+  }
+}
+
+@keyframes portfolio-image-light-sweep {
+  0% {
+    opacity: 0;
+    translate: -110% 0;
+  }
+
+  15%,
+  70% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    translate: 110% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce), (forced-colors: active) {
+  .portfolio-site
+    :is(.p-portfolio-header, .l-main, .p-portfolio-footer)
+    :is(
+      a[href].p-portfolio-project__image,
+      a[href].p-portfolio-work__image,
+      a[href]:has(> img, > picture):not(:where(.p-archive__link, .p-works-list__link, .p-single__related-link)),
+      .p-archive__link .p-archive__thumbnail,
+      .p-works-list__link .p-works-list__thumbnail,
+      .p-single__related-link .p-single__related-thumbnail
+    )::before {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .portfolio-site
+    :is(.p-portfolio-header, .l-main, .p-portfolio-footer)
+    :is(
+      a[href].p-portfolio-project__image,
+      a[href].p-portfolio-work__image,
+      a[href]:has(> img, > picture):not(:where(.p-archive__link, .p-works-list__link, .p-single__related-link)),
+      .p-archive__link .p-archive__thumbnail,
+      .p-works-list__link .p-works-list__thumbnail,
+      .p-single__related-link .p-single__related-thumbnail
+    )::before {
+    border-color: Highlight;
+    box-shadow: none;
+  }
+}
+
+// Snapshot both the outgoing image and any media wrapper without hover offsets.
+.portfolio-site .is-portfolio-transition-image img {
+  scale: 1 !important;
+  transition: none !important;
+}
+
+.portfolio-site .is-portfolio-transition-image :is(.p-archive__thumbnail, .p-works-list__thumbnail, .p-single__related-thumbnail)::before,
+.portfolio-site .is-portfolio-transition-image :is(.p-archive__thumbnail, .p-works-list__thumbnail, .p-single__related-thumbnail)::after {
+  opacity: 0 !important;
+  animation: none !important;
+}

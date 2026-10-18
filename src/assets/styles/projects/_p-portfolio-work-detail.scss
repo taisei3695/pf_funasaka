@@ -1,0 +1,30 @@
+.portfolio-site .p-portfolio-detail--work .p-portfolio-detail__meta {
+  margin-block-start: calc(var(--portfolio-heading-gap) + var(--portfolio-heading-cue-size) + var(--portfolio-heading-content-gap));
+}
+
+.portfolio-site .p-portfolio-detail--work .p-portfolio-detail__image {
+  margin-block-end: 0;
+}
+
+.portfolio-site .p-portfolio-detail--work .p-portfolio-detail__image-caption {
+  inline-size: min(800px, 100%);
+  margin-block: 1rem 0;
+  color: var(--portfolio-muted);
+  font-family: var(--portfolio-japanese);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.9;
+}
+
+.portfolio-site .p-portfolio-detail--work .p-portfolio-detail__body {
+  margin-block-start: 2.5rem;
+  margin-inline: 0;
+}
+
+.portfolio-site .p-portfolio-detail--work .p-portfolio-detail__body ul {
+  list-style-type: disc;
+}
+
+.portfolio-site .p-portfolio-detail--work .p-portfolio-detail__body ol {
+  list-style-type: decimal;
+}

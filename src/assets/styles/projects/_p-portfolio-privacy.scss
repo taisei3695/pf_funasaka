@@ -1,0 +1,3 @@
+.portfolio-site .p-portfolio-detail--privacy .p-portfolio-detail__body > section:first-child + section {
+  margin-block-start: calc(var(--portfolio-heading-gap) + var(--portfolio-heading-cue-size) + var(--portfolio-heading-content-gap));
+}

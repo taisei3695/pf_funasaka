@@ -1,10 +1,13 @@
 <?php get_header(); ?>
 
-<main class="l-main" id="main">
+<main class="l-main<?php echo is_privacy_policy() ? " l-main--ambient" : ""; ?>" id="main">
+  <?php if (is_privacy_policy()) {
+    get_template_part("template-parts/portfolio-backdrop", null, ["variant" => "privacy"]);
+  } ?>
   <?php while (have_posts()):
     the_post(); ?>
     <?php if (is_privacy_policy()): ?>
-      <article id="post-<?php the_ID(); ?>" <?php post_class("p-portfolio-detail"); ?>>
+      <article id="post-<?php the_ID(); ?>" <?php post_class("p-portfolio-detail p-portfolio-detail--privacy"); ?>>
         <div class="l-portfolio-inner">
           <nav class="p-portfolio-detail__breadcrumb" aria-label="パンくずリスト">
             <a href="<?php echo esc_url(home_url("/")); ?>">Home</a>
@@ -15,6 +18,7 @@
             <section>
               <header>
                 <h1 class="p-portfolio-detail__title">Privacy Policy</h1>
+                <?php get_template_part("template-parts/portfolio-light-cue"); ?>
                 <p class="p-portfolio-detail__subtitle"><?php echo esc_html(get_the_title()); ?></p>
               </header>
             </section>

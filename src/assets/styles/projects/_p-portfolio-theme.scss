@@ -1,0 +1,82 @@
+// Public-site adapters for components shared with the original template.
+.portfolio-site :is(.p-portfolio-header, .l-main, .p-portfolio-footer) :is(button, input, select, textarea) {
+  font-family: var(--portfolio-font);
+}
+
+.portfolio-site .c-portfolio-progress,
+.portfolio-site .c-portfolio-progress[data-portfolio-dark="true"] {
+  --portfolio-progress-light: 1;
+
+  color: var(--portfolio-accent);
+}
+
+.portfolio-site .c-light-equalizer .c-light {
+  filter: grayscale(1) brightness(1);
+}
+
+.portfolio-site :is(.p-archive__link, .p-news-list__container, .c-search-form__input) {
+  background-color: var(--portfolio-surface);
+}
+
+.portfolio-site .p-single--works .p-single__works-technology {
+  background-color: var(--portfolio-surface-raised);
+  color: var(--portfolio-accent);
+}
+
+.portfolio-site :is(.p-works-list__client, .p-works-list__date, .p-works-list__empty) {
+  color: var(--portfolio-muted);
+}
+
+.portfolio-site :is(.p-form__input, .p-form__textarea, .c-search-form__input)::placeholder {
+  color: var(--portfolio-muted);
+  opacity: 1;
+}
+
+@media (any-hover: hover) {
+  .portfolio-site :is(.p-form__input, .p-form__select, .p-form__textarea):hover:not(:focus) {
+    opacity: 1;
+  }
+}
+
+.portfolio-site .p-archive--works .p-archive__link {
+  background-color: var(--portfolio-surface);
+}
+
+.portfolio-site .c-pagination {
+  --_pagination-bg: var(--portfolio-surface);
+  --_pagination-text: var(--portfolio-ink);
+  --_pagination-text-hover: var(--portfolio-ink);
+  --_pagination-bg-hover: var(--portfolio-surface-raised);
+  --_pagination-active-bg: var(--portfolio-accent);
+  --_pagination-active-text: var(--portfolio-paper);
+  --_pagination-border: var(--portfolio-line);
+  --_pagination-border-hover: var(--portfolio-accent);
+}
+
+.portfolio-site .p-form {
+  --_form-color-text: var(--portfolio-ink);
+  --_form-color-bg: var(--portfolio-surface);
+  --_form-color-badge-text: var(--portfolio-paper);
+  --_form-color-badge-bg: var(--portfolio-accent);
+  --_form-color-accent: var(--portfolio-accent);
+  --_form-color-border: #576473;
+  --_form-color-primary: var(--portfolio-accent);
+}
+
+.portfolio-site :is(.c-button, .c-button[data-color="black"]) {
+  border-color: var(--portfolio-line);
+  background-color: var(--portfolio-surface-raised);
+  color: var(--portfolio-ink);
+}
+
+.portfolio-site .c-button::before {
+  border-color: currentcolor;
+}
+
+.portfolio-site :is(.c-search-form__button, .p-works-list__filter-btn.is-active, .p-works-list__badge) {
+  color: var(--portfolio-paper);
+}
+
+.portfolio-site .p-portfolio-detail__body :is(table, th, td, hr) {
+  border-color: var(--portfolio-line);
+}

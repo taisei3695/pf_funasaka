@@ -1,0 +1,26 @@
+// The decorative cover is inserted only when the once-only entrance is enabled.
+// Image hover keeps its existing pseudo-elements and independent image scale.
+.portfolio-site .p-portfolio-project__curtain {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: none;
+  background-color: #030405;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .portfolio-site .p-portfolio-project:is([data-portfolio-project-entrance="pending"], [data-portfolio-project-entrance="playing"]) .p-portfolio-project__curtain {
+    display: block;
+  }
+
+  .portfolio-site .p-portfolio-project:is([data-portfolio-project-entrance="pending"], [data-portfolio-project-entrance="playing"]) .p-portfolio-project__content > * {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  .portfolio-site .p-portfolio-project[data-portfolio-project-entrance="playing"] .p-portfolio-project__curtain,
+  .portfolio-site .p-portfolio-project[data-portfolio-project-entrance="playing"] .p-portfolio-project__content > * {
+    will-change: transform, opacity;
+  }
+}

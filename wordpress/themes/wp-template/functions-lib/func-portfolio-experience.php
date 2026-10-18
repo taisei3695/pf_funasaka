@@ -34,6 +34,8 @@ function portfolio_list_skill_experience()
     ["name" => "Oracle", "years" => "1年", "context" => "実務経験あり", "category" => "Database", "description" => "農業向け業務管理システムでのデータベース操作"],
     ["name" => "PL/pgSQL", "years" => "1年", "context" => "実務経験あり", "category" => "Database", "description" => "製造業向け業務管理システムのデータベース処理の実装・修正"],
     ["name" => "C", "years" => "4年", "context" => "大学校での学習・開発", "category" => "Embedded", "description" => "卓球練習用ラリーマシンのプログラム実装・統合"],
+    ["name" => "C++", "years" => "2年", "context" => "大学校での学習・開発", "category" => "Embedded", "description" => "卓球練習用ラリーマシンのプログラム実装・統合"],
     ["name" => "C#", "years" => "2年", "context" => "大学校での学習・開発", "category" => "Application", "description" => "卓球練習用ラリーマシンのプログラム実装・統合"],
+    ["name" => "Git", "years" => "3年", "context" => "実務経験あり", "category" => "Tools", "description" => "ソースコードのバージョン管理"],
   ];
 }

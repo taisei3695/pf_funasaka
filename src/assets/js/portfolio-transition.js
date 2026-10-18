@@ -3,6 +3,11 @@ const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const readNativeExceptionName = Object.getOwnPropertyDescriptor(DOMException.prototype, "name").get;
 let activeTransition = null;
 
+function releasePortfolioEntranceAnimations() {
+  delete document.documentElement.dataset.portfolioEntrancePending;
+  document.dispatchEvent(new Event("portfolio:entrance-ready"));
+}
+
 function parsePortfolioUrl(value) {
   if (typeof value !== "string" || !value) return null;
   try {
@@ -18,7 +23,11 @@ function isSamePortfolioPage(first, second) {
 }
 
 function findWorkTransitionImage(url) {
-  return [...document.querySelectorAll("[data-portfolio-transition-image][data-portfolio-work-url]")].find(frame => isSamePortfolioPage(parsePortfolioUrl(frame.dataset.portfolioWorkUrl), url)) ?? null;
+  return (
+    [...document.querySelectorAll("[data-portfolio-transition-image][data-portfolio-work-url], a.p-portfolio-project__image[href]")].find(frame =>
+      isSamePortfolioPage(parsePortfolioUrl(frame.dataset.portfolioWorkUrl ?? frame.getAttribute("href")), url),
+    ) ?? null
+  );
 }
 
 function isWorkListingUrl(url, detailImage) {
@@ -32,14 +41,14 @@ function isWorkListingUrl(url, detailImage) {
 
 function findOutgoingWorkImage(destination) {
   const cardImage = findWorkTransitionImage(destination);
-  if (cardImage?.classList.contains("p-portfolio-work__image")) return cardImage;
+  if (cardImage?.matches(".p-portfolio-work__image, .p-portfolio-project__image")) return cardImage;
   const detailImage = document.querySelector(".p-portfolio-detail__image[data-portfolio-transition-image]");
   return detailImage && isWorkListingUrl(destination, detailImage) ? detailImage : null;
 }
 
 function findIncomingWorkImage(source, destination) {
   const cardImage = findWorkTransitionImage(source);
-  if (cardImage?.classList.contains("p-portfolio-work__image")) return cardImage;
+  if (cardImage?.matches(".p-portfolio-work__image, .p-portfolio-project__image")) return cardImage;
   const detailImage = document.querySelector(".p-portfolio-detail__image[data-portfolio-transition-image]");
   return detailImage && isSamePortfolioPage(parsePortfolioUrl(detailImage.dataset.portfolioWorkUrl), destination) && isWorkListingUrl(source, detailImage) ? detailImage : null;
 }
@@ -54,13 +63,15 @@ function canShareWorkImage(frame) {
 }
 
 function removeWorkTransitionNames() {
+  document.documentElement.classList.remove("is-portfolio-curtain-transition");
   document.querySelectorAll(`.${transitionClass}`).forEach(frame => frame.classList.remove(transitionClass));
 }
 
 function setPortfolioPageTransition(transition, frame = null, incoming = false) {
   activeTransition = transition;
+  document.documentElement.classList.add("is-portfolio-curtain-transition");
   if (frame) {
-    frame.classList.add(transitionClass);
+    // Keep the image inside the root snapshot so it cannot float above the curtain.
     // Kept for this document, including BFCache: the main GSAP entry must skip this frame's reveal/parallax.
     if (incoming) frame.dataset.portfolioTransitionRevealed = "true";
   }
@@ -68,6 +79,7 @@ function setPortfolioPageTransition(transition, frame = null, incoming = false) 
     if (activeTransition !== transition) return;
     removeWorkTransitionNames();
     activeTransition = null;
+    if (incoming) releasePortfolioEntranceAnimations();
   };
   transition.finished.then(cleanup, cleanup);
 }
@@ -97,7 +109,7 @@ function handlePortfolioPageSwap(event) {
   ensurePortfolioTransitionPromisesHandled(event.viewTransition);
   const destination = parsePortfolioUrl(event.activation?.entry?.url);
   const image = !reducedMotion.matches && destination ? findOutgoingWorkImage(destination) : null;
-  if (!image) {
+  if (reducedMotion.matches || !destination || !document.body.classList.contains("portfolio-site")) {
     event.viewTransition.skipTransition();
     return;
   }
@@ -108,13 +120,17 @@ function handlePortfolioPageReveal(event) {
   // Clear names saved with an outgoing BFCache document before assigning the single incoming name.
   removeWorkTransitionNames();
   activeTransition = null;
-  if (!event.viewTransition) return;
+  if (!event.viewTransition) {
+    releasePortfolioEntranceAnimations();
+    return;
+  }
   ensurePortfolioTransitionPromisesHandled(event.viewTransition);
   const source = parsePortfolioUrl(window.navigation?.activation?.from?.url);
   const destination = parsePortfolioUrl(window.navigation?.activation?.entry?.url);
   const image = !reducedMotion.matches && source && destination ? findIncomingWorkImage(source, destination) : null;
-  if (!image) {
+  if (reducedMotion.matches || !source || !destination || !document.body.classList.contains("portfolio-site")) {
     event.viewTransition.skipTransition();
+    releasePortfolioEntranceAnimations();
     return;
   }
   setPortfolioPageTransition(event.viewTransition, canShareWorkImage(image) ? image : null, true);
@@ -130,6 +146,8 @@ function handlePortfolioReducedMotion(event) {
 
 // This independent head entry registers before pagereveal; it does not defer to DOMContentLoaded.
 if ("onpageswap" in window && "onpagereveal" in window && "navigation" in window && CSS.supports("view-transition-name", "portfolio-work-image")) {
+  // Set this in the head before the main entry can start heading / cue playback.
+  if (!reducedMotion.matches) document.documentElement.dataset.portfolioEntrancePending = "true";
   window.addEventListener("pageswap", handlePortfolioPageSwap);
   window.addEventListener("pagereveal", handlePortfolioPageReveal);
   window.addEventListener("pageshow", handlePortfolioPageShow);
