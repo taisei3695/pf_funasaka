@@ -3,7 +3,53 @@
 }
 
 .portfolio-site .p-portfolio-detail--work .p-portfolio-detail__image {
+  position: relative;
   margin-block-end: 0;
+}
+
+.portfolio-site .p-portfolio-detail--work .p-portfolio-detail__image.is-afterglow-visible {
+  overflow: visible;
+}
+
+.portfolio-site .p-portfolio-detail--work .p-portfolio-detail__image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgb(144 198 255 / 95%);
+  box-shadow:
+    0 0 32px rgb(64 135 255 / 65%),
+    inset 0 0 16px rgb(64 135 255 / 28%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .portfolio-site .p-portfolio-detail--work .p-portfolio-detail__image.is-afterglow-visible::after {
+    animation: portfolio-detail-image-afterglow 6s ease-out both;
+  }
+}
+
+@media (width < 768px) {
+  .portfolio-site .p-portfolio-detail--work .p-portfolio-detail__image::after {
+    box-shadow:
+      0 0 16px rgb(64 135 255 / 55%),
+      inset 0 0 8px rgb(64 135 255 / 22%);
+  }
+}
+
+@keyframes portfolio-detail-image-afterglow {
+  0% {
+    opacity: 0;
+  }
+
+  22%,
+  36% {
+    opacity: 0.95;
+  }
+
+  100% {
+    opacity: 0.24;
+  }
 }
 
 .portfolio-site .p-portfolio-detail--work .p-portfolio-detail__image-caption {

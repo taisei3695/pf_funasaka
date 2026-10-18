@@ -1,0 +1,266 @@
+{
+  "tool": "static_audit",
+  "created_at": "2026-10-18T13:52:06.474242+00:00",
+  "root": "C:\\Users\\oyaji\\Desktop\\pf_funasaka\\src",
+  "files_scanned": 82,
+  "summary": {
+    "high": 12,
+    "medium": 12,
+    "low": 4
+  },
+  "issues": [
+    {
+      "id": "CODE-01",
+      "severity": "high",
+      "status": "fail",
+      "file": "index.html",
+      "line": 59,
+      "message": "開発環境path/URL",
+      "evidence": "http://localhost:5173"
+    },
+    {
+      "id": "CODE-01",
+      "severity": "high",
+      "status": "fail",
+      "file": "index.html",
+      "line": 67,
+      "message": "開発環境path/URL",
+      "evidence": "http://localhost:8888"
+    },
+    {
+      "id": "CODE-01",
+      "severity": "high",
+      "status": "fail",
+      "file": "index.html",
+      "line": 77,
+      "message": "開発環境path/URL",
+      "evidence": "http://localhost:8888"
+    },
+    {
+      "id": "SEO-01",
+      "severity": "high",
+      "status": "fail",
+      "file": "index.html",
+      "line": 1,
+      "message": "meta descriptionがない",
+      "evidence": ""
+    },
+    {
+      "id": "SEO-02",
+      "severity": "medium",
+      "status": "fail",
+      "file": "index.html",
+      "line": 1,
+      "message": "og:titleがない",
+      "evidence": ""
+    },
+    {
+      "id": "SEO-02",
+      "severity": "medium",
+      "status": "fail",
+      "file": "index.html",
+      "line": 1,
+      "message": "og:descriptionがない",
+      "evidence": ""
+    },
+    {
+      "id": "SEO-02",
+      "severity": "medium",
+      "status": "fail",
+      "file": "index.html",
+      "line": 1,
+      "message": "og:imageがない",
+      "evidence": ""
+    },
+    {
+      "id": "SEO-02",
+      "severity": "medium",
+      "status": "fail",
+      "file": "index.html",
+      "line": 1,
+      "message": "og:urlがない",
+      "evidence": ""
+    },
+    {
+      "id": "SEO-04",
+      "severity": "medium",
+      "status": "fail",
+      "file": "index.html",
+      "line": 1,
+      "message": "canonicalがない",
+      "evidence": ""
+    },
+    {
+      "id": "SEO-04",
+      "severity": "medium",
+      "status": "fail",
+      "file": "index.html",
+      "line": 1,
+      "message": "favicon linkがない",
+      "evidence": ""
+    },
+    {
+      "id": "CODE-04",
+      "severity": "low",
+      "status": "warning",
+      "file": "index.html",
+      "line": 15,
+      "message": "画像がWebP/AVIFではない",
+      "evidence": "/assets/images/logo_vite.svg"
+    },
+    {
+      "id": "CODE-04",
+      "severity": "low",
+      "status": "warning",
+      "file": "index.html",
+      "line": 100,
+      "message": "画像がWebP/AVIFではない",
+      "evidence": "/assets/images/logo_vite.svg"
+    },
+    {
+      "id": "CNT-04",
+      "severity": "high",
+      "status": "fail",
+      "file": "_components.html",
+      "line": 85,
+      "message": "dummy文字列",
+      "evidence": "ダミー"
+    },
+    {
+      "id": "CNT-04",
+      "severity": "high",
+      "status": "fail",
+      "file": "_components.html",
+      "line": 121,
+      "message": "dummy文字列",
+      "evidence": "ダミー"
+    },
+    {
+      "id": "CNT-04",
+      "severity": "high",
+      "status": "fail",
+      "file": "_components.html",
+      "line": 127,
+      "message": "dummy文字列",
+      "evidence": "placeholder"
+    },
+    {
+      "id": "SEO-01",
+      "severity": "high",
+      "status": "fail",
+      "file": "_components.html",
+      "line": 1,
+      "message": "meta descriptionがない",
+      "evidence": ""
+    },
+    {
+      "id": "SEO-02",
+      "severity": "medium",
+      "status": "fail",
+      "file": "_components.html",
+      "line": 1,
+      "message": "og:titleがない",
+      "evidence": ""
+    },
+    {
+      "id": "SEO-02",
+      "severity": "medium",
+      "status": "fail",
+      "file": "_components.html",
+      "line": 1,
+      "message": "og:descriptionがない",
+      "evidence": ""
+    },
+    {
+      "id": "SEO-02",
+      "severity": "medium",
+      "status": "fail",
+      "file": "_components.html",
+      "line": 1,
+      "message": "og:imageがない",
+      "evidence": ""
+    },
+    {
+      "id": "SEO-02",
+      "severity": "medium",
+      "status": "fail",
+      "file": "_components.html",
+      "line": 1,
+      "message": "og:urlがない",
+      "evidence": ""
+    },
+    {
+      "id": "SEO-04",
+      "severity": "medium",
+      "status": "fail",
+      "file": "_components.html",
+      "line": 1,
+      "message": "canonicalがない",
+      "evidence": ""
+    },
+    {
+      "id": "SEO-04",
+      "severity": "medium",
+      "status": "fail",
+      "file": "_components.html",
+      "line": 1,
+      "message": "favicon linkがない",
+      "evidence": ""
+    },
+    {
+      "id": "CODE-04",
+      "severity": "low",
+      "status": "warning",
+      "file": "_components.html",
+      "line": 15,
+      "message": "画像がWebP/AVIFではない",
+      "evidence": "/assets/images/logo_vite.svg"
+    },
+    {
+      "id": "CODE-04",
+      "severity": "low",
+      "status": "warning",
+      "file": "_components.html",
+      "line": 225,
+      "message": "画像がWebP/AVIFではない",
+      "evidence": "/assets/images/logo_vite.svg"
+    },
+    {
+      "id": "CNT-04",
+      "severity": "high",
+      "status": "fail",
+      "file": "assets/styles/projects/_p-form.scss",
+      "line": 93,
+      "message": "dummy文字列",
+      "evidence": "placeholder"
+    },
+    {
+      "id": "CNT-04",
+      "severity": "high",
+      "status": "fail",
+      "file": "assets/styles/projects/_p-form.scss",
+      "line": 94,
+      "message": "dummy文字列",
+      "evidence": "placeholder"
+    },
+    {
+      "id": "CNT-04",
+      "severity": "high",
+      "status": "fail",
+      "file": "assets/styles/projects/_p-form.scss",
+      "line": 95,
+      "message": "dummy文字列",
+      "evidence": "placeholder"
+    },
+    {
+      "id": "CNT-04",
+      "severity": "high",
+      "status": "fail",
+      "file": "assets/styles/projects/_p-portfolio-theme.scss",
+      "line": 30,
+      "message": "dummy文字列",
+      "evidence": "placeholder"
+    }
+  ],
+  "dates": []
+}

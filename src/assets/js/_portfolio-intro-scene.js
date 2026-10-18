@@ -16,18 +16,38 @@ import {
   Scene,
   ShaderMaterial,
   SphereGeometry,
+  Vector3,
   WebGLRenderer,
 } from "three";
 
 const INTRO_SPHERE_RADIUS = 1.64;
 const INTRO_LIGHT_WAVE_DURATION = 3.4;
 const INTRO_MUSIC_TEMPO = 108;
-const INTRO_MUSIC_PULSE_SCALE = 0.2;
 const INTRO_STAGE_SWEEP_DURATION = 7.2;
 const INTRO_STAGE_SWEEP_ACTIVE_DURATION = INTRO_STAGE_SWEEP_DURATION * 0.84;
 const INTRO_RIM_ROTATION_SPEED = 0.34;
 const INTRO_RIM_START_ANGLE = Math.PI * 1.75;
 const INTRO_EXIT_FLARE_DURATION = 0.95;
+const INTRO_RIBBON_RADIUS = INTRO_SPHERE_RADIUS;
+const INTRO_RIBBON_DURATION = 17;
+
+const RIBBON_FLARE_FRAGMENT = `
+  uniform float uStageAspect;
+  uniform vec2 uRibbonFlarePosition;
+  uniform float uRibbonFlareStrength;
+  uniform float uRibbonFlareExpansion;
+  varying vec2 vScreen;
+  void main() {
+    vec2 offset = (vScreen - uRibbonFlarePosition) * vec2(uStageAspect, 1.0);
+    if (abs(offset.x) > 0.5 || abs(offset.y) > 0.4) discard;
+    float radius = mix(0.045, 0.14, uRibbonFlareExpansion);
+    float halo = exp(-dot(offset, offset) / (radius * radius)) * 0.38;
+    float core = exp(-dot(offset, offset) / 0.0005);
+    vec2 streak = offset / vec2(0.22, 0.007);
+    float ray = exp(-dot(streak, streak)) * 0.5;
+    gl_FragColor = vec4(mix(vec3(1.0, 0.72, 0.34), vec3(1.0, 0.98, 0.9), core), (core + halo + ray) * uRibbonFlareStrength);
+  }
+`;
 
 const RIM_LIGHTING = `
   uniform float uRimAngle;
@@ -120,6 +140,10 @@ const EXIT_FLARE_FRAGMENT = `
 `;
 
 const SPHERE_VERTEX = `
+  uniform float uRibbonPhase;
+  uniform float uRibbonPresence;
+  uniform float uRibbonPointAngle;
+  varying vec2 vRibbonLight;
   uniform float uTime;
   uniform float uInterior;
   uniform float uPixelRatio;
@@ -152,14 +176,22 @@ const SPHERE_VERTEX = `
     vec3 direction = normalize(position);
     float motionPresence = 1.0 - smoothstep(0.05, 0.85, uInterior);
     float lightPresence = mix(1.0, 0.3, uInterior);
-    // Latitude-dependent shear moves points along the surface, preserving a round silhouette.
-    float yaw = sin(direction.y * 4.0 + uTime * 0.8) * 0.14 * uMusicGain;
-    yaw += uKick * 0.36 * sin(direction.y * 3.5);
-    yaw += uSnareStrength * 0.2 * sin(direction.y * 5.0);
-    yaw *= motionPresence;
-    direction.xz = mat2(cos(yaw), sin(yaw), -sin(yaw), cos(yaw)) * direction.xz;
-    direction = normalize(direction);
+    // Keep point positions stable; rhythm affects lighting instead of the shell.
     vec3 p = direction * ${INTRO_SPHERE_RADIUS} * uPulseScale;
+    // Convert the rotating point shell into the ribbon's group-space orbit.
+    vec3 ribbonDirection = direction;
+    float ribbonCos = cos(uRibbonPointAngle);
+    float ribbonSin = sin(uRibbonPointAngle);
+    ribbonDirection.xy = mat2(ribbonCos, ribbonSin, -ribbonSin, ribbonCos) * ribbonDirection.xy;
+    vec3 ribbonSide = vec3(0.0, 0.42, 0.9075241);
+    vec3 ribbonNormal = vec3(0.0, -0.9075241, 0.42);
+    float ribbonLatitude = dot(ribbonDirection, ribbonNormal);
+    float ribbonAngle = atan(dot(ribbonDirection, ribbonSide), ribbonDirection.x) / 6.28318530718;
+    float ribbonAge = mod(uRibbonPhase - ribbonAngle + 1.0, 1.0);
+    float ribbonEnd = (1.0 - smoothstep(0.3, 0.48, ribbonAge)) * uRibbonPresence;
+    float ribbonCore = exp(-pow(ribbonLatitude / 0.14, 2.0)) * exp(-ribbonAge / 0.1);
+    float ribbonTrail = exp(-pow(ribbonLatitude / 0.21, 2.0)) * exp(-ribbonAge / 0.25) * 0.68;
+    vRibbonLight = vec2(ribbonCore, ribbonTrail) * ribbonEnd;
     float orbitAngle = uWavePhase * 6.28318530718;
     vec3 orbitNormal = normalize(vec3(cos(orbitAngle), 0.42, sin(orbitAngle)));
     vec3 orbitSide = vec3(-sin(orbitAngle), 0.0, cos(orbitAngle));
@@ -186,14 +218,16 @@ const SPHERE_VERTEX = `
     vec3 stageSweep = buildIntroStageSweep(screen);
     vStageSweep = stageSweep.x;
     vStageAfterglow = stageSweep.z;
-    float pointScale = mix(1.0, 0.95, uInterior);
+    float frontDepth = smoothstep(-0.45, 0.65, vDepth);
+    float depthScale = mix(0.7, 1.24, frontDepth);
+    float pointScale = mix(depthScale, 0.95, uInterior);
     float pointLimit = min(mix(92.0, 70.0, uInterior), uTrailPointLimit);
-    float pointEnergy = max(vLightWave * 0.08, vMusicLight * 0.18 * motionPresence) + uKick * 0.2 * motionPresence;
-    gl_PointSize = clamp(aSize * uPixelRatio * (240.0 / max(0.12, -viewPosition.z)) * pointScale * (1.0 + pointEnergy), min(2.0, pointLimit), pointLimit);
+    gl_PointSize = clamp(aSize * uPixelRatio * (240.0 / max(0.12, -viewPosition.z)) * pointScale, min(2.0, pointLimit), pointLimit);
   }
 `;
 
 const SPHERE_FRAGMENT = `
+  varying vec2 vRibbonLight;
   uniform float uOpacity;
   uniform float uInterior;
   uniform vec3 uBlue;
@@ -209,7 +243,9 @@ const SPHERE_FRAGMENT = `
   varying float vStageAfterglow;
   varying float vRimLight;
   void main() {
-    float exterior = smoothstep(-0.035, 0.08, vDepth);
+    // Keep the far hemisphere visible through the open point shell.
+    float frontDepth = smoothstep(-0.45, 0.65, vDepth);
+    float exterior = mix(0.6, 1.0, frontDepth);
     float interior = smoothstep(-0.035, 0.08, -vDepth);
     float facing = mix(exterior, interior, uInterior);
     if (facing < 0.001 || vNearVisibility < 0.001) discard;
@@ -235,6 +271,12 @@ const SPHERE_FRAGMENT = `
     float rimLight = vRimLight * (1.0 - smoothstep(0.05, 0.65, uInterior));
     color = mix(color, vec3(0.82, 0.95, 1.0), rimLight * 0.92);
     alpha *= 1.0 + rimLight;
+    float farHemisphere = (1.0 - smoothstep(-0.25, 0.12, vDepth)) * (1.0 - uInterior);
+    color = mix(color, vec3(0.32, 0.58, 1.0), farHemisphere * 0.7);
+    vec3 ribbonColor = mix(vec3(1.0, 0.78, 0.42), vec3(1.0, 0.99, 0.93), clamp(vRibbonLight.x * 1.8, 0.0, 1.0));
+    float ribbonColorStrength = clamp((vRibbonLight.x * 1.65 + vRibbonLight.y * 1.2) * mix(0.72, 1.0, frontDepth), 0.0, 0.98);
+    color = mix(color, ribbonColor, ribbonColorStrength);
+    alpha *= 1.0 + vRibbonLight.x * 4.0 + vRibbonLight.y * 1.2;
     gl_FragColor = vec4(color, alpha);
   }
 `;
@@ -402,7 +444,7 @@ function buildIntroSphereGeometry(count) {
     const seed = ((index * 127.1) % 997) / 997;
     positions.set([Math.cos(angle) * radius * INTRO_SPHERE_RADIUS, y * INTRO_SPHERE_RADIUS, Math.sin(angle) * radius * INTRO_SPHERE_RADIUS], index * 3);
     seeds[index] = seed;
-    sizes[index] = 0.375 + seed * 0.15;
+    sizes[index] = 0.8 + seed * 0.26;
   }
   const geometry = new BufferGeometry();
   geometry.setAttribute("position", new BufferAttribute(positions, 3));
@@ -474,6 +516,12 @@ export function createPortfolioIntroScene(intro) {
   const hardwarePointLimit = Math.max(1, context.getParameter(context.ALIASED_POINT_SIZE_RANGE)[1]);
   const uniforms = {
     uTime: { value: 0 },
+    uRibbonPhase: { value: 0.16 },
+    uRibbonPresence: { value: 1 },
+    uRibbonPointAngle: { value: 0 },
+    uRibbonFlarePosition: { value: new Float32Array(2) },
+    uRibbonFlareStrength: { value: 0 },
+    uRibbonFlareExpansion: { value: 0 },
     uRimAngle: { value: INTRO_RIM_START_ANGLE },
     uExitFlarePosition: { value: new Float32Array(2) },
     uExitFlareStrength: { value: 0 },
@@ -521,7 +569,8 @@ export function createPortfolioIntroScene(intro) {
   exitFlare.renderOrder = 4;
   exitFlare.visible = false;
   scene.add(exitFlare);
-  const sphereGeometry = buildIntroSphereGeometry(window.innerWidth < 768 ? 2400 : 4000);
+  const sphereGeometry = buildIntroSphereGeometry(window.innerWidth < 768 ? 540 : 900);
+  intro.dataset.introSpherePointCount = String(sphereGeometry.getAttribute("position").count);
   const sphereMaterial = new ShaderMaterial({ vertexShader: SPHERE_VERTEX, fragmentShader: SPHERE_FRAGMENT, uniforms, transparent: true, depthWrite: false, blending: AdditiveBlending });
   const sphere = new Points(sphereGeometry, sphereMaterial);
   sphere.renderOrder = 1;
@@ -537,10 +586,25 @@ export function createPortfolioIntroScene(intro) {
   const surface = new Mesh(surfaceGeometry, surfaceMaterial);
   const atmosphereMaterial = new ShaderMaterial({ vertexShader: ATMOSPHERE_VERTEX, fragmentShader: ATMOSPHERE_FRAGMENT, uniforms, side: BackSide, transparent: true, depthWrite: false, blending: AdditiveBlending });
   const atmosphere = new Mesh(surfaceGeometry, atmosphereMaterial);
+  // Let the point shell define the silhouette without a continuous outer ring.
+  atmosphere.visible = false;
   atmosphere.scale.setScalar(1.055);
   atmosphere.renderOrder = 2;
   group.add(surface, atmosphere);
   group.add(sphere);
+  const ribbonFlareMaterial = new ShaderMaterial({ vertexShader: STAGE_HAZE_VERTEX, fragmentShader: RIBBON_FLARE_FRAGMENT, uniforms, transparent: true, depthTest: false, depthWrite: false, blending: AdditiveBlending });
+  const ribbonFlare = new Mesh(hazeGeometry, ribbonFlareMaterial);
+  ribbonFlare.frustumCulled = false;
+  ribbonFlare.renderOrder = 4;
+  ribbonFlare.visible = false;
+  scene.add(ribbonFlare);
+  const ribbonHead = new Vector3();
+  const ribbonCameraDirection = new Vector3();
+  const ribbonNormal = new Vector3();
+  let previousRibbonFacing = null;
+  let ribbonFlareStartedAt = Number.NEGATIVE_INFINITY;
+  let lastRibbonFlareAt = Number.NEGATIVE_INFINITY;
+  intro.dataset.introRibbonMode = "points";
   // Keep forward travel separate from the rotating spherical backdrop.
   const interiorGeometry = buildIntroInteriorGeometry(window.innerWidth < 768 ? 120 : 220);
   const interiorMaterial = new ShaderMaterial({ vertexShader: INTERIOR_VERTEX, fragmentShader: INTERIOR_FRAGMENT, uniforms, transparent: true, depthWrite: false, blending: AdditiveBlending });
@@ -698,6 +762,48 @@ export function createPortfolioIntroScene(intro) {
     intro.dataset.introStageSweepTime = cycleTime.toFixed(3);
   }
 
+  function updateIntroRibbon(interior) {
+    const presence = 1 - MathUtils.smoothstep(interior, 0.05, 0.7);
+    const phase = reducedMotion.matches ? 0.16 : (0.16 + elapsed / INTRO_RIBBON_DURATION) % 1;
+    uniforms.uRibbonPhase.value = phase;
+    uniforms.uRibbonPresence.value = presence;
+    uniforms.uRibbonPointAngle.value = sphere.rotation.z;
+    intro.dataset.introRibbonPhase = phase.toFixed(3);
+    intro.dataset.introRibbonPresence = presence.toFixed(3);
+    if (reducedMotion.matches || presence < 0.01) {
+      previousRibbonFacing = null;
+      ribbonFlareStartedAt = Number.NEGATIVE_INFINITY;
+      uniforms.uRibbonFlareStrength.value = 0;
+      ribbonFlare.visible = false;
+      intro.dataset.introRibbonFlare = "0.000";
+      return;
+    }
+    const angle = phase * Math.PI * 2;
+    ribbonHead.set(Math.cos(angle), Math.sin(angle) * 0.42, Math.sin(angle) * Math.sqrt(1 - 0.42 ** 2)).multiplyScalar(INTRO_RIBBON_RADIUS);
+    group.updateMatrixWorld(true);
+    camera.updateMatrixWorld();
+    ribbonHead.applyMatrix4(group.matrixWorld);
+    ribbonNormal.copy(ribbonHead).sub(group.position).normalize();
+    ribbonCameraDirection.copy(camera.position).sub(group.position);
+    const distance = ribbonCameraDirection.length();
+    const facing = ribbonNormal.dot(ribbonCameraDirection.normalize()) - INTRO_SPHERE_RADIUS / distance;
+    if (previousRibbonFacing !== null && previousRibbonFacing > 0 && facing <= 0 && elapsed - lastRibbonFlareAt > 2) {
+      ribbonFlareStartedAt = elapsed;
+      lastRibbonFlareAt = elapsed;
+      intro.dataset.introRibbonFlareAt = elapsed.toFixed(3);
+      ribbonHead.project(camera);
+      uniforms.uRibbonFlarePosition.value[0] = ribbonHead.x;
+      uniforms.uRibbonFlarePosition.value[1] = ribbonHead.y;
+    }
+    previousRibbonFacing = facing;
+    const age = elapsed - ribbonFlareStartedAt;
+    const strength = MathUtils.smoothstep(age, 0, 0.12) * (1 - MathUtils.smoothstep(age, 0.22, 1.3)) * presence * 0.7;
+    uniforms.uRibbonFlareStrength.value = strength;
+    uniforms.uRibbonFlareExpansion.value = MathUtils.smoothstep(age, 0, 0.8);
+    ribbonFlare.visible = strength > 0.001;
+    intro.dataset.introRibbonFlare = strength.toFixed(3);
+  }
+
   function updateIntroRimLight() {
     // Use the scene clock so hidden tabs pause and reduced motion stays static.
     const angle = (elapsed * INTRO_RIM_ROTATION_SPEED + INTRO_RIM_START_ANGLE) % (Math.PI * 2);
@@ -842,14 +948,13 @@ export function createPortfolioIntroScene(intro) {
     intro.dataset.introStageLight = "cyan-rose-amber";
     intro.dataset.introStageOpacity = uniforms.uStageOpacity.value.toFixed(3);
     updateIntroAmbientMotion(interior, deltaTime);
-    const sphereMusicPresence = 1 - MathUtils.smoothstep(interior, 0.05, 0.85);
-    const pulseScale = 1 + (uniforms.uKick.value * INTRO_MUSIC_PULSE_SCALE + uniforms.uSnareStrength.value * 0.035) * sphereMusicPresence;
+    const pulseScale = 1;
     uniforms.uPulseScale.value = pulseScale;
     intro.dataset.introPulseScale = pulseScale.toFixed(3);
     surface.scale.setScalar(pulseScale);
     atmosphere.scale.setScalar(1.055 * pulseScale);
     interiorPoints.visible = interior > 0.001;
-    surfaceMaterial.opacity = 1 - MathUtils.smoothstep(interior, 0, 0.65);
+    surfaceMaterial.opacity = (1 - MathUtils.smoothstep(interior, 0, 0.65)) * 0.07;
     surface.visible = surfaceMaterial.opacity > 0.001;
     const fieldOfView = 42 + interior * 26;
     if (Math.abs(camera.fov - fieldOfView) > 0.001) {
@@ -857,9 +962,10 @@ export function createPortfolioIntroScene(intro) {
       camera.updateProjectionMatrix();
     }
     updateIntroExitFlare(interior, pulseScale);
-    group.rotation.set(0.16 + Math.sin(elapsed * 0.32) * 0.08, elapsed * 0.18, -0.22 + Math.sin(elapsed * 0.24) * 0.08);
+    group.rotation.set(0.16, elapsed * 0.18, -0.22);
     sphere.rotation.z = elapsed * 0.045;
     atmosphere.rotation.copy(sphere.rotation);
+    updateIntroRibbon(interior);
     interiorPoints.position.copy(camera.position);
     keyLight.position.set(group.position.x - 3.5, group.position.y + 4, 5);
     rimLight.position.set(group.position.x + 3, group.position.y + 0.5, -2);
@@ -962,6 +1068,7 @@ export function createPortfolioIntroScene(intro) {
     canvas.removeEventListener("webglcontextrestored", handleIntroContextRestored);
     sphereGeometry.dispose();
     sphereMaterial.dispose();
+    ribbonFlareMaterial.dispose();
     interiorGeometry.dispose();
     interiorMaterial.dispose();
     surfaceGeometry.dispose();

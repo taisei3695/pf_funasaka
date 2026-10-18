@@ -533,11 +533,15 @@ function initPortfolioMotion() {
       const image = frame.querySelector("img");
       if (!image) return;
       // Shared-image navigation already reveals this frame, including bfcache restores.
-      if (frame.dataset.portfolioTransitionRevealed === "true") return;
+      if (frame.dataset.portfolioTransitionRevealed === "true") {
+        frame.classList.add("is-afterglow-visible");
+        return;
+      }
       gsap
         .timeline({ scrollTrigger: { trigger: frame, start: "top 90%", once: true } })
         .from(frame, { clipPath: "inset(0 0 100% 0)", duration: 1.05, ease: "power3.out", clearProps: "clipPath" })
-        .from(image, { scale: 1.06, duration: 1.3, ease: "power3.out", clearProps: "transform" }, 0);
+        .from(image, { scale: 1.06, duration: 1.3, ease: "power3.out", clearProps: "transform" }, 0)
+        .call(() => frame.classList.add("is-afterglow-visible"));
       if (desktop && frame.classList.contains("p-portfolio-work__image")) {
         gsap.fromTo(
           frame,

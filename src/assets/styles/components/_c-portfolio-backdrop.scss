@@ -6,6 +6,9 @@
 }
 
 .c-portfolio-backdrop {
+  --backdrop-particle-travel: 10rem;
+  --backdrop-light-travel: 20svh;
+
   position: fixed;
   inset: 0;
   z-index: -1;
@@ -15,6 +18,8 @@
 }
 
 .c-portfolio-backdrop__glow {
+  --backdrop-glow-delay: 0s;
+
   position: absolute;
   inset-block-start: 12%;
   inset-inline-start: -8rem;
@@ -32,7 +37,21 @@
   background: radial-gradient(ellipse at 0% 65%, rgb(30 72 140 / 16%), transparent 48%), radial-gradient(ellipse at 100% 25%, rgb(40 78 145 / 12%), transparent 42%);
 }
 
+.c-portfolio-backdrop::after {
+  content: "";
+  position: absolute;
+  inset-block-start: -24svh;
+  inset-inline-start: 0;
+  inline-size: 4px;
+  block-size: 24svh;
+  box-shadow: 0 0 20px rgb(90 161 255 / 90%);
+  background: linear-gradient(transparent, #89c0ff 55%, #f5fbff 85%, transparent);
+  opacity: 0;
+}
+
 .c-portfolio-backdrop__glow--opposite {
+  --backdrop-glow-delay: -5s;
+
   inset-inline: auto -8rem;
   inset-block-start: 48%;
 }
@@ -50,6 +69,29 @@
   opacity: 0.6;
 }
 
+.c-portfolio-backdrop--list .c-portfolio-backdrop__glow--opposite {
+  inset-block-start: 8%;
+}
+
+.c-portfolio-backdrop--privacy .c-portfolio-backdrop__glow--opposite {
+  inset-inline: -8rem auto;
+  inset-block-start: 44%;
+}
+
+.c-portfolio-backdrop .c-portfolio-backdrop__glow--accent {
+  --backdrop-glow-delay: -9s;
+
+  inset-inline: -6rem auto;
+  inset-block-start: 74%;
+  inline-size: min(42vw, 34rem);
+  block-size: 48svh;
+}
+
+.c-portfolio-backdrop__glow--afterglow {
+  display: none;
+  background: radial-gradient(ellipse, rgb(50 116 224 / 20%), rgb(26 70 150 / 9%) 42%, transparent 72%);
+}
+
 .c-portfolio-backdrop__particles {
   position: absolute;
   inset: 0;
@@ -65,9 +107,9 @@
   opacity: 0.8;
 }
 
-$particle-positions: (7% 14%, 91% 34%, 16% 66%, 83% 83%, 27% 42%, 74% 18%, 12% 89%, 94% 65%, 35% 24%, 66% 74%, 5% 48%, 87% 9%);
+$particle-positions: (7% 14%, 91% 34%, 16% 66%, 83% 83%, 27% 42%, 74% 18%, 12% 89%, 94% 65%, 35% 24%, 66% 74%, 5% 48%, 87% 9%, 20% 20%, 79% 53%, 9% 76%, 96% 19%, 23% 92%, 71% 91%, 4% 30%, 88% 73%, 31% 58%, 69% 38%, 18% 46%, 82% 27%);
 
-@for $particle from 1 through 12 {
+@for $particle from 1 through list.length($particle-positions) {
   .c-portfolio-backdrop__particle:nth-child(#{$particle}) {
     inset-block-start: list.nth(list.nth($particle-positions, $particle), 2);
     inset-inline-start: list.nth(list.nth($particle-positions, $particle), 1);
@@ -76,34 +118,68 @@ $particle-positions: (7% 14%, 91% 34%, 16% 66%, 83% 83%, 27% 42%, 74% 18%, 12% 8
 }
 
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .c-portfolio-backdrop::after {
+    animation: portfolio-backdrop-edge-sweep 4.4s 0.35s ease-in-out both;
+  }
+
   .c-portfolio-backdrop--list .c-portfolio-backdrop__particle {
     animation-name: portfolio-backdrop-drift;
-    animation-duration: 16s;
+    animation-duration: 10s;
     animation-timing-function: ease-in-out;
     animation-iteration-count: infinite;
     animation-direction: alternate;
   }
 
-  .c-portfolio-backdrop--detail .c-portfolio-backdrop__glow {
-    animation: portfolio-backdrop-edge-light 16s ease-in-out infinite alternate;
-  }
-
-  .c-portfolio-backdrop--detail .c-portfolio-backdrop__glow--opposite {
-    animation-delay: -13s;
+  .c-portfolio-backdrop--list .c-portfolio-backdrop__particle:nth-child(even) {
+    animation-duration: 13s;
     animation-direction: alternate-reverse;
   }
 
+  .c-portfolio-backdrop--list .c-portfolio-backdrop__glow,
+  .c-portfolio-backdrop--detail .c-portfolio-backdrop__glow {
+    animation: portfolio-backdrop-edge-light 10s ease-in-out infinite alternate;
+  }
+
   .c-portfolio-backdrop--privacy .c-portfolio-backdrop__glow {
-    animation: portfolio-backdrop-breathe 20s ease-in-out infinite alternate;
+    animation: portfolio-backdrop-breathe 13s ease-in-out infinite alternate;
+  }
+
+  .c-portfolio-backdrop .c-portfolio-backdrop__glow--opposite {
+    animation-duration: 14s;
+    animation-delay: var(--backdrop-glow-delay);
+    animation-direction: alternate-reverse;
+  }
+
+  .c-portfolio-backdrop .c-portfolio-backdrop__glow--accent {
+    animation-duration: 16s;
+    animation-delay: var(--backdrop-glow-delay);
+  }
+
+  .c-portfolio-backdrop .c-portfolio-backdrop__glow--afterglow {
+    display: block;
+    animation-delay: calc(var(--backdrop-glow-delay) + 1.6s);
+    animation-fill-mode: both;
   }
 }
 
 .c-portfolio-backdrop.is-backdrop-paused :is(.c-portfolio-backdrop__particle, .c-portfolio-backdrop__glow),
-[data-portfolio-entrance-pending="true"] .c-portfolio-backdrop :is(.c-portfolio-backdrop__particle, .c-portfolio-backdrop__glow) {
+[data-portfolio-entrance-pending="true"] .c-portfolio-backdrop :is(.c-portfolio-backdrop__particle, .c-portfolio-backdrop__glow),
+.c-portfolio-backdrop.is-backdrop-paused::after,
+[data-portfolio-entrance-pending="true"] .c-portfolio-backdrop::after {
   animation-play-state: paused;
 }
 
 @media (width < 768px) {
+  .c-portfolio-backdrop::after {
+    inline-size: 2px;
+    box-shadow: 0 0 8px rgb(90 161 255 / 80%);
+  }
+
+  .c-portfolio-backdrop {
+    --backdrop-particle-travel: 6rem;
+    --backdrop-light-travel: 12svh;
+  }
+
   .c-portfolio-backdrop__glow {
     inset-inline-start: -10rem;
     inline-size: 26rem;
@@ -111,19 +187,43 @@ $particle-positions: (7% 14%, 91% 34%, 16% 66%, 83% 83%, 27% 42%, 74% 18%, 12% 8
     opacity: 0.65;
   }
 
+  .c-portfolio-backdrop--list .c-portfolio-backdrop__glow,
   .c-portfolio-backdrop--detail .c-portfolio-backdrop__glow {
-    animation-duration: 22s;
-  }
-
-  .c-portfolio-backdrop__glow--opposite {
-    display: none;
+    animation-duration: 14s;
   }
 
   .c-portfolio-backdrop--privacy .c-portfolio-backdrop__glow {
     inset-inline: auto -12rem;
     inline-size: 28rem;
     opacity: 0.55;
-    animation-duration: 26s;
+    animation-duration: 18s;
+  }
+
+  .c-portfolio-backdrop .c-portfolio-backdrop__glow--opposite {
+    inset-inline: auto -11rem;
+    inset-block-start: 52%;
+    inline-size: 22rem;
+    block-size: 42svh;
+    animation-duration: 18s;
+  }
+
+  .c-portfolio-backdrop--privacy .c-portfolio-backdrop__glow--opposite {
+    inset-inline: -11rem auto;
+  }
+
+  .c-portfolio-backdrop .c-portfolio-backdrop__glow--afterglow {
+    background: radial-gradient(ellipse, rgb(50 116 224 / 14%), rgb(26 70 150 / 6%) 38%, transparent 64%);
+    animation-delay: calc(var(--backdrop-glow-delay) + 1.2s);
+  }
+
+  .c-portfolio-backdrop .c-portfolio-backdrop__glow--opposite.c-portfolio-backdrop__glow--afterglow {
+    display: none;
+    animation: none;
+  }
+
+  .c-portfolio-backdrop .c-portfolio-backdrop__glow--accent {
+    display: none;
+    animation: none;
   }
 
   .c-portfolio-backdrop__particle {
@@ -133,10 +233,14 @@ $particle-positions: (7% 14%, 91% 34%, 16% 66%, 83% 83%, 27% 42%, 74% 18%, 12% 8
   }
 
   .c-portfolio-backdrop--list .c-portfolio-backdrop__particle {
-    animation-duration: 22s;
+    animation-duration: 14s;
   }
 
-  .c-portfolio-backdrop--list .c-portfolio-backdrop__particle:nth-child(n + 7) {
+  .c-portfolio-backdrop--list .c-portfolio-backdrop__particle:nth-child(even) {
+    animation-duration: 17s;
+  }
+
+  .c-portfolio-backdrop--list .c-portfolio-backdrop__particle:nth-child(n + 11) {
     display: none;
     animation: none;
   }
@@ -151,33 +255,52 @@ $particle-positions: (7% 14%, 91% 34%, 16% 66%, 83% 83%, 27% 42%, 74% 18%, 12% 8
 @keyframes portfolio-backdrop-drift {
   from {
     opacity: 0.5;
-    transform: translate3d(-1rem, 3rem, 0) scale(0.8);
+    transform: translate3d(-1.5rem, var(--backdrop-particle-travel), 0) scale(0.8);
   }
 
   to {
     opacity: 0.9;
-    transform: translate3d(1.5rem, -4rem, 0) scale(1.1);
+    transform: translate3d(2rem, calc(-1 * var(--backdrop-particle-travel)), 0) scale(1.1);
   }
 }
 
 @keyframes portfolio-backdrop-edge-light {
   from {
-    opacity: 0.55;
-    transform: translate3d(0, -5svh, 0);
+    opacity: 0.45;
+    transform: translate3d(0, calc(-1 * var(--backdrop-light-travel)), 0) scale(0.92);
   }
 
   to {
     opacity: 0.9;
-    transform: translate3d(2rem, 8svh, 0);
+    transform: translate3d(1rem, var(--backdrop-light-travel), 0) scale(1.12);
   }
 }
 
 @keyframes portfolio-backdrop-breathe {
   from {
     opacity: 0.4;
+    transform: translate3d(0, calc(-0.6 * var(--backdrop-light-travel)), 0) scale(0.92);
   }
 
   to {
     opacity: 0.72;
+    transform: translate3d(0, calc(0.6 * var(--backdrop-light-travel)), 0) scale(1.1);
+  }
+}
+
+@keyframes portfolio-backdrop-edge-sweep {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+
+  15%,
+  75% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(124svh);
   }
 }
