@@ -132,13 +132,15 @@ export function initPortfolioScrollReveals(revealedElements, createHeadingLetter
     return sequence;
   }
 
-  listPortfolioScrollRevealElements().forEach(element => {
+  // Read positions together before adding animation attributes invalidates layout.
+  const revealElements = listPortfolioScrollRevealElements().map(element => ({ element, top: element.getBoundingClientRect().top }));
+  revealElements.forEach(({ element, top }) => {
     const kind = buildPortfolioScrollRevealKind(element);
     const profile = PORTFOLIO_SCROLL_REVEAL_PROFILES[kind];
     const record = { element, kind, profile, heading: null, tween: null, shown: false, animationName: profile.animationName };
     records.set(element, record);
     element.dataset.portfolioRevealKind = kind;
-    if (revealedElements.has(element) || element.getBoundingClientRect().top <= window.innerHeight * 0.74 || element.contains(document.activeElement)) {
+    if (revealedElements.has(element) || top <= window.innerHeight * 0.74 || element.contains(document.activeElement)) {
       showPortfolioScrollElement(element);
       return;
     }

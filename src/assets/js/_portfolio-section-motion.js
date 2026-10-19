@@ -110,10 +110,13 @@ export function initPortfolioSectionAccents(revealedHeadings, revealedElements) 
 
   const observer = new IntersectionObserver(handlePortfolioSectionEntries, { rootMargin: "0px 0px -12% 0px", threshold: 0 });
 
-  document.querySelectorAll(".p-portfolio-section__title, .p-portfolio-detail__title, .p-portfolio-detail__body h2").forEach(element => {
+  // Cache both groups before heading layers or pending states change the DOM.
+  const headingEntries = [...document.querySelectorAll(".p-portfolio-section__title, .p-portfolio-detail__title, .p-portfolio-detail__body h2")].map(element => ({ element, bounds: element.getBoundingClientRect() }));
+  const skillEntries = [...document.querySelectorAll(".p-portfolio-skill")].map(element => ({ element, top: element.getBoundingClientRect().top }));
+  headingEntries.forEach(({ element, bounds }) => {
+    if (element.dataset.portfolioInitialMotion === "true") return;
     const record = { element, shown: false, layers: [], originalState: element.getAttribute(PORTFOLIO_HEADING_STATE) };
     headings.set(element, record);
-    const bounds = element.getBoundingClientRect();
     if (revealedHeadings.has(element) || bounds.bottom <= 0 || (document.body.classList.contains("home") && bounds.top <= window.innerHeight * 0.78)) {
       showPortfolioHeading(record);
       return;
@@ -123,10 +126,10 @@ export function initPortfolioSectionAccents(revealedHeadings, revealedElements) 
     observer.observe(element);
   });
 
-  document.querySelectorAll(".p-portfolio-skill").forEach((element, index) => {
+  skillEntries.forEach(({ element, top }, index) => {
     const record = { element, index, category: element.querySelector(".p-portfolio-skill__category")?.textContent.trim() ?? "", visible: false, shown: false, timer: 0, originalState: element.getAttribute(PORTFOLIO_SKILL_STATE) };
     skills.set(element, record);
-    if (revealedElements.has(element) || element.getBoundingClientRect().top <= window.innerHeight * 0.78 || element.contains(document.activeElement)) {
+    if (revealedElements.has(element) || top <= window.innerHeight * 0.78 || element.contains(document.activeElement)) {
       showPortfolioSkill(record);
       return;
     }

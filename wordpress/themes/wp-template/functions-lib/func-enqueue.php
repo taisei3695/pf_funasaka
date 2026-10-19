@@ -61,6 +61,7 @@ function enqueue_production_assets_from_manifest()
   // ライブラリCSS（JS関連CSS）を先に読み込み
   $library_css_handles = [];
   $script_entry = $build_manifest["assets/js/script.js"] ?? null;
+  $use_critical_styles = is_front_page() || is_post_type_archive("works") || is_singular("works") || is_page("privacy-policy");
 
   if ($script_entry && isset($script_entry["file"])) {
     // JS関連CSS（ライブラリCSS、例：Splide）を先に読み込み
@@ -68,6 +69,9 @@ function enqueue_production_assets_from_manifest()
       foreach ($script_entry["css"] as $index => $css_file) {
         $handle = "theme-script-css-" . $index;
         $library_css_handles[] = $handle;
+        if ($use_critical_styles && portfolio_enqueue_inline_entry_style($handle, $css_file)) {
+          continue;
+        }
         wp_enqueue_style($handle, $root . "/" . $css_file, [], null, false);
       }
     }
@@ -75,12 +79,98 @@ function enqueue_production_assets_from_manifest()
     wp_enqueue_script("theme-scripts", $root . "/" . $script_entry["file"], [], null, true);
   }
 
+  // The embedded name font and its entrance rules are needed only on TOP.
+  // Keep them after the shared reset and before the page's critical styles.
+  $hero_entry = $build_manifest["assets/styles/portfolio-hero-reveal.css"] ?? null;
+  if (is_front_page() && is_array($hero_entry) && isset($hero_entry["file"])) {
+    $hero_handle = "theme-hero-reveal";
+    if (!portfolio_enqueue_inline_entry_style($hero_handle, $hero_entry["file"], 8192, $library_css_handles)) {
+      wp_enqueue_style($hero_handle, $root . "/" . $hero_entry["file"], $library_css_handles, null, false);
+    }
+    $library_css_handles[] = $hero_handle;
+  }
+
   // メインCSSを最後に読み込み（ライブラリCSSの後に確実に読み込まれるように依存関係を指定）
   $style_entry = $build_manifest["assets/styles/style.scss"] ?? null;
   if ($style_entry && isset($style_entry["file"])) {
+    $critical_sources = [is_front_page() ? "assets/styles/portfolio-critical.scss" : "assets/styles/portfolio-content-critical.scss"];
+    // A missing route entry in an older manifest keeps the verified shared fallback.
+    if (is_post_type_archive("works")) {
+      array_unshift($critical_sources, "assets/styles/portfolio-archive-critical.scss");
+    } elseif (is_singular("works")) {
+      array_unshift($critical_sources, "assets/styles/portfolio-work-critical.scss");
+    } elseif (is_page("privacy-policy")) {
+      array_unshift($critical_sources, "assets/styles/portfolio-privacy-critical.scss");
+    }
+    if ($use_critical_styles) {
+      foreach ($critical_sources as $critical_source) {
+        $critical_entry = $build_manifest[$critical_source] ?? null;
+        if (is_array($critical_entry) && isset($critical_entry["file"]) && portfolio_enqueue_inline_entry_style("theme-critical", $critical_entry["file"], 65536, $library_css_handles)) {
+          $library_css_handles[] = "theme-critical";
+          break;
+        }
+      }
+    }
     wp_enqueue_style("theme-styles", $root . "/" . $style_entry["file"], $library_css_handles, null, false);
   }
 }
+
+/** Inline the small, self-contained reset/hero entry without changing cascade order. */
+function portfolio_enqueue_inline_entry_style($handle, $file, $maximum_bytes = 8192, $dependencies = [])
+{
+  if (!is_string($file) || !preg_match("~^assets/styles/[a-zA-Z0-9_.-]+[.]css$~", $file)) {
+    return false;
+  }
+  $path = get_template_directory() . "/" . $file;
+  if (!is_file($path) || !is_readable($path) || filesize($path) > $maximum_bytes) {
+    return false;
+  }
+  $css = file_get_contents($path);
+  if (!is_string($css) || trim($css) === "") {
+    return false;
+  }
+  // Rebase only known first-view assets. Unrecognized relative assets stay external.
+  $manifest = read_build_manifest();
+  $asset_references = [];
+  foreach (["assets/fonts/jost-latin-wght-normal.woff2", "assets/images/light_strobe.webp"] as $source) {
+    $asset_file = $manifest[$source]["file"] ?? null;
+    if (is_string($asset_file) && preg_match("~^assets/(?:jost-latin-wght-normal[.][a-zA-Z0-9_-]+[.]woff2|images/light_strobe[.]webp)$~", $asset_file) && is_file(get_template_directory() . "/" . $asset_file)) {
+      $reference = 'url("' . esc_url(get_template_directory_uri() . "/" . $asset_file) . '")';
+      $css = str_replace("url(../" . substr($asset_file, strlen("assets/")) . ")", $reference, $css);
+      $asset_references[] = $reference;
+    }
+  }
+  // Embedded WOFF2 needs no base URL. All other assets must stay external.
+  $css_without_embedded_fonts = preg_replace('~url\\(\\s*(["\']?)data:font/woff2;base64,[a-zA-Z0-9+/=]+\\1\\s*\\)~i', "", $css);
+  if (is_string($css_without_embedded_fonts)) {
+    $css_without_embedded_fonts = str_replace($asset_references, "", $css_without_embedded_fonts);
+  }
+  if (!is_string($css_without_embedded_fonts) || preg_match("~@import|url\\s*\\(|</style~i", $css_without_embedded_fonts)) {
+    return false;
+  }
+  wp_register_style($handle, false, $dependencies, null);
+  if (!wp_add_inline_style($handle, $css)) {
+    wp_deregister_style($handle);
+    return false;
+  }
+  wp_enqueue_style($handle);
+  return true;
+}
+
+/** Keep the shared full sheet out of the first-view render path only with a verified inline fallback. */
+function portfolio_defer_primary_stylesheet($html, $handle, $href)
+{
+  if ($handle !== "theme-styles" || !wp_style_is("theme-critical", "done")) {
+    return $html;
+  }
+  // The critical sheet fully styles the first view. Fetch the remaining rules
+  // in parallel, but avoid restyling the entire page during its first paint.
+  // Apply them before scrolling, focus, hover or print needs the enhancements.
+  $loader =
+    'this.onload=null;(function(sheet){const events=["wheel","touchstart","pointerdown","keydown","focusin","scroll","pointerover","beforeprint"];function applyPortfolioStyles(event){if(event?.type==="pointerover"&&!event.target.closest?.("a,button,[tabindex]"))return;events.forEach(function(name){window.removeEventListener(name,applyPortfolioStyles,true);});sheet.rel="stylesheet";}if(window.scrollY>0||document.activeElement?.matches("a,button,input,textarea,select,[tabindex]")||document.querySelector("a:hover,button:hover")){applyPortfolioStyles();return;}events.forEach(function(name){window.addEventListener(name,applyPortfolioStyles,{capture:true,passive:true});});})(this)';
+  return '<link rel="preload" as="style" fetchpriority="low" href="' . esc_url($href) . '" onload="' . esc_attr($loader) . '">' . "\n" . "<noscript>" . $html . "</noscript>";
+}
+add_filter("style_loader_tag", "portfolio_defer_primary_stylesheet", 10, 3);
 
 /**
  * フォールバック方式で本番環境のアセットを読み込み
@@ -143,6 +233,17 @@ function remove_global_styles()
   remove_action("wp_footer", "wp_enqueue_global_styles", 1);
 }
 add_action("wp_enqueue_scripts", "remove_global_styles", 100);
+
+/** Custom TOP/archive templates render no block content; detail and policy keep core styling. */
+function portfolio_remove_unused_block_styles()
+{
+  if (!is_front_page() && !is_post_type_archive("works")) {
+    return;
+  }
+  wp_dequeue_style("wp-block-library");
+  wp_dequeue_style("classic-theme-styles");
+}
+add_action("wp_enqueue_scripts", "portfolio_remove_unused_block_styles", 100);
 
 /**
  * after_setup_themeでglobal-stylesを無効化
@@ -225,9 +326,9 @@ function portfolio_apply_transition_script_attributes($tag, $handle, $source)
 add_filter("script_loader_tag", "portfolio_apply_transition_script_attributes", 11, 3);
 
 /** Preload the hero font using the same hashed URL as the production stylesheet. */
-function portfolio_print_hero_font_preload()
+function portfolio_print_font_preload()
 {
-  if (!is_front_page() || get_asset_environment() !== "manifest") {
+  if (get_asset_environment() !== "manifest") {
     return;
   }
 
@@ -240,22 +341,17 @@ function portfolio_print_hero_font_preload()
   $url = get_template_directory_uri() . "/" . $file;
   echo '<link rel="preload" href="' . esc_url($url) . '" as="font" type="font/woff2" crossorigin>' . "\n";
 }
-add_action("wp_head", "portfolio_print_hero_font_preload", 2);
+add_action("wp_head", "portfolio_print_font_preload", 2);
 
-/** Discover the first-view scene before the footer entry's dynamic import. */
-function portfolio_print_intro_preload()
+/** Reserve the scene's scroll layout without parsing WebGL before the first paint. */
+function portfolio_print_intro_layout_hint()
 {
   if (!is_front_page()) {
     return;
   }
   wp_print_inline_script_tag('document.documentElement.classList.add("has-portfolio-intro");', ["id" => "portfolio-intro-layout"]);
-  $manifest = read_build_manifest();
-  $file = $manifest["assets/js/_portfolio-intro-scene.js"]["file"] ?? null;
-  if (get_asset_environment() === "manifest" && is_string($file) && preg_match("~^assets/js/_portfolio-intro-scene[.][a-zA-Z0-9_-]+[.]js$~", $file)) {
-    echo '<link rel="modulepreload" href="' . esc_url(get_template_directory_uri() . "/" . $file) . '" crossorigin>' . "\n";
-  }
 }
-add_action("wp_head", "portfolio_print_intro_preload", 2);
+add_action("wp_head", "portfolio_print_intro_layout_hint", 2);
 
 /** Reuse the rendered main image's source contract so responsive preload never requests a second candidate. */
 function portfolio_build_transition_image_preload($post_id)

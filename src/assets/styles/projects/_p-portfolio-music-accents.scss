@@ -50,6 +50,21 @@
   }
 }
 
+// A narrow stage has room for one downlight. Two desktop cones otherwise cross
+// over the heading and produce a bright, sharply layered patch on phones.
+@media (width <= 767px) and (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .home.portfolio-site .p-portfolio-section:not(.p-portfolio-contact)::before {
+    mask-image: linear-gradient(#000, rgb(0 0 0 / 70%) 30%, transparent);
+    block-size: min(20rem, 44svh);
+    background: conic-gradient(from 148deg at 8% -8%, transparent 0deg, rgb(119 183 255 / 9%) 6deg, rgb(200 231 255 / 35%) 16deg, rgb(115 179 255 / 12%) 26deg, transparent 36deg);
+    transform-origin: 8% top;
+  }
+
+  .home.portfolio-site .p-portfolio-section:not(.p-portfolio-contact)::after {
+    content: none;
+  }
+}
+
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) and (forced-colors: none) {
   .portfolio-site .l-main .p-portfolio-project:hover .p-portfolio-project__image::after {
     animation: portfolio-record-reflection 1.8s ease-in-out both;

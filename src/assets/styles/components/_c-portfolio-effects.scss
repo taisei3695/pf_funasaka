@@ -61,12 +61,16 @@
   display: block;
   width: var(--portfolio-progress-glow-size);
   height: var(--portfolio-progress-glow-size);
-  background-image: url("../../images/light_strobe.webp");
   background-position: center;
   background-size: contain;
   background-repeat: no-repeat;
   opacity: 0.85;
   filter: grayscale(1) brightness(var(--portfolio-progress-light));
+}
+
+// The progress accent stays invisible until interaction initializes it.
+.portfolio-site .c-portfolio-progress.is-portfolio-progress-ready .c-portfolio-progress__light {
+  background-image: url("../../images/light_strobe.webp");
 }
 
 @media (prefers-reduced-motion: reduce), (forced-colors: active) {

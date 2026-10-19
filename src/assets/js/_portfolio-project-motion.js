@@ -56,13 +56,15 @@ export function initPortfolioProjectEntrances(revealedElements) {
     if (record) showPortfolioProject(record);
   }
 
-  document.querySelectorAll(".portfolio-site article.p-portfolio-project").forEach(card => {
+  const cardEntries = [...document.querySelectorAll(".portfolio-site article.p-portfolio-project")].map(card => ({ card, top: card.getBoundingClientRect().top }));
+  cardEntries.forEach(({ card, top }) => {
     const content = card.querySelector(".p-portfolio-project__content");
     const record = { card, text: content ? [...content.children] : [], curtain: null, animations: [], trigger: null, started: false, shown: false, originalEntrance: card.getAttribute("data-portfolio-project-entrance") };
     records.set(card, record);
-    const top = card.getBoundingClientRect().top;
     // Restored scroll positions and already-seen cards should never start concealed.
-    if (revealedElements.has(card) || top < 0 || (window.scrollY > 8 && top < window.innerHeight * 0.88) || card.contains(document.activeElement) || typeof card.animate !== "function") {
+    // This module arrives after first paint. Never cover an already-visible LCP
+    // image again; the page curtain owns entry, and offscreen cards keep theirs.
+    if (revealedElements.has(card) || top < window.innerHeight || card.contains(document.activeElement) || typeof card.animate !== "function") {
       showPortfolioProject(record);
       return;
     }

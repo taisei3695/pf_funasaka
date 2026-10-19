@@ -12,7 +12,7 @@
         <?php if (have_posts()):
           while (have_posts()):
             the_post();
-            get_template_part("template-parts/portfolio-work-card", null, ["id" => get_the_ID()]);
+            get_template_part("template-parts/portfolio-work-card", null, ["id" => get_the_ID(), "image_attributes" => $wp_query->current_post === 0 ? ["loading" => "eager", "fetchpriority" => "high"] : []]);
           endwhile;
         else:
            ?><p>公開実績は準備中です。</p><?php

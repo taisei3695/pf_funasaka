@@ -1,0 +1,15 @@
+// Keep the first row fully rendered; skip distant card contents until needed.
+// Unsupported browsers retain the normal grid and all server-rendered content.
+@supports (content-visibility: auto) {
+  .post-type-archive-works .p-portfolio-project:nth-child(n + 3) {
+    content-visibility: auto;
+    contain-intrinsic-block-size: auto 42rem;
+  }
+
+  @media (width < 48rem) {
+    .post-type-archive-works .p-portfolio-project:nth-child(n + 2) {
+      content-visibility: auto;
+      contain-intrinsic-block-size: auto 42rem;
+    }
+  }
+}

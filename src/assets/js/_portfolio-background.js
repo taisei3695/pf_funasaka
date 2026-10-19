@@ -1,3 +1,5 @@
+import { queuePortfolioAfterContentPaint } from "./_portfolio-first-paint.js";
+
 function initPortfolioBackdrop() {
   const backdrop = document.querySelector(".js-portfolio-backdrop");
   if (!backdrop) return;
@@ -83,5 +85,13 @@ function initPortfolioBackdrop() {
   if (import.meta.hot) import.meta.hot.dispose(stopPortfolioBackdrop);
 }
 
-if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initPortfolioBackdrop, { once: true });
-else initPortfolioBackdrop();
+function queuePortfolioBackdrop() {
+  if (!document.querySelector(".js-portfolio-backdrop")) return;
+  const image = document.querySelector("main .p-portfolio-project__image img, main .p-portfolio-detail__image img");
+  const bounds = image?.getBoundingClientRect();
+  const target = image && bounds.top < window.innerHeight && bounds.bottom > 0 ? image : document.querySelector(".p-portfolio-detail--privacy .wp-block-paragraph, main h1");
+  queuePortfolioAfterContentPaint(initPortfolioBackdrop, target);
+}
+
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", queuePortfolioBackdrop, { once: true });
+else queuePortfolioBackdrop();

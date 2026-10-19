@@ -5,10 +5,15 @@ if (!$work || empty($work["id"])) {
 }
 $work_id = (int) $work["id"];
 $heading_tag = ($args["heading_level"] ?? 3) === 4 ? "h4" : "h3";
+$image_attributes = wp_parse_args($args["image_attributes"] ?? [], ["loading" => "lazy", "sizes" => "(min-width: 1440px) 614px, (min-width: 1024px) calc(50vw - 98px), (min-width: 768px) calc(50vw - 66px), calc(100vw - 42px)"]);
+// Nearby lazy images may still fetch early; keep the visible lead image first.
+if ($image_attributes["loading"] === "lazy" && !isset($image_attributes["fetchpriority"])) {
+  $image_attributes["fetchpriority"] = "low";
+}
 ?>
 <article class="p-portfolio-project">
   <a class="p-portfolio-project__image" href="<?php echo esc_url($work["permalink"]); ?>" aria-label="<?php echo esc_attr($work["title"] . " の詳細を見る"); ?>">
-    <?php echo portfolio_build_work_image($work_id, "large", ["loading" => "lazy", "sizes" => "(min-width: 1440px) 616px, (min-width: 768px) 46vw, 100vw"]); ?>
+    <?php echo portfolio_build_work_image($work_id, "large", $image_attributes); ?>
     <?php if ($work["image_kind"] === "illustration"): ?><span class="p-portfolio-project__image-note">イメージ画像</span><?php endif; ?>
   </a>
   <div class="p-portfolio-project__content">

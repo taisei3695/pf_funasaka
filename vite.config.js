@@ -24,6 +24,12 @@ const imageConfig = {
 
 const inputsForWordPress = {
   style: resolve(root, "assets", "styles", "style.scss"),
+  "portfolio-hero-reveal": resolve(root, "assets", "styles", "portfolio-hero-reveal.css"),
+  "portfolio-critical": resolve(root, "assets", "styles", "portfolio-critical.scss"),
+  "portfolio-content-critical": resolve(root, "assets", "styles", "portfolio-content-critical.scss"),
+  "portfolio-archive-critical": resolve(root, "assets", "styles", "portfolio-archive-critical.scss"),
+  "portfolio-work-critical": resolve(root, "assets", "styles", "portfolio-work-critical.scss"),
+  "portfolio-privacy-critical": resolve(root, "assets", "styles", "portfolio-privacy-critical.scss"),
   ...Object.fromEntries(
     globSync("src/assets/js/*.js")
       .filter(file => !basename(file).startsWith("_"))

@@ -29,6 +29,7 @@ $archive_url = $private ? home_url("/private-works/") : get_post_type_archive_li
   $work["permalink"],
 ); ?>"><?php echo portfolio_build_work_image($work_id, "full", [
   "loading" => "eager",
+  "fetchpriority" => "high",
   "sizes" => "(min-width: 1440px) 1280px, (min-width: 1024px) calc(100vw - 160px), (min-width: 768px) calc(100vw - 96px), calc(100vw - 40px)",
 ]); ?></div>
     <?php if ($work["image_kind"] === "illustration"): ?><p class="p-portfolio-detail__image-caption">画像は案件内容を表すAI生成のイメージです。実際の制作画面・製品写真ではありません。</p><?php elseif (

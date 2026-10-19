@@ -17,6 +17,19 @@
   pointer-events: none;
 }
 
+// Keep the initial static lighting, but allocate moving/composited layers only
+// after the foreground content's paint barrier has released playback.
+.c-portfolio-backdrop:not([data-backdrop-playback])::after,
+.c-portfolio-backdrop:not([data-backdrop-playback]) .c-portfolio-backdrop__glow,
+.c-portfolio-backdrop:not([data-backdrop-playback]) .c-portfolio-backdrop__particle {
+  animation: none;
+}
+
+.c-portfolio-backdrop:not([data-backdrop-playback]) .c-portfolio-backdrop__glow,
+.c-portfolio-backdrop:not([data-backdrop-playback]) .c-portfolio-backdrop__particle {
+  visibility: hidden;
+}
+
 .c-portfolio-backdrop__glow {
   --backdrop-glow-delay: 0s;
 

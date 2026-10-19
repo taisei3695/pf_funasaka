@@ -1,0 +1,11 @@
+// Reuse the exact first-view rules; the remaining effects load in parallel.
+@use "foundation";
+@use "global";
+@use "components/c-portfolio-font";
+@use "components/c-skip-link";
+@use "components/c-portfolio-effects";
+@use "components/c-portfolio-transition";
+@use "projects/p-portfolio";
+@use "projects/p-portfolio-header";
+@use "projects/p-portfolio-intro";
+@use "projects/p-portfolio-scroll-waveform";

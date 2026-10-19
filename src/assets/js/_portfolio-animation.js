@@ -157,6 +157,8 @@ function initHeadingReveals(revealedHeadings) {
   if (typeof IntersectionObserver !== "function") return { cues, restore: () => {} };
   document.querySelectorAll(".p-portfolio-section__title").forEach(heading => {
     if (revealedHeadings.has(heading)) return;
+    // Keep painted text intact while its independent glitch and light cue play.
+    if (heading.getBoundingClientRect().top < window.innerHeight) return;
     const { glyphs, restore } = createHeadingLetters(heading);
     restores.push(restore);
     const reveal = { glyphs, onComplete: () => revealedHeadings.add(heading) };
@@ -352,7 +354,7 @@ function createLightEqualizerSequence(stage) {
 function initLightPlayback(selector = ".js-light-stage, .js-light-cue", headingReveals = new Map(), { heroAnimations = [], heroStage = null } = {}) {
   // Keep the CSS light wall static when viewport observation is unavailable.
   if (typeof IntersectionObserver !== "function") return () => {};
-  const stages = [...document.querySelectorAll(selector)];
+  const stages = [...document.querySelectorAll(selector)].filter(stage => stage.previousElementSibling?.dataset.portfolioInitialMotion !== "true");
   if (!stages.length) return () => {};
   const stageVisible = new Map(stages.map(stage => [stage, false]));
   const renderSkipped = new Map();
@@ -400,9 +402,7 @@ function initLightPlayback(selector = ".js-light-stage, .js-light-cue", headingR
       });
   }
 
-  sequences.forEach(record => {
-    if (!record.stage.classList.contains("c-light-stage--contact")) ensureLightSequence(record);
-  });
+  // Allocate each light sequence only when its stage enters the viewport.
   const observer = new IntersectionObserver(entries => {
     entries.forEach(entry => stageVisible.set(entry.target, entry.isIntersecting));
     syncLightPlayback();
@@ -507,7 +507,7 @@ function initPortfolioMotion() {
       if (!active || refreshFrame) return;
       refreshFrame = window.requestAnimationFrame(() => {
         refreshFrame = 0;
-        if (active) ScrollTrigger.refresh();
+        if (active) ScrollTrigger.refresh(true);
       });
     }
     // The asynchronously loaded sphere expands the intro's scroll journey after DOM ready.
@@ -537,11 +537,11 @@ function initPortfolioMotion() {
         frame.classList.add("is-afterglow-visible");
         return;
       }
-      gsap
-        .timeline({ scrollTrigger: { trigger: frame, start: "top 90%", once: true } })
-        .from(frame, { clipPath: "inset(0 0 100% 0)", duration: 1.05, ease: "power3.out", clearProps: "clipPath" })
-        .from(image, { scale: 1.06, duration: 1.3, ease: "power3.out", clearProps: "transform" }, 0)
-        .call(() => frame.classList.add("is-afterglow-visible"));
+      const imageEntrance = gsap.timeline({ scrollTrigger: { trigger: frame, start: "top 90%", once: true } });
+      // A direct visit may already have painted the main image before GSAP loads.
+      // Preserve its zoom and afterglow without clipping that visible image away.
+      if (frame.getBoundingClientRect().top >= window.innerHeight) imageEntrance.from(frame, { clipPath: "inset(0 0 100% 0)", duration: 1.05, ease: "power3.out", clearProps: "clipPath" });
+      imageEntrance.from(image, { scale: 1.06, duration: 1.3, ease: "power3.out", clearProps: "transform" }, 0).call(() => frame.classList.add("is-afterglow-visible"));
       if (desktop && frame.classList.contains("p-portfolio-work__image")) {
         gsap.fromTo(
           frame,
@@ -558,7 +558,7 @@ function initPortfolioMotion() {
       if (isHome || element.classList.contains("p-portfolio-section__title")) return;
       gsap.from(element, {
         y: 22,
-        opacity: 0,
+        opacity: element.getBoundingClientRect().top < window.innerHeight ? 1 : 0,
         duration: 0.85,
         ease: "power2.out",
         clearProps: "transform,opacity",
@@ -597,8 +597,8 @@ function initPortfolioMotion() {
     return initLightPlayback(".js-light-equalizer");
   });
 
-  document.fonts.ready.then(() => ScrollTrigger.refresh());
-  window.addEventListener("load", () => ScrollTrigger.refresh(), { once: true });
+  document.fonts.ready.then(() => ScrollTrigger.refresh(true));
+  window.addEventListener("load", () => ScrollTrigger.refresh(true), { once: true });
 }
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initPortfolioMotion, { once: true });

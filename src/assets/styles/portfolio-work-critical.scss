@@ -1,0 +1,16 @@
+// Work details need their image/body accents, not archive cards or pagination.
+@use "foundation";
+@use "global";
+@use "components/c-portfolio-font";
+@use "components/c-skip-link";
+@use "components/c-portfolio-effects";
+@use "components/c-portfolio-transition";
+@use "components/c-light-stage";
+@use "components/c-portfolio-backdrop";
+@use "projects/p-portfolio";
+@use "projects/p-portfolio-header";
+@use "projects/p-portfolio-work-detail";
+@use "projects/p-portfolio-detail-heading-cue";
+@use "projects/p-portfolio-links";
+@use "projects/p-portfolio-link-equalizer";
+@use "projects/p-portfolio-section-motion";

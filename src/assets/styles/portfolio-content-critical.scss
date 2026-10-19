@@ -1,0 +1,22 @@
+// Shared first-view styles for archive, work detail and policy pages.
+// Import the original partials so typography and spacing stay identical.
+@use "foundation";
+@use "global";
+@use "components/c-portfolio-font";
+@use "components/c-skip-link";
+@use "components/c-portfolio-effects";
+@use "components/c-portfolio-transition";
+@use "components/c-light-stage";
+@use "components/c-portfolio-backdrop";
+@use "projects/p-portfolio";
+@use "projects/p-portfolio-header";
+@use "projects/p-portfolio-profile";
+@use "projects/p-portfolio-work-detail";
+@use "projects/p-portfolio-privacy";
+@use "projects/p-portfolio-detail-heading-cue";
+@use "projects/p-portfolio-links";
+@use "projects/p-portfolio-link-equalizer";
+@use "projects/p-portfolio-pagination";
+@use "projects/p-portfolio-project-motion";
+@use "projects/p-portfolio-section-motion";
+@use "projects/p-portfolio-rendering";

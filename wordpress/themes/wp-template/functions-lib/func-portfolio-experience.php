@@ -23,11 +23,11 @@ function portfolio_list_academic_projects()
 function portfolio_list_skill_experience()
 {
   return [
-    ["name" => "HTML", "years" => "5年", "context" => "実務経験あり", "category" => "Frontend", "description" => "業務システムの画面実装・デザインカンプからのコーディング"],
-    ["name" => "CSS", "years" => "5年", "context" => "実務経験あり", "category" => "Frontend", "description" => "Webサイトのスタイリング・レスポンシブ対応"],
-    ["name" => "JavaScript", "years" => "4年", "context" => "実務経験あり", "category" => "Frontend", "description" => "画面処理・カート・アコーディオン・フォーム確認画面の実装"],
-    ["name" => "WordPress", "years" => "1年", "context" => "実務経験あり", "category" => "CMS", "description" => "オリジナルテーマ・カスタム投稿・ブロックパターン・保守運用"],
-    ["name" => "PHP", "years" => "1年", "context" => "実務経験あり", "category" => "Backend", "description" => "WordPressテーマと投稿機能の実装"],
+    ["name" => "HTML", "years" => "6年", "context" => "実務経験あり", "category" => "Frontend", "description" => "業務システムの画面実装・デザインカンプからのコーディング"],
+    ["name" => "CSS", "years" => "6年", "context" => "実務経験あり", "category" => "Frontend", "description" => "Webサイトのスタイリング・レスポンシブ対応"],
+    ["name" => "JavaScript", "years" => "5年", "context" => "実務経験あり", "category" => "Frontend", "description" => "画面処理・カート・アコーディオン・フォーム確認画面の実装"],
+    ["name" => "WordPress", "years" => "2年", "context" => "実務経験あり", "category" => "CMS", "description" => "オリジナルテーマ・カスタム投稿・ブロックパターン・保守運用"],
+    ["name" => "PHP", "years" => "2年", "context" => "実務経験あり", "category" => "Backend", "description" => "WordPressテーマと投稿機能の実装"],
     ["name" => "Java", "years" => "4年", "context" => "実務・大学校での開発", "category" => "Backend", "description" => "業務システムの開発・改修、天体アプリの開発"],
     ["name" => "JSP", "years" => "1年", "context" => "実務経験あり", "category" => "Backend", "description" => "業務システムのサーバーサイド処理・画面実装"],
     ["name" => "SQL", "years" => "5年", "context" => "実務経験あり", "category" => "Database", "description" => "SQLの作成・修正、データベース操作"],

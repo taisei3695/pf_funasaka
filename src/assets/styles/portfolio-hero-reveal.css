@@ -1,6 +1,20 @@
+/* Same Jost outlines/weight as the full variable font, limited to the name. */
+@font-face {
+  font-family: "Portfolio Hero";
+  src: url("../fonts/jost-hero-400.woff2?inline") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+.portfolio-site .p-portfolio-intro .p-portfolio-hero__name {
+  font-family: "Portfolio Hero", var(--portfolio-font);
+}
+
 @keyframes portfolio-hero-reveal {
   from {
-    transform: translateY(105%);
+    /* Keep the name readable in the first paint while its entrance settles. */
+    transform: translateY(22%);
   }
 
   to {
@@ -11,6 +25,11 @@
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
   .portfolio-site .p-portfolio-hero .js-hero-line {
     animation: portfolio-hero-reveal 0.7s cubic-bezier(0.165, 0.84, 0.44, 1) both;
+  }
+
+  /* The primary text must not wait for a clipped entrance to finish. */
+  .portfolio-site .p-portfolio-hero__name .js-hero-line {
+    animation: none;
   }
 
   .portfolio-site .p-portfolio-hero__line:nth-child(2) .js-hero-line {

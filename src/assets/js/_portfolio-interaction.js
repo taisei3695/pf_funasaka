@@ -1,5 +1,6 @@
 import { initPortfolioLinkEqualizers } from "./_portfolio-link-equalizer.js";
 import { initPortfolioScrollWaveform } from "./_portfolio-scroll-waveform.js";
+import { queuePortfolioAfterPaint } from "./_portfolio-first-paint.js";
 
 function buildScrollProgress(scroll, documentHeight, viewportHeight) {
   const distance = documentHeight - viewportHeight;
@@ -114,5 +115,17 @@ function initPortfolioInteractions() {
   };
 }
 
-if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initPortfolioInteractions, { once: true });
-else initPortfolioInteractions();
+function queuePortfolioInteractions() {
+  const events = ["wheel", "touchstart", "pointerdown", "keydown", "focusin", "scroll", "pointerover"];
+  function startPortfolioInteractions(event) {
+    if (event?.type === "pointerover" && !event.target.closest?.("a,button,[tabindex]")) return;
+    events.forEach(name => window.removeEventListener(name, startPortfolioInteractions, true));
+    initPortfolioInteractions();
+  }
+  // Equalizers and the waveform respond to input; avoid adding their DOM and
+  // measuring the full page before the visitor has started interacting.
+  if (window.scrollY > 0) startPortfolioInteractions();
+  else events.forEach(name => window.addEventListener(name, startPortfolioInteractions, { capture: true, passive: true }));
+}
+
+queuePortfolioAfterPaint(queuePortfolioInteractions);
