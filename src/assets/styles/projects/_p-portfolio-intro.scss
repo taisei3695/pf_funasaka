@@ -87,9 +87,23 @@ body.home.portfolio-site.admin-bar {
 }
 
 .portfolio-site .p-portfolio-intro .p-portfolio-hero__type {
+  position: relative;
+  isolation: isolate;
   inline-size: min(1280px, calc(100% - 160px));
   margin-inline: auto;
   text-align: start;
+}
+
+.portfolio-site .p-portfolio-intro .p-portfolio-hero__type::before {
+  position: absolute;
+  z-index: -1;
+  inset-block: -2rem;
+  inset-inline-start: -2rem;
+  inline-size: min(46rem, calc(100% + 4rem));
+  background: linear-gradient(90deg, rgb(3 4 5 / 48%) 0%, rgb(3 4 5 / 36%) 48%, rgb(3 4 5 / 12%) 76%, transparent 100%);
+  mask-image: linear-gradient(180deg, transparent, #000 12%, #000 88%, transparent);
+  pointer-events: none;
+  content: "";
 }
 
 .portfolio-site .p-portfolio-hero__eyebrow {
@@ -110,6 +124,13 @@ body.home.portfolio-site.admin-bar {
   text-shadow: 0 0.0625rem 1.5rem #030405;
 }
 
+@media (width >= 48rem) {
+  .portfolio-site .p-portfolio-intro .p-portfolio-hero__name {
+    // Include the font's line-box space for a visual gap of about 75px.
+    margin-block-end: 3rem;
+  }
+}
+
 .portfolio-site .p-portfolio-intro .p-portfolio-hero__line {
   padding-block: 0.035em;
 }
@@ -125,6 +146,25 @@ body.home.portfolio-site.admin-bar {
   font-weight: 400;
   line-height: 2;
   letter-spacing: 0.08em;
+  text-shadow: 0 0.0625rem 0.1875rem #030405, 0 0 0.75rem #030405;
+}
+
+.portfolio-site .p-portfolio-hero__description.p-portfolio-hero__description--lead {
+  max-inline-size: 37.5rem;
+  margin-block-start: 0.875rem;
+  color: #e0e0e0;
+  font-size: clamp(0.9375rem, 1.1vw, 1rem);
+  font-weight: 400;
+  line-height: 1.8;
+  letter-spacing: 0.04em;
+}
+
+@media (width < 48rem) and (height < 44rem) {
+  .portfolio-site .p-portfolio-intro .p-portfolio-intro__journey .p-portfolio-hero {
+    justify-content: center;
+    min-block-size: calc(100svh - var(--intro-admin-offset));
+    padding-block: 7rem 2rem;
+  }
 }
 
 .portfolio-site .p-portfolio-intro .p-portfolio-about {

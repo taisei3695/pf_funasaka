@@ -1,0 +1,48 @@
+{
+  "tool": "static_audit",
+  "created_at": "2026-10-19T12:08:15.991526+00:00",
+  "root": "C:\\Users\\oyaji\\Desktop\\pf_funasaka\\src\\assets\\styles\\projects",
+  "files_scanned": 34,
+  "summary": {
+    "high": 4
+  },
+  "issues": [
+    {
+      "id": "CNT-04",
+      "severity": "high",
+      "status": "fail",
+      "file": "_p-form.scss",
+      "line": 93,
+      "message": "dummy文字列",
+      "evidence": "placeholder"
+    },
+    {
+      "id": "CNT-04",
+      "severity": "high",
+      "status": "fail",
+      "file": "_p-form.scss",
+      "line": 94,
+      "message": "dummy文字列",
+      "evidence": "placeholder"
+    },
+    {
+      "id": "CNT-04",
+      "severity": "high",
+      "status": "fail",
+      "file": "_p-form.scss",
+      "line": 95,
+      "message": "dummy文字列",
+      "evidence": "placeholder"
+    },
+    {
+      "id": "CNT-04",
+      "severity": "high",
+      "status": "fail",
+      "file": "_p-portfolio-theme.scss",
+      "line": 30,
+      "message": "dummy文字列",
+      "evidence": "placeholder"
+    }
+  ],
+  "dates": []
+}

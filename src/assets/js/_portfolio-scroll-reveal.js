@@ -18,7 +18,6 @@ const PORTFOLIO_SCROLL_REVEAL_SELECTORS = [
   ".p-portfolio-header__brand",
   ".p-portfolio-header__nav a",
   ".p-portfolio-hero__eyebrow",
-  ".p-portfolio-hero__description",
   ".p-portfolio-section__title",
   ".p-portfolio-about__eyebrow",
   ".p-portfolio-about__intro > *",

@@ -6,5 +6,6 @@
       <span class="p-portfolio-hero__line"><span class="js-hero-line">FUNASAKA</span></span>
     </h1>
     <p class="p-portfolio-hero__description">PORTFOLIO</p>
+    <p class="p-portfolio-hero__description p-portfolio-hero__description--lead">システム開発の実務経験を活かし、<br>Webサイトのコーディング・WordPress構築・改修に対応しています。</p>
   </div>
 </section>
