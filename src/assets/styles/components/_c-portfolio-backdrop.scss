@@ -2,7 +2,18 @@
 
 .portfolio-site .l-main--ambient {
   position: relative;
+  overflow-x: clip;
   isolation: isolate;
+}
+
+// Match the fixed background so its tint continues through the transparent footer.
+.portfolio-site .l-main--ambient::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-color: rgb(3 4 5 / 44%);
+  pointer-events: none;
 }
 
 .c-portfolio-backdrop {

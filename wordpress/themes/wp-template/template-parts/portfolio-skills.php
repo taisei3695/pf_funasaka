@@ -1,4 +1,5 @@
 <section id="skills" class="p-portfolio-section p-portfolio-skills" aria-labelledby="skills-title">
+  <div class="p-portfolio-skills__backdrop" aria-hidden="true"></div>
   <div class="l-portfolio-inner">
     <h2 id="skills-title" class="p-portfolio-section__title js-fade-up">SKILLS</h2>
     <?php get_template_part("template-parts/portfolio-light-cue"); ?>
@@ -8,7 +9,7 @@
       <?php foreach (portfolio_list_skill_experience() as $skill): ?>
         <li class="p-portfolio-skill">
           <p class="p-portfolio-skill__category"><?php echo esc_html($skill["category"]); ?></p>
-          <div class="p-portfolio-skill__heading"><h3><?php echo esc_html($skill["name"]); ?></h3><p class="p-portfolio-skill__years"><?php echo esc_html($skill["years"]); ?></p></div>
+          <div class="p-portfolio-skill__heading"><h3><?php echo esc_html($skill["name"]); ?></h3><?php if ($skill["years"] !== ""): ?><p class="p-portfolio-skill__years"><?php echo esc_html($skill["years"]); ?></p><?php endif; ?></div>
           <p class="p-portfolio-skill__context"><?php echo esc_html($skill["context"]); ?></p>
           <p class="p-portfolio-skill__description"><?php echo esc_html($skill["description"]); ?></p>
         </li>

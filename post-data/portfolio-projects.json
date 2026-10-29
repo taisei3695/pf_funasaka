@@ -124,7 +124,7 @@
       "category": "システム開発 / 実務",
       "technologies": ["Java", "JSP", "HTML", "CSS", "JavaScript", "SQL", "Oracle", "Eclipse"],
       "period_label": "開発期間",
-      "period": "約1年〜1年半",
+      "period": "約2年",
       "role": "画面・サーバーサイド開発、DB操作、不具合調査・修正",
       "summary": "農作物の生産・栽培管理や、農業資材・在庫管理を行うWebベースの業務管理システムの開発に携わりました。",
       "tasks": ["新規画面・機能の開発", "既存画面の修正・改修", "Java・JSPによるサーバーサイド処理の実装", "HTML・CSS・JavaScriptによる画面実装", "SQLの作成・修正、データベース操作", "不具合調査・修正", "テスト・動作確認"],

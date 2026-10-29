@@ -8,11 +8,12 @@
       <?php get_template_part("template-parts/portfolio-hero"); ?>
     </div>
     <?php get_template_part("template-parts/portfolio-about"); ?>
+    <?php get_template_part("template-parts/portfolio-skills"); ?>
     <?php get_template_part("template-parts/portfolio-works"); ?>
     <?php get_template_part("template-parts/portfolio-experience"); ?>
-    <?php get_template_part("template-parts/portfolio-skills"); ?>
     <?php get_template_part("template-parts/portfolio-study"); ?>
     <?php get_template_part("template-parts/portfolio-contact"); ?>
+    <?php get_template_part("template-parts/footer"); ?>
   </div>
 </main>
-<?php get_footer(); ?>
+<?php get_footer(null, ["portfolio_footer_rendered" => true]); ?>

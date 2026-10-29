@@ -16,6 +16,7 @@ body.home.portfolio-site.admin-bar {
   --intro-muted: var(--portfolio-muted);
   --intro-accent: var(--portfolio-accent);
   --intro-line: #26354b;
+  --intro-journey-size: 320svh;
 
   position: relative;
   overflow: clip;
@@ -26,7 +27,7 @@ body.home.portfolio-site.admin-bar {
 
 .portfolio-site .p-portfolio-intro__stage {
   position: sticky;
-  inset-block-start: 0;
+  inset-block-start: var(--intro-admin-offset);
   z-index: 0;
   overflow: hidden;
   inline-size: 100%;
@@ -44,7 +45,7 @@ body.home.portfolio-site.admin-bar {
 .portfolio-site .p-portfolio-intro__journey {
   position: relative;
   z-index: 1;
-  block-size: 320svh;
+  block-size: var(--intro-journey-size);
 }
 
 .portfolio-site .p-portfolio-intro > .p-portfolio-section {
@@ -52,8 +53,30 @@ body.home.portfolio-site.admin-bar {
   z-index: 1;
 }
 
+.portfolio-site .p-portfolio-intro > .p-portfolio-footer {
+  position: relative;
+  z-index: 1;
+}
+
 .portfolio-site .p-portfolio-intro > .p-portfolio-section:not(.p-portfolio-about) {
   background-color: transparent;
+}
+
+// One continuous veil follows the hero journey; sections no longer stack black panels.
+.portfolio-site .p-portfolio-intro[data-intro-renderer="three"]::after {
+  content: "";
+  position: absolute;
+  inset-block: calc(var(--intro-journey-size) - 16rem) 0;
+  inset-inline: 0;
+  z-index: 0;
+  background: linear-gradient(180deg, transparent, rgb(3 4 5 / 20%) 5rem, rgb(3 4 5 / 46%) 11rem, rgb(3 4 5 / 64%) 16rem);
+  pointer-events: none;
+}
+
+.portfolio-site .p-portfolio-intro :is(.p-portfolio-section__intro, .p-portfolio-section__note, .p-portfolio-experience__heading, .p-portfolio-about__intro, .p-portfolio-about__body, .p-portfolio-skill__description) {
+  text-shadow:
+    0 1px 2px #030405,
+    0 0 4px rgb(3 4 5 / 85%);
 }
 
 .portfolio-site .p-portfolio-intro:not([data-intro-renderer="three"]) .p-portfolio-intro__journey {
@@ -63,7 +86,7 @@ body.home.portfolio-site.admin-bar {
 // Reserve the WebGL journey before the module arrives; no-JS / fallback stays compact.
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
   .has-portfolio-intro .portfolio-site .p-portfolio-intro:not([data-intro-renderer="fallback"]) .p-portfolio-intro__journey {
-    block-size: 320svh;
+    block-size: var(--intro-journey-size);
   }
 }
 
@@ -88,22 +111,24 @@ body.home.portfolio-site.admin-bar {
 
 .portfolio-site .p-portfolio-intro .p-portfolio-hero__type {
   position: relative;
-  isolation: isolate;
   inline-size: min(1280px, calc(100% - 160px));
   margin-inline: auto;
+  isolation: isolate;
   text-align: start;
 }
 
 .portfolio-site .p-portfolio-intro .p-portfolio-hero__type::before {
-  position: absolute;
-  z-index: -1;
-  inset-block: -2rem;
-  inset-inline-start: -2rem;
-  inline-size: min(46rem, calc(100% + 4rem));
-  background: linear-gradient(90deg, rgb(3 4 5 / 48%) 0%, rgb(3 4 5 / 36%) 48%, rgb(3 4 5 / 12%) 76%, transparent 100%);
-  mask-image: linear-gradient(180deg, transparent, #000 12%, #000 88%, transparent);
-  pointer-events: none;
   content: "";
+  position: absolute;
+  inset-block: -4rem;
+  inset-inline-start: -6rem;
+  z-index: -1;
+  /* stylelint-disable-next-line property-no-vendor-prefix -- Older Safari mask fallback. */
+  -webkit-mask-image: linear-gradient(180deg, transparent, rgb(0 0 0 / 35%) 5%, #000 18%, #000 82%, rgb(0 0 0 / 35%) 95%, transparent);
+  mask-image: linear-gradient(180deg, transparent, rgb(0 0 0 / 35%) 5%, #000 18%, #000 82%, rgb(0 0 0 / 35%) 95%, transparent);
+  inline-size: min(52rem, calc(100% + 12rem));
+  background: linear-gradient(90deg, transparent, rgb(3 4 5 / 24%) 5%, rgb(3 4 5 / 68%) 12%, rgb(3 4 5 / 58%) 44%, rgb(3 4 5 / 30%) 72%, rgb(3 4 5 / 8%) 90%, transparent);
+  pointer-events: none;
 }
 
 .portfolio-site .p-portfolio-hero__eyebrow {
@@ -146,15 +171,17 @@ body.home.portfolio-site.admin-bar {
   font-weight: 400;
   line-height: 2;
   letter-spacing: 0.08em;
-  text-shadow: 0 0.0625rem 0.1875rem #030405, 0 0 0.75rem #030405;
+  text-shadow:
+    0 0.0625rem 0.1875rem #030405,
+    0 0 0.75rem #030405;
 }
 
 .portfolio-site .p-portfolio-hero__description.p-portfolio-hero__description--lead {
   max-inline-size: 37.5rem;
   margin-block-start: 0.875rem;
-  color: #e0e0e0;
+  color: var(--portfolio-ink);
   font-size: clamp(0.9375rem, 1.1vw, 1rem);
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.8;
   letter-spacing: 0.04em;
 }
@@ -197,6 +224,7 @@ body.home.portfolio-site.admin-bar {
   position: sticky;
   inset-block-start: calc(var(--intro-admin-offset) + 3rem);
   align-self: start;
+  isolation: isolate;
 }
 
 .portfolio-site .p-portfolio-intro .p-portfolio-about__intro h3 {
@@ -225,7 +253,7 @@ body.home.portfolio-site.admin-bar {
   padding-inline: 1.5rem;
   border: 1px solid var(--intro-line);
   background-color: rgb(3 4 5 / 88%);
-  font-size: 0.875rem;
+  font-size: clamp(1rem, 0.94rem + 0.15vw, 1.0625rem);
   line-height: 2.1;
 }
 
@@ -254,13 +282,14 @@ body.home.portfolio-site.admin-bar {
 
 .portfolio-site .p-portfolio-intro .p-portfolio-about__timeline h4 {
   color: var(--intro-text);
-  font-size: 0.9375rem;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .portfolio-site .p-portfolio-intro .p-portfolio-about__timeline .p-portfolio-about__period {
   margin-block: 0 0.75rem;
   color: var(--intro-accent);
-  font-size: 0.75rem;
+  font-size: 0.875rem;
 }
 
 .portfolio-site .p-portfolio-intro .p-portfolio-about__timeline p + p {
@@ -276,12 +305,12 @@ body.home.portfolio-site.admin-bar {
 
 .portfolio-site .p-portfolio-intro .p-portfolio-about__strengths h4 {
   color: var(--intro-text);
-  font-size: 0.875rem;
+  font-size: 1rem;
 }
 
 .portfolio-site .p-portfolio-intro .p-portfolio-about__strengths ul {
   color: var(--intro-muted);
-  font-size: 0.8125rem;
+  font-size: 1rem;
 }
 
 @media (width < 64rem) {
